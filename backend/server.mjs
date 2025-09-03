@@ -919,7 +919,7 @@ app.get("/api/opname/final", async (req, res) => {
 // --- Endpoint baru untuk mengambil data RAB dari data_rab ---
 app.get("/api/rab", async (req, res) => {
   try {
-    const { kode_toko, no_ulok } = req.query;
+    const { kode_toko, no_ulok, lingkup } = req.query;
     if (!kode_toko)
       return res.status(400).json({ message: "Kode toko diperlukan." });
 
@@ -932,13 +932,18 @@ app.get("/api/rab", async (req, res) => {
 
     const rows = await rabSheet.getRows();
 
-    let rabItems = rows.filter((row) => row.get("kode_toko") === kode_toko);
+    const norm = (v) => (v ?? "").toString().trim().toUpperCase();
+    let rabItems = rows.filter((row) => norm(row.get("kode_toko")) === norm(kode_toko));
 
     // Filter berdasarkan no_ulok jika disediakan
     if (no_ulok) {
-      rabItems = rabItems.filter((row) => row.get("no_ulok") === no_ulok);
+      rabItems = rabItems.filter((row) => norm(row.get("no_ulok")) === norm(no_ulok));
     }
-
+    if (lingkup) {
+      rabItems = rabItems.filter(
+        (row) => norm(row.get("lingkup_pekerjaan")) === norm(lingkup)
+      );
+    }
     const result = rabItems.map((row) => ({
       kategori_pekerjaan: row.get("kategori_pekerjaan"),
       jenis_pekerjaan: row.get("jenis_pekerjaan"),
@@ -950,6 +955,7 @@ app.get("/api/rab", async (req, res) => {
       pic_username: row.get("pic_username") || "",
       kontraktor_username:
         row.get("kontraktor") || row.get("kontraktor_username") || "",
+      lingkup_pekerjaan: row.get("lingkup_pekerjaan") || "",
     }));
 
     res.status(200).json(result);

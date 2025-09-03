@@ -101,11 +101,13 @@ const wrapText = (doc, text, maxWidth) => {
 };
 
 // Fungsi untuk mengambil data RAB dari API
-const fetchRabData = async (kode_toko, no_ulok) => {
+const fetchRabData = async (kode_toko, no_ulok, lingkup) => {
   try {
-     const response = await fetch(
-       `${API_BASE_URL}/api/rab?kode_toko=${kode_toko}&no_ulok=${no_ulok}`
-     );
+   const url = new URL(`${API_BASE_URL}/api/rab`);
+   url.searchParams.set("kode_toko", kode_toko);
+   if (no_ulok)  url.searchParams.set("no_ulok",  no_ulok);
+   if (lingkup)  url.searchParams.set("lingkup",  lingkup); // 🔑 tambah filter
+   const response = await fetch(url.toString());
     if (!response.ok) throw new Error("Gagal mengambil data RAB");
     return await response.json();
   } catch (error) {
@@ -183,9 +185,14 @@ export const generateFinalOpnamePDF = async (
     doc.setTextColor(0, 0, 0);
   };
 
-  // --- Ambil Data RAB dari server ---
-  const rabData = await fetchRabData(selectedStore.kode_toko, selectedUlok);
-
+  // --- Ambil Data RAB dari server (terfilter lingkup) ---
+  const selectedLingkup =
+    (submissions && submissions[0]?.lingkup_pekerjaan || "").toUpperCase();
+  const rabData = await fetchRabData(
+    selectedStore.kode_toko,
+    selectedUlok,
+    selectedLingkup // 🔑 kirim ME/SIPIL
+  );
   // --- Ambil Data PIC dan Kontraktor berdasarkan no_ulok ---
   const picKontraktorData = await fetchPicKontraktorData(selectedUlok);
   // Fallback: kalau API kosong/N/A, ambil dari rabData
