@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
+import LingkupSelection from "./LingkupSelection";
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || "";
 
@@ -332,7 +333,10 @@ const withLingkup = lk ? base + `&lingkup=${encodeURIComponent(lk)}` : null;
           <select
             className="form-select"
             value={selectedUlok || ""}
-            onChange={(e) => setSelectedUlok(e.target.value)}
+            onChange={(e) => {
+              setSelectedUlok(e.target.value); // pilih ULOK
+              setSelectedLingkup(null); // reset lingkup setiap kali ULOK berubah
+            }}
           >
             <option value="">Pilih No. ULOK</option>
             {uloks.map((ulok) => (
@@ -346,6 +350,21 @@ const withLingkup = lk ? base + `&lingkup=${encodeURIComponent(lk)}` : null;
     );
   }
 
+  // STEP 2: jika ULOK sudah dipilih tapi LINGKUP belum -> tampilkan pemilih lingkup
+  if (selectedUlok && !selectedLingkup) {
+    return (
+      <div className="container" style={{ paddingTop: "20px" }}>
+        <LingkupSelection
+          kodeToko={selectedStore.kode_toko}
+          noUlok={selectedUlok}
+          onSelect={(lk) => setSelectedLingkup(lk)}
+          onCancel={() => setSelectedUlok(null)}
+        />
+      </div>
+    );
+  }
+
+  // STEP 3: jika ULOK & LINGKUP sudah ada -> tampilkan tabel input
   return (
     <div
       className="container"
