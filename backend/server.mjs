@@ -37,19 +37,38 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-// 5. Otentikasi Google (HANYA untuk Sheets)
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const credsPath = path.join(__dirname, "google-credentials.json");
+// 5. Otentikasi Google (HANYA untuk Sheets) — aman untuk Render
+import fs from "fs";
+import path from "path";
+
+const RENDER_SECRET_PATH = "/etc/secrets/google-credentials.json";
+// Izinkan override via env jika perlu
+const CREDENTIALS_PATH =
+  process.env.GOOGLE_CREDENTIALS_PATH && fs.existsSync(process.env.GOOGLE_CREDENTIALS_PATH)
+    ? process.env.GOOGLE_CREDENTIALS_PATH
+    : (fs.existsSync(RENDER_SECRET_PATH) ? RENDER_SECRET_PATH : path.join(process.cwd(), "google-credentials.json"));
+
+// Baca file JSON secara manual agar bisa pakai { email, private_key } langsung
+if (!fs.existsSync(CREDENTIALS_PATH)) {
+  console.error("[FATAL] File service account tidak ditemukan di:", CREDENTIALS_PATH);
+  throw new Error("Service account key file not found");
+}
+
+const sa = JSON.parse(fs.readFileSync(CREDENTIALS_PATH, "utf8"));
+
+// Beberapa penyedia menyimpan `\n` sebagai karakter literal.
+// Pastikan newline benar agar OpenSSL tidak error.
+const PRIVATE_KEY = (sa.private_key || "").replace(/\\n/g, "\n");
 
 const serviceAccountAuth = new JWT({
-  keyFile: credsPath, // <-- KITA GUNAKAN keyFile
+  email: sa.client_email,
+  key: PRIVATE_KEY,
   scopes: ["https://www.googleapis.com/auth/spreadsheets"],
 });
-const doc = new GoogleSpreadsheet(
-  process.env.SPREADSHEET_ID,
-  serviceAccountAuth
-);
+
+// SPREADSHEET_ID tetap dari env
+const doc = new GoogleSpreadsheet(process.env.SPREADSHEET_ID, serviceAccountAuth);
+
 
 // =================================================================
 // FUNGSI BANTU
