@@ -12,7 +12,6 @@ import axios from "axios";
 import sharp from "sharp";
 import fs from "fs";
 import { fileURLToPath } from "url";
-import path from "path";
 
 // 2. Konfigurasi awal
 dotenv.config({ path: "./.env.local" });
@@ -37,13 +36,27 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-// 5. Otentikasi Google (HANYA untuk Sheets)
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const credsPath = path.join(__dirname, "google-credentials.json");
-
+// Validasi environment variables yang diperlukan
+if (!process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL || !process.env.GOOGLE_PRIVATE_KEY || !process.env.SPREADSHEET_ID) {
+  console.error("Error: Environment variables untuk Google Sheets tidak lengkap!");
+  console.error("Pastikan ada: GOOGLE_SERVICE_ACCOUNT_EMAIL, GOOGLE_PRIVATE_KEY, SPREADSHEET_ID");
+  process.exit(1);
+}
+// Test koneksi Google Sheets saat startup
+(async () => {
+  try {
+    console.log("Testing Google Sheets connection...");
+    await doc.loadInfo();
+    console.log("Google Sheets connected successfully!");
+    console.log(`Spreadsheet title: ${doc.title}`);
+  } catch (error) {
+    console.error("Failed to connect to Google Sheets:", error.message);
+    console.error("Check your environment variables");
+  }
+})();
 const serviceAccountAuth = new JWT({
-  keyFile: credsPath, // <-- KITA GUNAKAN keyFile
+  email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
+  key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, "\n"),
   scopes: ["https://www.googleapis.com/auth/spreadsheets"],
 });
 const doc = new GoogleSpreadsheet(
