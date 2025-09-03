@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { generateFinalOpnamePDF } from "../utils/pdfGenerator";
 import LingkupSelection from "./LingkupSelection"; // ← step baru
 
+const API_BASE_URL = process.env.REACT_APP_API_URL || "";
+
 const FinalOpnameView = ({ onBack, selectedStore }) => {
   const [submissions, setSubmissions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -19,7 +21,7 @@ const FinalOpnameView = ({ onBack, selectedStore }) => {
   useEffect(() => {
     if (selectedStore?.kode_toko) {
       setLoading(true);
-      fetch(`/api/uloks?kode_toko=${selectedStore.kode_toko}`)
+      fetch(`${API_BASE_URL}/api/uloks?kode_toko=${selectedStore.kode_toko}`)
         .then((res) => res.json())
         .then((data) => {
           setUloks(data || []);
@@ -40,7 +42,7 @@ const FinalOpnameView = ({ onBack, selectedStore }) => {
     if (selectedStore?.kode_toko && selectedUlok && selectedLingkup) {
       setLoading(true);
       fetch(
-        `/api/opname/final?kode_toko=${selectedStore.kode_toko}&no_ulok=${selectedUlok}&lingkup=${selectedLingkup}`
+        `${API_BASE_URL}/api/opname/final?kode_toko=${selectedStore.kode_toko}&no_ulok=${selectedUlok}&lingkup=${selectedLingkup}`
       )
         .then((res) => res.json())
         .then((data) => {

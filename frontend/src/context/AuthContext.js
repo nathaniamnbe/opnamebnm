@@ -2,6 +2,8 @@
 
 import { createContext, useContext, useState, useEffect } from "react";
 
+const API_BASE_URL = process.env.REACT_APP_API_URL || "";
+
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
@@ -22,30 +24,35 @@ export const AuthProvider = ({ children }) => {
     setLoading(false);
   }, []);
 
-  const login = async (username, password) => {
-    try {
-      const response = await fetch("/api/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ username, password }),
-      });
+const login = async (username, password) => {
+  try {
+    // Ambil URL backend dari environment variable
+    const apiUrl = process.env.REACT_APP_API_URL;
 
-      const userData = await response.json();
+    // Gabungkan URL backend dengan endpoint-nya
+    const response = await fetch(`${API_BASE_URL}/api/login`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ username, password }),
+    });
 
-      if (!response.ok) {
-        throw new Error(userData.message || "Login failed");
-      }
+    const userData = await response.json();
 
-      setUser(userData);
-      localStorage.setItem("user", JSON.stringify(userData));
-      return { success: true, user: userData };
-    } catch (error) {
-      console.error("Login error:", error);
-      return { success: false, error: error.message };
+    if (!response.ok) {
+      throw new Error(userData.message || "Login failed");
     }
-  };
+
+    setUser(userData);
+    localStorage.setItem("user", JSON.stringify(userData));
+    return { success: true, user: userData };
+  } catch (error) {
+    console.error("Login error:", error);
+    // Ubah message error agar lebih informatif
+    return { success: false, message: error.message };
+  }
+};
 
   const logout = () => {
     setUser(null);

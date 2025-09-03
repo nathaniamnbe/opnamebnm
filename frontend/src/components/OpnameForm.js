@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 
+const API_BASE_URL = process.env.REACT_APP_API_URL || "";
+
 // Fungsi bantu untuk format mata uang
 const formatRupiah = (number) => {
   const numericValue = Number(number) || 0;
@@ -44,19 +46,19 @@ const OpnameForm = ({ onBack, selectedStore }) => {
     if (selectedStore?.kode_toko) {
       setLoading(true);
       // Fetch daftar no_ulok untuk kode_toko ini
-      fetch(`/api/uloks?kode_toko=${selectedStore.kode_toko}`)
-        .then((res) => res.json())
-        .then((data) => {
-          setUloks(data);
-          if (data.length === 1) {
-            setSelectedUlok(data[0]);
-          }
-          setLoading(false);
-        })
-        .catch((err) => {
-          console.error("Gagal mengambil daftar no_ulok:", err);
-          setLoading(false);
-        });
+       fetch(`${API_BASE_URL}/api/uloks?kode_toko=${selectedStore.kode_toko}`)
+         .then((res) => res.json())
+         .then((data) => {
+           setUloks(data);
+           if (data.length === 1) {
+             setSelectedUlok(data[0]);
+           }
+           setLoading(false);
+         })
+         .catch((err) => {
+           console.error("Gagal mengambil daftar no_ulok:", err);
+           setLoading(false);
+         });
     }
   }, [selectedStore]);
 
@@ -66,7 +68,7 @@ const OpnameForm = ({ onBack, selectedStore }) => {
       setLoading(true);
 
       const base =
-        `/api/opname?kode_toko=${encodeURIComponent(selectedStore.kode_toko)}` +
+       `${API_BASE_URL}/api/opname?kode_toko=${encodeURIComponent(selectedStore.kode_toko)}` +
         `&no_ulok=${encodeURIComponent(selectedUlok)}`;
 
       // normalisasi lingkup jika ada
@@ -196,7 +198,7 @@ const withLingkup = lk ? base + `&lingkup=${encodeURIComponent(lk)}` : null;
     const formData = new FormData();
     formData.append("file", file);
     try {
-      const response = await fetch("/api/upload", {
+      const response = await fetch(`${API_BASE_URL}/api/upload`, {
         method: "POST",
         body: formData,
       });
@@ -259,7 +261,7 @@ const withLingkup = lk ? base + `&lingkup=${encodeURIComponent(lk)}` : null;
     console.log("Data yang akan dikirim:", submissionData); // Debug log
 
     try {
-      const response = await fetch("/api/opname/item/submit", {
+      const response = await fetch(`${API_BASE_URL}/api/opname/item/submit`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(submissionData),

@@ -5,6 +5,8 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 
+const API_BASE_URL = process.env.REACT_APP_API_URL || "";
+
 const NoUlokSelectionPage = ({
   selectedStore,
   onSelectNoUlok,
@@ -20,7 +22,9 @@ const NoUlokSelectionPage = ({
     if (!selectedStore || !user) return;
 
     setLoading(true);
-    const apiUrl = `/api/no-ulok?kode_toko=${selectedStore.kode_toko}&username=${user.username}`;
+    const apiUrl = `${API_BASE_URL}/api/no-ulok?kode_toko=${selectedStore.kode_toko}&username=${user.username}`;
+
+    fetch(apiUrl);
 
     fetch(apiUrl)
       .then((res) => res.json())

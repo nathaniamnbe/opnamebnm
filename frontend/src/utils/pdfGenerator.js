@@ -3,6 +3,8 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
+const API_BASE_URL = process.env.REACT_APP_API_URL || "";
+
 // --- PENGATURAN TEKS ---
 const companyName = "PT. SUMBER ALFARIA TRIJAYA, Tbk";
 const branch = "CABANG: HEAD OFFICE";
@@ -54,7 +56,7 @@ const toNumberVol = (v) => {
 const toBase64 = async (url) => {
   try {
     if (!url) return null;
-    const proxyUrl = `/api/image-proxy?url=${encodeURIComponent(url)}`;
+    const proxyUrl = `${API_BASE_URL}/api/image-proxy?url=${encodeURIComponent(url)}`;
     const response = await fetch(proxyUrl);
     if (!response.ok)
       throw new Error(
@@ -101,9 +103,9 @@ const wrapText = (doc, text, maxWidth) => {
 // Fungsi untuk mengambil data RAB dari API
 const fetchRabData = async (kode_toko, no_ulok) => {
   try {
-    const response = await fetch(
-      `/api/rab?kode_toko=${kode_toko}&no_ulok=${no_ulok}`
-    );
+     const response = await fetch(
+       `${API_BASE_URL}/api/rab?kode_toko=${kode_toko}&no_ulok=${no_ulok}`
+     );
     if (!response.ok) throw new Error("Gagal mengambil data RAB");
     return await response.json();
   } catch (error) {
@@ -114,7 +116,9 @@ const fetchRabData = async (kode_toko, no_ulok) => {
 
 // FUNGSI BARU: Mengambil data PIC dan Kontraktor dari Google Sheets
 async function fetchPicKontraktorData(noUlok) {
-  const url = `/api/pic-kontraktor?no_ulok=${encodeURIComponent(noUlok)}`;
+  const url = `${API_BASE_URL}/api/pic-kontraktor?no_ulok=${encodeURIComponent(
+    noUlok
+  )}`;
   const res = await fetch(url);
   if (!res.ok) return { pic_username: "N/A", kontraktor_username: "N/A" };
   const json = await res.json();
@@ -126,7 +130,7 @@ async function fetchPicKontraktorData(noUlok) {
 
 // FUNGSI TAMBAHAN BARU: Mengambil data PIC dan Kontraktor dari opname_final di Google Sheets (fallback tambahan)
 async function fetchPicKontraktorOpnameData(noUlok) {
-  const url = `/api/pic-kontraktor-opname?no_ulok=${encodeURIComponent(noUlok)}`;
+  const url = `${API_BASE_URL}/api/pic-kontraktor-opname?no_ulok=${encodeURIComponent(noUlok)}`;
   const res = await fetch(url);
   if (!res.ok) return { pic_username: "N/A", kontraktor_username: "N/A" };
   const json = await res.json();

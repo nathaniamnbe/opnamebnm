@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 
+const API_BASE_URL = process.env.REACT_APP_API_URL || "";
+
 const UlokSelection = ({ onBack, selectedStore, onUlokSelected }) => {
   const { user } = useAuth();
   const [ulokOptions, setUlokOptions] = useState([]);
@@ -17,9 +19,11 @@ const UlokSelection = ({ onBack, selectedStore, onUlokSelected }) => {
       // Tentukan endpoint berdasarkan role user
       const endpoint =
         user.role === "pic"
-          ? `/api/ulok-options?kode_toko=${selectedStore.kode_toko}&username=${user.username}`
-          : `/api/ulok-options-kontraktor?kode_toko=${selectedStore.kode_toko}&username=${user.username}`;
-
+          ? // Ubah URL
+            `${API_BASE_URL}/api/ulok-options?kode_toko=${selectedStore.kode_toko}&username=${user.username}`
+          : // Ubah URL (PERHATIAN: ENDPOINT INI TIDAK ADA DI BACKEND ANDA)
+            `${API_BASE_URL}/api/ulok-options-kontraktor?kode_toko=${selectedStore.kode_toko}&username=${user.username}`;
+            
       fetch(endpoint)
         .then((res) => res.json())
         .then((data) => {

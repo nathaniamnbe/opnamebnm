@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 
+const API_BASE_URL = process.env.REACT_APP_API_URL || "";
+
 const LingkupSelection = ({
   kodeToko,
   noUlok,
@@ -18,7 +20,7 @@ const LingkupSelection = ({
       setError("");
       try {
         const res = await fetch(
-          `/api/lingkups?kode_toko=${encodeURIComponent(
+          `${API_BASE_URL}/api/lingkups?kode_toko=${encodeURIComponent(
             kodeToko ?? ""
           )}&no_ulok=${encodeURIComponent(noUlok ?? "")}`
         );

@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 import LingkupSelection from "./LingkupSelection"; // ← step baru: pilih ME/SIPIL
 import { useAuth } from "../context/AuthContext";
 
+const API_BASE_URL = process.env.REACT_APP_API_URL || "";
 
 const ApprovalPage = ({ onBack, selectedStore }) => {
   const [pendingItems, setPendingItems] = useState([]);
@@ -24,7 +25,7 @@ const ApprovalPage = ({ onBack, selectedStore }) => {
   useEffect(() => {
     if (selectedStore?.kode_toko) {
       setLoading(true);
-      fetch(`/api/uloks?kode_toko=${selectedStore.kode_toko}`)
+      fetch(`${API_BASE_URL}/api/uloks?kode_toko=${selectedStore.kode_toko}`)
         .then((res) => res.json())
         .then((data) => {
           setUloks(data || []);
@@ -48,7 +49,7 @@ const ApprovalPage = ({ onBack, selectedStore }) => {
     }
     setLoading(true);
     const url =
-      `/api/opname/pending?kode_toko=${selectedStore.kode_toko}` +
+      `${API_BASE_URL}/api/opname/pending?kode_toko=${selectedStore.kode_toko}` +
       `&no_ulok=${selectedUlok}&lingkup=${selectedLingkup}`;
 
     fetch(url)
@@ -75,12 +76,13 @@ const ApprovalPage = ({ onBack, selectedStore }) => {
     setPendingItems((prev) => prev.filter((it) => it.item_id !== itemId));
 
     try {
-      const response = await fetch("/api/opname/approve", {
+      const response = await fetch(`${API_BASE_URL}/api/opname/approve`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           item_id: itemId,
-          kontraktor_username: user?.email || user?.username || user?.name || "",
+          kontraktor_username:
+            user?.email || user?.username || user?.name || "",
         }),
       });
       const result = await response.json();

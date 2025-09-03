@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import StoreNavigationWrapper from "./StoreNavigationWrapper";
 
+const API_BASE_URL = process.env.REACT_APP_API_URL || "";
+
 const PICDashboard = () => {
   const { user } = useAuth();
   const [stores, setStores] = useState([]);
@@ -14,7 +16,7 @@ const PICDashboard = () => {
 
   useEffect(() => {
     if (user?.username) {
-      fetch(`/api/toko?username=${user.username}`)
+      fetch(`${API_BASE_URL}/api/toko?username=${user.username}`)
         .then((res) => res.json())
         .then((data) => {
           setStores(data);
@@ -35,7 +37,7 @@ const PICDashboard = () => {
     if (store.ulok_count === 1) {
       // Ambil data ulok untuk toko ini
       fetch(
-        `/api/ulok-options?kode_toko=${store.kode_toko}&username=${user.username}`
+        `${API_BASE_URL}/api/ulok-options?kode_toko=${store.kode_toko}&username=${user.username}`
       )
         .then((res) => res.json())
         .then((ulokOptions) => {
