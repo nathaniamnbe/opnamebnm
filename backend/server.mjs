@@ -17,7 +17,7 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 // 3. Middleware
-const vercelFrontendURL = "https://opnamebnm.vercel.app/";
+const vercelFrontendURL = "https://opnamebnm.vercel.app";
 app.use(
   cors({
     origin: vercelFrontendURL,
