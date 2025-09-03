@@ -10,6 +10,9 @@ import multer from "multer";
 import { v2 as cloudinary } from "cloudinary";
 import axios from "axios";
 import sharp from "sharp";
+import fs from "fs";
+import { fileURLToPath } from "url";
+import path from "path";
 
 // 2. Konfigurasi awal
 dotenv.config({ path: "./.env.local" });
@@ -35,9 +38,12 @@ cloudinary.config({
 });
 
 // 5. Otentikasi Google (HANYA untuk Sheets)
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const credsPath = path.join(__dirname, "google-credentials.json");
+
 const serviceAccountAuth = new JWT({
-  email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
-  key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, "\n"),
+  keyFile: credsPath, // <-- KITA GUNAKAN keyFile
   scopes: ["https://www.googleapis.com/auth/spreadsheets"],
 });
 const doc = new GoogleSpreadsheet(
