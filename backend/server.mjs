@@ -14,10 +14,16 @@ import sharp from "sharp";
 // 2. Konfigurasi awal
 dotenv.config({ path: "./.env.local" });
 const app = express();
-const port = 3001;
+const PORT = process.env.PORT || 3001;
 
 // 3. Middleware
-app.use(cors());
+const vercelFrontendURL = "https://NAMA-PROYEK-FRONTEND-ANDA.vercel.app";
+app.use(
+  cors({
+    origin: vercelFrontendURL,
+  })
+);
+
 app.use(express.json());
 const upload = multer({ storage: multer.memoryStorage() });
 
@@ -1017,13 +1023,6 @@ app.get("/api/debug/sheet-headers", async (req, res) => {
   }
 });
 
-// 6. Menjalankan server
-app.listen(port, () => {
-  console.log(`Server backend berjalan di http://localhost:${port}`);
-  console.log("Endpoints yang tersedia:");
-  console.log("- Debug: http://localhost:3001/api/debug/opname-final");
-  console.log("- Debug Headers: http://localhost:3001/api/debug/sheet-headers");
-});
 
 // --- Ambil item Pending untuk persetujuan ---
 app.get("/api/opname/pending", async (req, res) => {
@@ -1107,4 +1106,9 @@ app.patch("/api/opname/approve", async (req, res) => {
     console.error("Error di /api/opname/approve:", error);
     return res.status(500).json({ message: "Terjadi kesalahan pada server." });
   }
+});
+
+// 6. Menjalankan server
+app.listen(PORT, () => {
+  console.log(`Server backend berjalan di port ${PORT}`);
 });
