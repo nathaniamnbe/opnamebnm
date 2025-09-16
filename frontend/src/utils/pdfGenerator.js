@@ -509,6 +509,7 @@ export const generateFinalOpnamePDF = async (
 
     const opnameTableColumn = [
       "No",
+      "Kategori",
       "Jenis Pekerjaan",
       "Vol RAB",
       "Satuan",
@@ -519,6 +520,7 @@ export const generateFinalOpnamePDF = async (
 
     const opnameTableRows = submissions.map((item, index) => [
       index + 1,
+      item.kategori_pekerjaan || "",
       item.jenis_pekerjaan,
       item.vol_rab,
       item.satuan,
@@ -549,13 +551,16 @@ export const generateFinalOpnamePDF = async (
         lineWidth: 0.2,
       },
       columnStyles: {
-        0: { halign: "center", cellWidth: 8 },
-        1: { cellWidth: "auto", minCellWidth: 40 },
-        2: { halign: "center", cellWidth: 12 },
-        3: { halign: "center", cellWidth: 12 },
-        4: { halign: "center", cellWidth: 15 },
-        5: { halign: "center", cellWidth: 15 },
-        6: { halign: "right", cellWidth: 25, fontStyle: "bold" },
+        columnStyles: {
+          0: { halign: "center", cellWidth: 8 }, // No
+          1: { cellWidth: 22 }, // Kategori
+          2: { cellWidth: "auto", minCellWidth: 40 }, // Jenis Pekerjaan
+          3: { halign: "center", cellWidth: 12 }, // Vol RAB
+          4: { halign: "center", cellWidth: 12 }, // Satuan
+          5: { halign: "center", cellWidth: 15 }, // Volume Akhir
+          6: { halign: "center", cellWidth: 15 }, // Selisih
+          7: { halign: "right", cellWidth: 25, fontStyle: "bold" }, // Total Harga Akhir
+        },
       },
       didDrawPage: function (data) {
         if (data.settings.startY + data.table.height > pageHeight - 20) {
