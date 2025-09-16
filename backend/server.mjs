@@ -1079,6 +1079,7 @@ app.get("/api/opname/pending", async (req, res) => {
     });
 
     const result = pending.map((row) => ({
+      kategori_pekerjaan: row.get("kategori_pekerjaan") || "",
       item_id: row.get("item_id") || null,
       jenis_pekerjaan: row.get("jenis_pekerjaan") || "",
       volume_akhir: row.get("volume_akhir") || "",
