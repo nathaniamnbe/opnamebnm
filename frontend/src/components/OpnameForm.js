@@ -410,6 +410,8 @@ const withLingkup = lk ? base + `&lingkup=${encodeURIComponent(lk)}` : null;
                   color: "var(--white)",
                 }}
               >
+                <th style={{ padding: "12px", minWidth: "140px" }}>Kategori</th>
+
                 <th style={{ padding: "12px", minWidth: "150px" }}>
                   Jenis Pekerjaan
                 </th>
@@ -484,6 +486,7 @@ const withLingkup = lk ? base + `&lingkup=${encodeURIComponent(lk)}` : null;
                     borderBottom: "1px solid #ddd",
                   }}
                 >
+                  <td style={{ padding: "12px" }}>{item.kategori_pekerjaan}</td>
                   <td style={{ padding: "12px" }}>{item.jenis_pekerjaan}</td>
                   <td style={{ padding: "12px", textAlign: "center" }}>
                     {item.vol_rab}
