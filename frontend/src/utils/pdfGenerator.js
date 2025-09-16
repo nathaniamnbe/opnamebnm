@@ -509,7 +509,6 @@ export const generateFinalOpnamePDF = async (
 
     const opnameTableColumn = [
       "No",
-      "Kategori",
       "Jenis Pekerjaan",
       "Vol RAB",
       "Satuan",
@@ -518,58 +517,79 @@ export const generateFinalOpnamePDF = async (
       "Total Harga Akhir",
     ];
 
-    const opnameTableRows = submissions.map((item, index) => [
-      index + 1,
-      item.kategori_pekerjaan || "",
-      item.jenis_pekerjaan,
-      item.vol_rab,
-      item.satuan,
-      item.volume_akhir,
-      `${item.selisih} ${item.satuan}`,
-      formatRupiah(item.total_harga_akhir),
-    ]);
+const groups = {};
+(submissions || []).forEach((it) => {
+  const key = (it.kategori_pekerjaan || "LAINNYA").toString();
+  if (!groups[key]) groups[key] = [];
+  groups[key].push(it);
+});
 
-    autoTable(doc, {
-      head: [opnameTableColumn],
-      body: opnameTableRows,
-      startY: lastY,
-      margin: { left: margin, right: margin },
-      theme: "grid",
-      styles: { fontSize: 7, cellPadding: 1.5, overflow: "linebreak" },
-      headStyles: {
-        fillColor: [34, 139, 34],
-        textColor: [255, 255, 255],
-        halign: "center",
-        valign: "middle",
-        fontSize: 7,
-        fontStyle: "bold",
-      },
-      bodyStyles: {
-        fontSize: 7,
-        valign: "middle",
-        lineColor: [150, 150, 150],
-        lineWidth: 0.2,
-      },
-      columnStyles: {
-        columnStyles: {
-          0: { halign: "center", cellWidth: 8 }, // No
-          1: { cellWidth: 22 }, // Kategori
-          2: { cellWidth: "auto", minCellWidth: 40 }, // Jenis Pekerjaan
-          3: { halign: "center", cellWidth: 12 }, // Vol RAB
-          4: { halign: "center", cellWidth: 12 }, // Satuan
-          5: { halign: "center", cellWidth: 15 }, // Volume Akhir
-          6: { halign: "center", cellWidth: 15 }, // Selisih
-          7: { halign: "right", cellWidth: 25, fontStyle: "bold" }, // Total Harga Akhir
-        },
-      },
-      didDrawPage: function (data) {
-        if (data.settings.startY + data.table.height > pageHeight - 20) {
-          addFooter(doc.getNumberOfPages());
-        }
-      },
-    });
+let kategoriIndex = 1;
+for (const [kategori, items] of Object.entries(groups)) {
+  // jika mepet bawah halaman, pindah halaman
+  if (lastY + 20 > pageHeight - 20) {
+    addFooter(doc.getNumberOfPages());
+    doc.addPage();
+    lastY = margin + 10;
+  }
 
-    lastY = doc.lastAutoTable.finalY + 10;
+  // judul kategori seperti RAB: "1. PEKERJAAN PERSIAPAN"
+  doc.setFontSize(11).setFont(undefined, "bold");
+  doc.text(`${kategoriIndex}. ${kategori.toUpperCase()}`, margin, lastY + 8);
+  lastY += 12;
+
+  // susun baris untuk kategori ini
+  const rows = items.map((item, idx) => [
+    idx + 1,
+    item.jenis_pekerjaan,
+    item.vol_rab,
+    item.satuan,
+    item.volume_akhir,
+    `${item.selisih} ${item.satuan}`,
+    formatRupiah(item.total_harga_akhir),
+  ]);
+
+  // tabel untuk kategori ini
+  autoTable(doc, {
+    head: [opnameTableColumn],
+    body: rows,
+    startY: lastY,
+    margin: { left: margin, right: margin },
+    theme: "grid",
+    styles: { fontSize: 7, cellPadding: 1.5, overflow: "linebreak" },
+    headStyles: {
+      fillColor: [34, 139, 34],
+      textColor: [255, 255, 255],
+      halign: "center",
+      valign: "middle",
+      fontSize: 7,
+      fontStyle: "bold",
+    },
+    bodyStyles: {
+      fontSize: 7,
+      valign: "middle",
+      lineColor: [150, 150, 150],
+      lineWidth: 0.2,
+    },
+    columnStyles: {
+      0: { halign: "center", cellWidth: 8 }, // No
+      1: { cellWidth: "auto", minCellWidth: 40 }, // Jenis Pekerjaan
+      2: { halign: "center", cellWidth: 12 }, // Vol RAB
+      3: { halign: "center", cellWidth: 12 }, // Satuan
+      4: { halign: "center", cellWidth: 15 }, // Volume Akhir
+      5: { halign: "center", cellWidth: 15 }, // Selisih
+      6: { halign: "right", cellWidth: 25, fontStyle: "bold" }, // Total Harga Akhir
+    },
+    didDrawPage: function (data) {
+      if (data.settings.startY + data.table.height > pageHeight - 20) {
+        addFooter(doc.getNumberOfPages());
+      }
+    },
+  });
+
+  lastY = doc.lastAutoTable.finalY + 10;
+  kategoriIndex += 1;
+}
 
     // GRAND TOTAL untuk Opname
     if (lastY + 40 > pageHeight - 20) {
