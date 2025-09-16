@@ -201,6 +201,7 @@ const ApprovalPage = ({ onBack, selectedStore }) => {
           >
             <thead>
               <tr style={{ backgroundColor: "#f2f2f2" }}>
+                <th style={{ padding: "12px", minWidth: "140px" }}>Kategori</th>
                 <th style={{ padding: "12px" }}>Jenis Pekerjaan</th>
                 <th style={{ padding: "12px", textAlign: "center" }}>
                   Volume Akhir
@@ -217,6 +218,7 @@ const ApprovalPage = ({ onBack, selectedStore }) => {
                   key={item.item_id || Math.random()}
                   style={{ borderBottom: "1px solid #ddd" }}
                 >
+                  <td style={{ padding: "12px" }}>{item.kategori_pekerjaan}</td>
                   <td style={{ padding: "12px" }}>{item.jenis_pekerjaan}</td>
                   <td style={{ padding: "12px", textAlign: "center" }}>
                     {item.volume_akhir} {item.satuan || ""}
