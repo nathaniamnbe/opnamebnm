@@ -1169,6 +1169,21 @@ app.patch("/api/opname/reject", async (req, res) => {
 });
 
 // 6. Menjalankan server
+// ✅ Route untuk uptime monitor (UptimeRobot)
+app.get("/health", (req, res) => {
+  res.status(200).json({ status: "ok" });
+});
+
+app.head("/health", (req, res) => {
+  res.sendStatus(200);
+});
+
+// --- route default opsional ---
+app.get("/", (req, res) => {
+  res.json({ message: "Backend OK" });
+});
+
+// 6. Menjalankan server
 app.listen(PORT, () => {
-  console.log(`Server backend berjalan di port ${PORT}`);
+  console.log(`🚀 Server backend berjalan di port ${PORT}`);
 });
