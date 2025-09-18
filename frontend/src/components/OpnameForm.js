@@ -482,7 +482,12 @@ const withLingkup = lk ? base + `&lingkup=${encodeURIComponent(lk)}` : null;
                 <tr
                   key={item.id}
                   style={{
-                    background: item.isSubmitted ? "#f0fff0" : "transparent",
+                    background:
+                      item.approval_status === "Rejected"
+                        ? "#ffe5e5" // merah muda untuk rejected
+                        : item.isSubmitted
+                        ? "#f0fff0" // hijau untuk tersimpan
+                        : "transparent",
                     borderBottom: "1px solid #ddd",
                   }}
                 >
@@ -601,7 +606,29 @@ const withLingkup = lk ? base + `&lingkup=${encodeURIComponent(lk)}` : null;
                     </span>
                   </td>
                   <td style={{ padding: "12px", textAlign: "center" }}>
-                    {item.isSubmitted ? (
+                    {item.approval_status === "Rejected" ? (
+                      <button
+                        className="btn btn-warning btn-sm"
+                        onClick={() =>
+                          setOpnameItems((prev) =>
+                            prev.map((x) =>
+                              x.id === item.id
+                                ? {
+                                    ...x,
+                                    isSubmitted: false, // buka kembali agar bisa diisi ulang
+                                    approval_status: "Pending", // reset status
+                                    volume_akhir: "",
+                                    selisih: "",
+                                    total_harga: 0,
+                                  }
+                                : x
+                            )
+                          )
+                        }
+                      >
+                        Perbaiki
+                      </button>
+                    ) : item.isSubmitted ? (
                       <div style={{ fontSize: "12px", color: "green" }}>
                         <strong>Tersimpan</strong>
                         <br />
