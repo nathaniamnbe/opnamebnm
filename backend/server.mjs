@@ -621,57 +621,14 @@ app.get("/api/lingkups", async (req, res) => {
 
 // --- ENDPOINT SUBMIT OPNAME YANG SUDAH DIPERBAIKI ---
 // --- ENDPOINT SUBMIT OPNAME (FULL, TANPA MENGURANGI FIELD LAMA) ---
-
-// ==== NUMBER HELPERS (letakkan sebelum endpoint submit) ====
-// ==== NUMBER HELPERS (ganti yang lama) ====
-// Float pintar: dukung "2.80", "2,80", "1.234,56", "1,234.56"
-const toFloat = (v) => {
-  if (v === null || v === undefined) return 0;
-  if (typeof v === "number") return v;
-  let s = String(v).trim();
-  if (!s) return 0;
-
-  const hasDot = s.includes(".");
-  const hasComma = s.includes(",");
-
-  if (hasDot && hasComma) {
-    // Tentukan mana desimal berdasarkan posisi terakhir
-    if (s.lastIndexOf(",") > s.lastIndexOf(".")) {
-      // "1.234,56" -> buang titik, koma jadi titik
-      s = s.replace(/\./g, "").replace(",", ".");
-    } else {
-      // "1,234.56" -> buang koma (ribuan)
-      s = s.replace(/,/g, "");
-    }
-  } else if (hasComma) {
-    // "2,80" -> "2.80"
-    s = s.replace(",", ".");
-  }
-  const n = Number(s);
-  return Number.isFinite(n) ? n : 0;
-};
-
-// Integer rupiah: buang semua selain digit & minus
-const toIDRint = (v) => {
-  const n = Number(String(v ?? "").replace(/[^\d-]/g, ""));
-  return Number.isFinite(n) ? n : 0;
-};
-
-// Pembulatan aman utk float (hindari 0.20000000000000018)
-const fix = (n, dp = 6) => Number(toFloat(n).toFixed(dp));
-
-const toDec = toFloat;
-
-
-
 app.post("/api/opname/item/submit", async (req, res) => {
   try {
     const itemData = req.body;
 
-    // Pastikan rab_key ada (kalau belum dikirim FE karena RAB kosong, generate di sini)
-    if (!itemData.rab_key || String(itemData.rab_key).trim() === "") {
-      itemData.rab_key = makeRabKey(itemData);
-    }
+ // Pastikan rab_key ada (kalau belum dikirim FE karena RAB kosong, generate di sini)
+ if (!itemData.rab_key || String(itemData.rab_key).trim() === "") {
+   itemData.rab_key = makeRabKey(itemData);
+}
 
     // Validasi minimum (tetap sama + pic_username wajib)
     if (
@@ -730,33 +687,32 @@ app.post("/api/opname/item/submit", async (req, res) => {
 
     // Cek duplikasi: hanya dianggap duplikat jika SEMUA field identik.
     // Ini agar "jenis pekerjaan sama" tetap bisa disimpan berulang jika volume/harga/lingkup/satuan berbeda.
-    let existingRow = null;
-    if (itemData.rab_key) {
-      existingRow = rows.find(
-        (row) =>
-          (row.get("rab_key") || "") === (itemData.rab_key || "") &&
-          row.get("kode_toko") === (itemData.kode_toko || "") &&
-          row.get("no_ulok") === (itemData.no_ulok || "") &&
-          row.get("pic_username") === (itemData.pic_username || "") &&
-          toNum(row.get("volume_akhir")) === toNum(itemData.volume_akhir)
-      );
-    }
-    if (!existingRow) {
-      existingRow = rows.find(
-        (row) =>
-          row.get("kode_toko") === (itemData.kode_toko || "") &&
-          row.get("no_ulok") === (itemData.no_ulok || "") &&
-          row.get("jenis_pekerjaan") === (itemData.jenis_pekerjaan || "") &&
-          row.get("pic_username") === (itemData.pic_username || "") &&
-          (row.get("lingkup_pekerjaan") || "") ===
-            (itemData.lingkup_pekerjaan || "") &&
-          String(row.get("satuan") || "") === String(itemData.satuan || "") &&
-          toNum(row.get("vol_rab")) === toNum(itemData.vol_rab) &&
-          toNum(row.get("harga_material")) === toNum(itemData.harga_material) &&
-          toNum(row.get("harga_upah")) === toNum(itemData.harga_upah) &&
-          toNum(row.get("volume_akhir")) === toNum(itemData.volume_akhir)
-      );
-    }
+ let existingRow = null;
+ if (itemData.rab_key) {
+   existingRow = rows.find(
+     (row) =>
+       (row.get("rab_key") || "") === (itemData.rab_key || "") &&
+       row.get("kode_toko") === (itemData.kode_toko || "") &&
+       row.get("no_ulok") === (itemData.no_ulok || "") &&
+       row.get("pic_username") === (itemData.pic_username || "") &&
+       toNum(row.get("volume_akhir")) === toNum(itemData.volume_akhir)
+   );
+ }
+ if (!existingRow) {
+   existingRow = rows.find(
+     (row) =>
+       row.get("kode_toko") === (itemData.kode_toko || "") &&
+       row.get("no_ulok") === (itemData.no_ulok || "") &&
+       row.get("jenis_pekerjaan") === (itemData.jenis_pekerjaan || "") &&
+       row.get("pic_username") === (itemData.pic_username || "") &&
+       (row.get("lingkup_pekerjaan") || "") === (itemData.lingkup_pekerjaan || "") &&
+       String(row.get("satuan") || "") === String(itemData.satuan || "") &&
+       toNum(row.get("vol_rab")) === toNum(itemData.vol_rab) &&
+       toNum(row.get("harga_material")) === toNum(itemData.harga_material) &&
+       toNum(row.get("harga_upah")) === toNum(itemData.harga_upah) &&
+       toNum(row.get("volume_akhir")) === toNum(itemData.volume_akhir)
+   );
+ }
 
     // ID & timestamp
     const timestamp = new Date().toLocaleString("id-ID", {
@@ -772,17 +728,6 @@ app.post("/api/opname/item/submit", async (req, res) => {
       .toString(36)
       .slice(2, 10)}`;
 
-    // --- normalisasi & hitung ulang angka (TAMBAHAN) ---
-    const volRabNum = fix(itemData.vol_rab, 6);
-    const volAkhirNum = fix(itemData.volume_akhir, 6);
-    const hargaMatNum = toIDRint(itemData.harga_material);
-    const hargaUpahNum = toIDRint(itemData.harga_upah);
-
-    const selisihNum = fix(volAkhirNum - volRabNum, 6);
-    const totalAkhirNum = Math.round(
-      volAkhirNum * (hargaMatNum + hargaUpahNum)
-    );
-
     // Susun row baru (semua kolom lama dipertahankan, kolom baru ditambahkan)
     const rowToAdd = {
       submission_id,
@@ -796,10 +741,10 @@ app.post("/api/opname/item/submit", async (req, res) => {
       vol_rab: itemData.vol_rab ?? "",
       satuan: itemData.satuan ?? "",
       volume_akhir: itemData.volume_akhir ?? "",
-      selisih: selisihNum,  
+      selisih: itemData.selisih ?? "",
       harga_material: itemData.harga_material ?? 0,
       harga_upah: itemData.harga_upah ?? 0,
-      total_harga_akhir: totalAkhirNum, 
+      total_harga_akhir: itemData.total_harga_akhir ?? 0,
       approval_status: itemData.approval_status || "Pending", // default aman
       item_id,
 
