@@ -510,33 +510,10 @@ app.get("/api/opname", async (req, res) => {
 
  const takeMatch = (subs, rabJenis, rabLingkup, rabSatuan, rabHargaMat, rabHargaUpah, rabKey) => {
    // 1) Prioritas: rab_key sama persis
-if (rabKey) {
-  const idxs = subs
-    .map((s, i) => ({ s, i }))
-    .filter(({ s }) => (s.rab_key || "") === rabKey);
-
-  if (idxs.length > 0) {
-    const rank = (st) => {
-      const S = String(st || "").toUpperCase();
-      if (S === "APPROVED") return 3;
-      if (S === "PENDING") return 2;
-      if (S === "REJECTED") return 1;
-      return 0;
-    };
-
-    // Urutkan: status terbaik dulu, lalu tanggal_submit paling baru
-    idxs.sort((a, b) => {
-      const r = rank(b.s.approval_status) - rank(a.s.approval_status);
-      if (r !== 0) return r;
-      return String(b.s.tanggal_submit || "").localeCompare(
-        String(a.s.tanggal_submit || "")
-      );
-    });
-
-    const pick = idxs[0].i;
-    return subs.splice(pick, 1)[0];
-  }
-}
+    if (rabKey) {
+      const byKey = subs.findIndex((s) => (s.rab_key || "") === rabKey);
+      if (byKey >= 0) return subs.splice(byKey, 1)[0];
+    }
    // 2) Fallback: cocokkan berdasarkan teks/satuan/harga persis (lama)
    const idx = subs.findIndex(
      (s) =>
@@ -644,14 +621,26 @@ app.get("/api/lingkups", async (req, res) => {
 
 // --- ENDPOINT SUBMIT OPNAME YANG SUDAH DIPERBAIKI ---
 // --- ENDPOINT SUBMIT OPNAME (FULL, TANPA MENGURANGI FIELD LAMA) ---
+
+// ==== NUMBER HELPERS (letakkan sebelum endpoint submit) ====
+const toDec = (v) => {
+  if (v === null || v === undefined) return 0;
+  // buang pemisah ribuan lokal, set '.' sebagai desimal
+  const n = Number(String(v).replace(/\./g, "").replace(",", "."));
+  return Number.isFinite(n) ? n : 0;
+};
+// pembulatan aman supaya tidak ada 0.20000000000000018
+const fix = (n, dp = 6) => Number(toDec(n).toFixed(dp));
+
+
 app.post("/api/opname/item/submit", async (req, res) => {
   try {
     const itemData = req.body;
 
- // Pastikan rab_key ada (kalau belum dikirim FE karena RAB kosong, generate di sini)
- if (!itemData.rab_key || String(itemData.rab_key).trim() === "") {
-   itemData.rab_key = makeRabKey(itemData);
-}
+    // Pastikan rab_key ada (kalau belum dikirim FE karena RAB kosong, generate di sini)
+    if (!itemData.rab_key || String(itemData.rab_key).trim() === "") {
+      itemData.rab_key = makeRabKey(itemData);
+    }
 
     // Validasi minimum (tetap sama + pic_username wajib)
     if (
@@ -710,32 +699,33 @@ app.post("/api/opname/item/submit", async (req, res) => {
 
     // Cek duplikasi: hanya dianggap duplikat jika SEMUA field identik.
     // Ini agar "jenis pekerjaan sama" tetap bisa disimpan berulang jika volume/harga/lingkup/satuan berbeda.
- let existingRow = null;
- if (itemData.rab_key) {
-   existingRow = rows.find(
-     (row) =>
-       (row.get("rab_key") || "") === (itemData.rab_key || "") &&
-       row.get("kode_toko") === (itemData.kode_toko || "") &&
-       row.get("no_ulok") === (itemData.no_ulok || "") &&
-       row.get("pic_username") === (itemData.pic_username || "") &&
-       toNum(row.get("volume_akhir")) === toNum(itemData.volume_akhir)
-   );
- }
- if (!existingRow) {
-   existingRow = rows.find(
-     (row) =>
-       row.get("kode_toko") === (itemData.kode_toko || "") &&
-       row.get("no_ulok") === (itemData.no_ulok || "") &&
-       row.get("jenis_pekerjaan") === (itemData.jenis_pekerjaan || "") &&
-       row.get("pic_username") === (itemData.pic_username || "") &&
-       (row.get("lingkup_pekerjaan") || "") === (itemData.lingkup_pekerjaan || "") &&
-       String(row.get("satuan") || "") === String(itemData.satuan || "") &&
-       toNum(row.get("vol_rab")) === toNum(itemData.vol_rab) &&
-       toNum(row.get("harga_material")) === toNum(itemData.harga_material) &&
-       toNum(row.get("harga_upah")) === toNum(itemData.harga_upah) &&
-       toNum(row.get("volume_akhir")) === toNum(itemData.volume_akhir)
-   );
- }
+    let existingRow = null;
+    if (itemData.rab_key) {
+      existingRow = rows.find(
+        (row) =>
+          (row.get("rab_key") || "") === (itemData.rab_key || "") &&
+          row.get("kode_toko") === (itemData.kode_toko || "") &&
+          row.get("no_ulok") === (itemData.no_ulok || "") &&
+          row.get("pic_username") === (itemData.pic_username || "") &&
+          toNum(row.get("volume_akhir")) === toNum(itemData.volume_akhir)
+      );
+    }
+    if (!existingRow) {
+      existingRow = rows.find(
+        (row) =>
+          row.get("kode_toko") === (itemData.kode_toko || "") &&
+          row.get("no_ulok") === (itemData.no_ulok || "") &&
+          row.get("jenis_pekerjaan") === (itemData.jenis_pekerjaan || "") &&
+          row.get("pic_username") === (itemData.pic_username || "") &&
+          (row.get("lingkup_pekerjaan") || "") ===
+            (itemData.lingkup_pekerjaan || "") &&
+          String(row.get("satuan") || "") === String(itemData.satuan || "") &&
+          toNum(row.get("vol_rab")) === toNum(itemData.vol_rab) &&
+          toNum(row.get("harga_material")) === toNum(itemData.harga_material) &&
+          toNum(row.get("harga_upah")) === toNum(itemData.harga_upah) &&
+          toNum(row.get("volume_akhir")) === toNum(itemData.volume_akhir)
+      );
+    }
 
     // ID & timestamp
     const timestamp = new Date().toLocaleString("id-ID", {
@@ -751,6 +741,17 @@ app.post("/api/opname/item/submit", async (req, res) => {
       .toString(36)
       .slice(2, 10)}`;
 
+    // --- normalisasi & hitung ulang angka (TAMBAHAN) ---
+    const volRabNum = fix(itemData.vol_rab, 6);
+    const volAkhirNum = fix(itemData.volume_akhir, 6);
+    const hargaMatNum = Math.round(toDec(itemData.harga_material));
+    const hargaUpahNum = Math.round(toDec(itemData.harga_upah));
+
+    const selisihNum = fix(volAkhirNum - volRabNum, 6);
+    const totalAkhirNum = Math.round(
+      volAkhirNum * (hargaMatNum + hargaUpahNum)
+    );
+
     // Susun row baru (semua kolom lama dipertahankan, kolom baru ditambahkan)
     const rowToAdd = {
       submission_id,
@@ -764,10 +765,10 @@ app.post("/api/opname/item/submit", async (req, res) => {
       vol_rab: itemData.vol_rab ?? "",
       satuan: itemData.satuan ?? "",
       volume_akhir: itemData.volume_akhir ?? "",
-      selisih: itemData.selisih ?? "",
+      selisih: selisihNum,
       harga_material: itemData.harga_material ?? 0,
       harga_upah: itemData.harga_upah ?? 0,
-      total_harga_akhir: itemData.total_harga_akhir ?? 0,
+      total_harga_akhir: totalAkhirNum,
       approval_status: itemData.approval_status || "Pending", // default aman
       item_id,
 
