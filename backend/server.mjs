@@ -660,6 +660,8 @@ const toIDRint = (v) => {
 // Pembulatan aman utk float (hindari 0.20000000000000018)
 const fix = (n, dp = 6) => Number(toFloat(n).toFixed(dp));
 
+const toDec = toFloat;
+
 
 
 app.post("/api/opname/item/submit", async (req, res) => {
@@ -773,8 +775,8 @@ app.post("/api/opname/item/submit", async (req, res) => {
     // --- normalisasi & hitung ulang angka (TAMBAHAN) ---
     const volRabNum = fix(itemData.vol_rab, 6);
     const volAkhirNum = fix(itemData.volume_akhir, 6);
-    const hargaMatNum = Math.round(toDec(itemData.harga_material));
-    const hargaUpahNum = Math.round(toDec(itemData.harga_upah));
+    const hargaMatNum = toIDRint(itemData.harga_material);
+    const hargaUpahNum = toIDRint(itemData.harga_upah);
 
     const selisihNum = fix(volAkhirNum - volRabNum, 6);
     const totalAkhirNum = Math.round(
