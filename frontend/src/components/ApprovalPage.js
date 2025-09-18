@@ -265,19 +265,26 @@ const ApprovalPage = ({ onBack, selectedStore }) => {
                   <td style={{ padding: "12px" }}>{item.pic_username}</td>
                   <td style={{ padding: "12px" }}>{item.tanggal_submit}</td>
                   <td style={{ padding: "12px", textAlign: "center" }}>
-                    <button
-                      className="btn btn-success btn-sm"
-                      onClick={() => handleApprove(item.item_id)}
-                      style={{ marginRight: "8px" }}
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "center",
+                        gap: "10px",
+                      }}
                     >
-                      Approve
-                    </button>
-                    <button
-                      className="btn btn-error btn-sm"
-                      onClick={() => handleReject(item.item_id)}
-                    >
-                      Reject
-                    </button>
+                      <button
+                        className="btn btn-success btn-sm"
+                        onClick={() => handleApprove(item.item_id)}
+                      >
+                        Approve
+                      </button>
+                      <button
+                        className="btn btn-error btn-sm"
+                        onClick={() => handleReject(item.item_id)}
+                      >
+                        Reject
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
