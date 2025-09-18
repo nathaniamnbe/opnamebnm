@@ -107,9 +107,7 @@ const withLingkup = lk ? base + `&lingkup=${encodeURIComponent(lk)}` : null;
 
             // kunci baris yang sudah tersubmit
             isSubmitted: alreadySubmitted,
-            approval_status:
-              task.approval_status ||
-              (alreadySubmitted ? "Pending" : undefined),
+            approval_status: normStatus(task.approval_status),
             submissionTime: task.tanggal_submit || task.submissionTime || null,
             foto_url: alreadySubmitted ? task.foto_url : null,
 

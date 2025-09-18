@@ -510,10 +510,33 @@ app.get("/api/opname", async (req, res) => {
 
  const takeMatch = (subs, rabJenis, rabLingkup, rabSatuan, rabHargaMat, rabHargaUpah, rabKey) => {
    // 1) Prioritas: rab_key sama persis
-   if (rabKey) {
-     const byKey = subs.findIndex((s) => (s.rab_key || "") === rabKey);
-     if (byKey >= 0) return subs.splice(byKey, 1)[0];
-   }
+if (rabKey) {
+  const idxs = subs
+    .map((s, i) => ({ s, i }))
+    .filter(({ s }) => (s.rab_key || "") === rabKey);
+
+  if (idxs.length > 0) {
+    const rank = (st) => {
+      const S = String(st || "").toUpperCase();
+      if (S === "APPROVED") return 3;
+      if (S === "PENDING") return 2;
+      if (S === "REJECTED") return 1;
+      return 0;
+    };
+
+    // Urutkan: status terbaik dulu, lalu tanggal_submit paling baru
+    idxs.sort((a, b) => {
+      const r = rank(b.s.approval_status) - rank(a.s.approval_status);
+      if (r !== 0) return r;
+      return String(b.s.tanggal_submit || "").localeCompare(
+        String(a.s.tanggal_submit || "")
+      );
+    });
+
+    const pick = idxs[0].i;
+    return subs.splice(pick, 1)[0];
+  }
+}
    // 2) Fallback: cocokkan berdasarkan teks/satuan/harga persis (lama)
    const idx = subs.findIndex(
      (s) =>
