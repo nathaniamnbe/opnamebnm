@@ -107,11 +107,13 @@ const withLingkup = lk ? base + `&lingkup=${encodeURIComponent(lk)}` : null;
 
             // kunci baris yang sudah tersubmit
             isSubmitted: alreadySubmitted,
-            approval_status: normStatus(task.approval_status),
+            approval_status:
+              task.approval_status ||
+              (alreadySubmitted ? "Pending" : undefined),
             submissionTime: task.tanggal_submit || task.submissionTime || null,
             foto_url: alreadySubmitted ? task.foto_url : null,
 
-            // nilai formf
+            // nilai form
             volume_akhir: alreadySubmitted ? String(volAkhirNum) : "",
             selisih: String(volAkhirNum - volRab),
             total_harga,
