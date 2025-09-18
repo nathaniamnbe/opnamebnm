@@ -12,7 +12,7 @@ const ApprovalPage = ({ onBack, selectedStore }) => {
   const [pendingItems, setPendingItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
-  const { user } = useAuth(); 
+  const { user } = useAuth();
 
   // Step 1: pilih ULOK
   const [uloks, setUloks] = useState([]);
@@ -88,6 +88,32 @@ const ApprovalPage = ({ onBack, selectedStore }) => {
       const result = await response.json();
       if (!response.ok) throw new Error(result.message || "Gagal approve");
       setMessage("Berhasil di-approve!");
+      setTimeout(() => setMessage(""), 2500);
+    } catch (error) {
+      setMessage(`Error: ${error.message}`);
+      setPendingItems(original); // rollback
+    }
+  };
+
+  // --- Reject satu item ---
+  const handleReject = async (itemId) => {
+    setMessage("");
+    const original = [...pendingItems];
+    setPendingItems((prev) => prev.filter((it) => it.item_id !== itemId));
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/opname/reject`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          item_id: itemId,
+          kontraktor_username:
+            user?.email || user?.username || user?.name || "",
+        }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.message || "Gagal reject");
+      setMessage("Berhasil di-reject!");
       setTimeout(() => setMessage(""), 2500);
     } catch (error) {
       setMessage(`Error: ${error.message}`);
@@ -242,8 +268,15 @@ const ApprovalPage = ({ onBack, selectedStore }) => {
                     <button
                       className="btn btn-success btn-sm"
                       onClick={() => handleApprove(item.item_id)}
+                      style={{ marginRight: "8px" }}
                     >
                       Approve
+                    </button>
+                    <button
+                      className="btn btn-error btn-sm"
+                      onClick={() => handleReject(item.item_id)}
+                    >
+                      Reject
                     </button>
                   </td>
                 </tr>
