@@ -484,48 +484,61 @@ app.get("/api/opname", async (req, res) => {
     };
 
     // KUMPULKAN SEMUA SUBMISSION (LIST, BUKAN MAP) → supaya bisa match satu-per-satu
-    const submittedList = finalRows
+    // urutkan yang terbaru duluan agar takeMatch() selalu mengambil submission paling baru
+    const filteredFinalRows = finalRows
       .filter(
         (row) =>
           norm(row.get("kode_toko")) === norm(kode_toko) &&
           norm(row.get("no_ulok")) === norm(no_ulok) &&
           (!qLing || norm(row.get("lingkup_pekerjaan")) === qLing)
       )
-      .map((row) => ({
-        item_id: row.get("item_id"),
-        jenis: row.get("jenis_pekerjaan") || "",
-        lingkup: (row.get("lingkup_pekerjaan") || "").toString(),
-        vol_akhir: row.get("volume_akhir"),
-        selisih: row.get("selisih"),
-        approval_status: row.get("approval_status"),
-        tanggal_submit: row.get("tanggal_submit"),
-        foto_url: row.get("foto_url"),
-        // field pembeda tambahan untuk matching unik
-        satuan: row.get("satuan"),
-        harga_material: row.get("harga_material"),
-        harga_upah: row.get("harga_upah"),
-        rab_key: row.get("rab_key") || "",
-        
-      }));
+      .sort((a, b) =>
+        String(b.get("tanggal_submit") || "").localeCompare(
+          String(a.get("tanggal_submit") || "")
+        )
+      );
 
- const takeMatch = (subs, rabJenis, rabLingkup, rabSatuan, rabHargaMat, rabHargaUpah, rabKey) => {
-   // 1) Prioritas: rab_key sama persis
-   if (rabKey) {
-     const byKey = subs.findIndex((s) => (s.rab_key || "") === rabKey);
-     if (byKey >= 0) return subs.splice(byKey, 1)[0];
-   }
-   // 2) Fallback: cocokkan berdasarkan teks/satuan/harga persis (lama)
-   const idx = subs.findIndex(
-     (s) =>
-       s.jenis === rabJenis &&
-       (s.lingkup || "") === (rabLingkup || "") &&
-       String(s.satuan || "") === String(rabSatuan || "") &&
-       toNum(s.harga_material) === toNum(rabHargaMat) &&
-       toNum(s.harga_upah) === toNum(rabHargaUpah)
-   );
-   if (idx >= 0) return subs.splice(idx, 1)[0];
-   return null;
- };
+    const submittedList = filteredFinalRows.map((row) => ({
+      item_id: row.get("item_id"),
+      jenis: row.get("jenis_pekerjaan") || "",
+      lingkup: (row.get("lingkup_pekerjaan") || "").toString(),
+      vol_akhir: row.get("volume_akhir"),
+      selisih: row.get("selisih"),
+      approval_status: row.get("approval_status"),
+      tanggal_submit: row.get("tanggal_submit"),
+      foto_url: row.get("foto_url"),
+      satuan: row.get("satuan"),
+      harga_material: row.get("harga_material"),
+      harga_upah: row.get("harga_upah"),
+      rab_key: row.get("rab_key") || "",
+    }));
+
+    const takeMatch = (
+      subs,
+      rabJenis,
+      rabLingkup,
+      rabSatuan,
+      rabHargaMat,
+      rabHargaUpah,
+      rabKey
+    ) => {
+      // 1) Prioritas: rab_key sama persis
+      if (rabKey) {
+        const byKey = subs.findIndex((s) => (s.rab_key || "") === rabKey);
+        if (byKey >= 0) return subs.splice(byKey, 1)[0];
+      }
+      // 2) Fallback: cocokkan berdasarkan teks/satuan/harga persis (lama)
+      const idx = subs.findIndex(
+        (s) =>
+          s.jenis === rabJenis &&
+          (s.lingkup || "") === (rabLingkup || "") &&
+          String(s.satuan || "") === String(rabSatuan || "") &&
+          toNum(s.harga_material) === toNum(rabHargaMat) &&
+          toNum(s.harga_upah) === toNum(rabHargaUpah)
+      );
+      if (idx >= 0) return subs.splice(idx, 1)[0];
+      return null;
+    };
 
     // BENTUK LIST TASK DARI RAB (TIDAK DIDE-DUP)
     const tasks = rabRows
@@ -544,15 +557,15 @@ app.get("/api/opname", async (req, res) => {
         const rab_key_raw = row.get("rab_key") || "";
         const rab_key = rab_key_raw || makeRabKey(row);
 
-const matched = takeMatch(
-  submittedList,
-  jenis_pekerjaan,
-  lingkup_pekerjaan,
-  satuan,
-  harga_material,
-  harga_upah,
-  rab_key
-);
+        const matched = takeMatch(
+          submittedList,
+          jenis_pekerjaan,
+          lingkup_pekerjaan,
+          satuan,
+          harga_material,
+          harga_upah,
+          rab_key
+        );
 
         return {
           kategori_pekerjaan: row.get("kategori_pekerjaan"),
@@ -567,7 +580,7 @@ const matched = takeMatch(
           volume_akhir: matched?.vol_akhir || "",
           selisih: matched?.selisih || "",
           isSubmitted: !!matched,
-          approval_status: matched?.approval_status || "Not Submitted",
+          approval_status: normalizedStatus,
           submissionTime: matched?.tanggal_submit || null,
           foto_url: matched?.foto_url || null,
         };
