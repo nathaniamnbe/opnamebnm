@@ -592,6 +592,8 @@ const withLingkup = lk ? base + `&lingkup=${encodeURIComponent(lk)}` : null;
                           ? "badge-warning"
                           : item.approval_status === "Approved"
                           ? "badge-success"
+                          : item.approval_status === "Rejected"
+                          ? "badge-error"
                           : "badge-light"
                       }`}
                     >

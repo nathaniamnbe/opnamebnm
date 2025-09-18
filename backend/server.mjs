@@ -1134,6 +1134,41 @@ app.patch("/api/opname/approve", async (req, res) => {
   }
 });
 
+// --- Endpoint REJECT item opname ---
+app.patch("/api/opname/reject", async (req, res) => {
+  try {
+    const { item_id, kontraktor_username } = req.body;
+    if (!item_id) {
+      return res.status(400).json({ message: "item_id diperlukan." });
+    }
+
+    await doc.loadInfo();
+    const finalSheet = doc.sheetsByTitle["opname_final"];
+    if (!finalSheet) {
+      return res.status(500).json({ message: "Sheet 'opname_final' tidak ditemukan." });
+    }
+
+    const rows = await finalSheet.getRows();
+    const row = rows.find((r) => r.get("item_id") === item_id);
+    if (!row) {
+      return res.status(404).json({ message: "Item tidak ditemukan." });
+    }
+
+    // Update status jadi REJECTED
+    row.set("approval_status", "Rejected");
+    if (kontraktor_username) {
+      row.set("kontraktor_username", kontraktor_username);
+    }
+    await row.save();
+
+    return res.status(200).json({ message: "Item berhasil di-reject." });
+  } catch (err) {
+    console.error("Error di /api/opname/reject:", err);
+    return res.status(500).json({ message: "Gagal reject item." });
+  }
+});
+
+
 // 6. Menjalankan server
 app.listen(PORT, () => {
   console.log(`Server backend berjalan di port ${PORT}`);
