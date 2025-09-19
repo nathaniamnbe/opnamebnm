@@ -1125,6 +1125,19 @@ app.patch("/api/opname/approve", async (req, res) => {
     if (kontraktor_username && String(kontraktor_username).trim()) {
       target.set("kontraktor", kontraktor_username);
     }
+
+     if (typeof catatan === "string" && catatan.trim()) {
+       const prev = target.get("catatan") || "";
+       const stamp = new Date().toLocaleString("id-ID", {
+         timeZone: "Asia/Jakarta",
+       });
+       const appended = prev
+         ? `${prev}\n[APPROVE ${stamp}] ${catatan.trim()}`
+         : `[APPROVE ${stamp}] ${catatan.trim()}`;
+       target.set("catatan", appended);
+     }
+
+
     await target.save();
 
     return res.status(200).json({ message: "Berhasil di-approve." });
@@ -1145,7 +1158,9 @@ app.patch("/api/opname/reject", async (req, res) => {
     await doc.loadInfo();
     const finalSheet = doc.sheetsByTitle["opname_final"];
     if (!finalSheet) {
-      return res.status(500).json({ message: "Sheet 'opname_final' tidak ditemukan." });
+      return res
+        .status(500)
+        .json({ message: "Sheet 'opname_final' tidak ditemukan." });
     }
 
     const rows = await finalSheet.getRows();
@@ -1159,6 +1174,20 @@ app.patch("/api/opname/reject", async (req, res) => {
     if (kontraktor_username) {
       row.set("kontraktor_username", kontraktor_username);
     }
+
+    // 🔹 Tambah catatan
+    if (typeof catatan === "string" && catatan.trim()) {
+      const prev = row.get("catatan") || "";
+      const stamp = new Date().toLocaleString("id-ID", {
+        timeZone: "Asia/Jakarta",
+      });
+      const appended = prev
+        ? `${prev}\n[REJECT ${stamp}] ${catatan.trim()}`
+        : `[REJECT ${stamp}] ${catatan.trim()}`;
+      row.set("catatan", appended);
+    }
+
+    
     await row.save();
 
     return res.status(200).json({ message: "Item berhasil di-reject." });
