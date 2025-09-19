@@ -19,12 +19,20 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 // 3. Middleware
-const vercelFrontendURL = "https://opnamebnm.vercel.app";
+const allowedOrigins = [
+  "https://opnamebnm.vercel.app",
+  "http://localhost:3000", // Next.js dev
+  "http://127.0.0.1:3000",
+];
 app.use(
   cors({
-    origin: vercelFrontendURL,
+    origin: (origin, cb) => {
+      if (!origin || allowedOrigins.includes(origin)) return cb(null, true);
+      return cb(new Error("Not allowed by CORS"));
+    },
   })
 );
+
 
 app.use(express.json());
 const upload = multer({ storage: multer.memoryStorage() });
@@ -43,6 +51,17 @@ if (!process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL || !process.env.GOOGLE_PRIVATE_KEY
   process.exit(1);
 }
 // Test koneksi Google Sheets saat startup
+const serviceAccountAuth = new JWT({
+  email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
+  key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, "\n"),
+  scopes: ["https://www.googleapis.com/auth/spreadsheets"],
+});
+const doc = new GoogleSpreadsheet(
+  process.env.SPREADSHEET_ID,
+  serviceAccountAuth
+);
+
+// Test koneksi Google Sheets saat startup
 (async () => {
   try {
     console.log("Testing Google Sheets connection...");
@@ -54,15 +73,7 @@ if (!process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL || !process.env.GOOGLE_PRIVATE_KEY
     console.error("Check your environment variables");
   }
 })();
-const serviceAccountAuth = new JWT({
-  email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
-  key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, "\n"),
-  scopes: ["https://www.googleapis.com/auth/spreadsheets"],
-});
-const doc = new GoogleSpreadsheet(
-  process.env.SPREADSHEET_ID,
-  serviceAccountAuth
-);
+
 
 // =================================================================
 // FUNGSI BANTU
@@ -484,6 +495,18 @@ app.get("/api/opname", async (req, res) => {
     };
 
     // KUMPULKAN SEMUA SUBMISSION (LIST, BUKAN MAP) → supaya bisa match satu-per-satu
+    // tambahkan helper di atas .map()
+    const getCatatan = (r) =>
+      r.get("catatan") ||
+      r.get("Catatan") ||
+      r.get("CATATAN") ||
+      r.get("notes") ||
+      r.get("Notes") ||
+      r.get("NOTE") ||
+      r.get("") || // kalau header kosong
+      "";
+
+    // lalu di dalam .map() ganti bagian catatan
     const submittedList = finalRows
       .filter(
         (row) =>
@@ -500,32 +523,40 @@ app.get("/api/opname", async (req, res) => {
         approval_status: row.get("approval_status"),
         tanggal_submit: row.get("tanggal_submit"),
         foto_url: row.get("foto_url"),
-        // field pembeda tambahan untuk matching unik
         satuan: row.get("satuan"),
         harga_material: row.get("harga_material"),
         harga_upah: row.get("harga_upah"),
         rab_key: row.get("rab_key") || "",
-        catatan: row.get("catatan") || "", // ⬅️ ini tambahan
+
+        catatan: getCatatan(row), // ⬅️ pakai helper
       }));
 
- const takeMatch = (subs, rabJenis, rabLingkup, rabSatuan, rabHargaMat, rabHargaUpah, rabKey) => {
-   // 1) Prioritas: rab_key sama persis
-    if (rabKey) {
-      const byKey = subs.findIndex((s) => (s.rab_key || "") === rabKey);
-      if (byKey >= 0) return subs.splice(byKey, 1)[0];
-    }
-   // 2) Fallback: cocokkan berdasarkan teks/satuan/harga persis (lama)
-   const idx = subs.findIndex(
-     (s) =>
-       s.jenis === rabJenis &&
-       (s.lingkup || "") === (rabLingkup || "") &&
-       String(s.satuan || "") === String(rabSatuan || "") &&
-       toNum(s.harga_material) === toNum(rabHargaMat) &&
-       toNum(s.harga_upah) === toNum(rabHargaUpah)
-   );
-   if (idx >= 0) return subs.splice(idx, 1)[0];
-   return null;
- };
+    const takeMatch = (
+      subs,
+      rabJenis,
+      rabLingkup,
+      rabSatuan,
+      rabHargaMat,
+      rabHargaUpah,
+      rabKey
+    ) => {
+      // 1) Prioritas: rab_key sama persis
+      if (rabKey) {
+        const byKey = subs.findIndex((s) => (s.rab_key || "") === rabKey);
+        if (byKey >= 0) return subs.splice(byKey, 1)[0];
+      }
+      // 2) Fallback: cocokkan berdasarkan teks/satuan/harga persis (lama)
+      const idx = subs.findIndex(
+        (s) =>
+          s.jenis === rabJenis &&
+          (s.lingkup || "") === (rabLingkup || "") &&
+          String(s.satuan || "") === String(rabSatuan || "") &&
+          toNum(s.harga_material) === toNum(rabHargaMat) &&
+          toNum(s.harga_upah) === toNum(rabHargaUpah)
+      );
+      if (idx >= 0) return subs.splice(idx, 1)[0];
+      return null;
+    };
 
     // BENTUK LIST TASK DARI RAB (TIDAK DIDE-DUP)
     const tasks = rabRows
@@ -544,15 +575,15 @@ app.get("/api/opname", async (req, res) => {
         const rab_key_raw = row.get("rab_key") || "";
         const rab_key = rab_key_raw || makeRabKey(row);
 
-const matched = takeMatch(
-  submittedList,
-  jenis_pekerjaan,
-  lingkup_pekerjaan,
-  satuan,
-  harga_material,
-  harga_upah,
-  rab_key
-);
+        const matched = takeMatch(
+          submittedList,
+          jenis_pekerjaan,
+          lingkup_pekerjaan,
+          satuan,
+          harga_material,
+          harga_upah,
+          rab_key
+        );
 
         return {
           kategori_pekerjaan: row.get("kategori_pekerjaan"),
@@ -1125,19 +1156,32 @@ app.patch("/api/opname/approve", async (req, res) => {
 
     target.set("approval_status", "APPROVED"); // konsisten
     if (kontraktor_username && String(kontraktor_username).trim()) {
-      target.set("kontraktor", kontraktor_username);
+      target.set("kontraktor_username", kontraktor_username); // ✅ konsisten
     }
 
-    if (typeof catatan === "string" && catatan.trim()) {
-      const prev = target.get("catatan") || "";
-      const stamp = new Date().toLocaleString("id-ID", {
-        timeZone: "Asia/Jakarta",
-      });
-      const appended = prev
-        ? `${prev}\n[APPROVE ${stamp}] ${catatan.trim()}`
-        : `[APPROVE ${stamp}] ${catatan.trim()}`;
-      target.set("catatan", appended);
-    }
+await finalSheet.loadHeaderRow();
+const headers = finalSheet.headerValues || [];
+const CAT_KEY = headers.includes("catatan")
+  ? "catatan"
+  : headers.includes("Catatan")
+  ? "Catatan"
+  : headers.includes("CATATAN")
+  ? "CATATAN"
+  : headers.includes("")
+  ? ""
+  : "catatan";
+
+if (typeof catatan === "string" && catatan.trim()) {
+  const prev = target.get(CAT_KEY) || "";
+  const stamp = new Date().toLocaleString("id-ID", {
+    timeZone: "Asia/Jakarta",
+  });
+  const appended = prev
+    ? `${prev}\n[APPROVE ${stamp}] ${catatan.trim()}`
+    : `[APPROVE ${stamp}] ${catatan.trim()}`;
+  target.set(CAT_KEY, appended);
+}
+
 
     await target.save();
 
@@ -1177,16 +1221,28 @@ app.patch("/api/opname/reject", async (req, res) => {
     }
 
     // 🔹 Tambah catatan
-    if (typeof catatan === "string" && catatan.trim()) {
-      const prev = row.get("catatan") || "";
-      const stamp = new Date().toLocaleString("id-ID", {
-        timeZone: "Asia/Jakarta",
-      });
-      const appended = prev
-        ? `${prev}\n[REJECT ${stamp}] ${catatan.trim()}`
-        : `[REJECT ${stamp}] ${catatan.trim()}`;
-      row.set("catatan", appended);
-    }
+await finalSheet.loadHeaderRow();
+const headers = finalSheet.headerValues || [];
+const CAT_KEY = headers.includes("catatan")
+  ? "catatan"
+  : headers.includes("Catatan")
+  ? "Catatan"
+  : headers.includes("CATATAN")
+  ? "CATATAN"
+  : headers.includes("")
+  ? ""
+  : "catatan";
+
+if (typeof catatan === "string" && catatan.trim()) {
+  const prev = row.get(CAT_KEY) || "";
+  const stamp = new Date().toLocaleString("id-ID", {
+    timeZone: "Asia/Jakarta",
+  });
+  const appended = prev
+    ? `${prev}\n[REJECT ${stamp}] ${catatan.trim()}`
+    : `[REJECT ${stamp}] ${catatan.trim()}`;
+  row.set(CAT_KEY, appended);
+}
 
     await row.save();
 
