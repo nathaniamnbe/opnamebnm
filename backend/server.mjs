@@ -78,6 +78,25 @@ const doc = new GoogleSpreadsheet(
 // =================================================================
 // FUNGSI BANTU
 // =================================================================
+// --- Ambil nama PIC dari sheet 'users' berdasarkan username (email)
+const getPicNameByUsername = async (username) => {
+  try {
+    await doc.loadInfo();
+    const usersSheet = doc.sheetsByTitle["users"];
+    if (!usersSheet) return "";
+    const rows = await usersSheet.getRows();
+
+    const norm = (v) => (v ?? "").toString().trim().toLowerCase();
+    const r = rows.find(row => norm(row.get("username")) === norm(username));
+    return r?.get("name") || "";
+  } catch (e) {
+    console.error("Gagal membaca nama PIC dari 'users':", e);
+    return "";
+  }
+};
+
+
+
 const logLoginAttempt = async (username, status) => {
   try {
     await doc.loadInfo();
@@ -700,7 +719,7 @@ app.post("/api/opname/item/submit", async (req, res) => {
         .status(500)
         .json({ message: "Sheet 'opname_final' tidak ditemukan." });
     }
-
+    const picName = await getPicNameByUsername(itemData.pic_username);
     // Pastikan semua header tersedia (TIDAK menghapus yang lama; hanya menambahkan jika belum ada)
     await finalSheet.loadHeaderRow();
     const headers = new Set(finalSheet.headerValues || []);
@@ -727,6 +746,7 @@ app.post("/api/opname/item/submit", async (req, res) => {
       "rab_key",
     ].forEach((h) => headers.add(h));
     headers.add("catatan");
+    headers.add("name"); 
     await finalSheet.setHeaderRow([...headers]);
 
     const rows = await finalSheet.getRows();
@@ -805,9 +825,12 @@ app.post("/api/opname/item/submit", async (req, res) => {
       foto_url: itemData.foto_url || "",
       lingkup_pekerjaan: itemData.lingkup_pekerjaan || "",
       rab_key: itemData.rab_key || "",
+      name: picName || "",
     };
 
     const newRow = await finalSheet.addRow(rowToAdd);
+
+
 
     return res.status(201).json({
       success: true,
