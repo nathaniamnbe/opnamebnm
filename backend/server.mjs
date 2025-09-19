@@ -674,6 +674,7 @@ app.post("/api/opname/item/submit", async (req, res) => {
       "lingkup_pekerjaan", // tambahan: simpan ME/SIPIL bila ada
       "rab_key",
     ].forEach((h) => headers.add(h));
+    headers.add("catatan");
     await finalSheet.setHeaderRow([...headers]);
 
     const rows = await finalSheet.getRows();
@@ -1101,7 +1102,7 @@ app.get("/api/opname/pending", async (req, res) => {
 // --- Approve item opname ---
 app.patch("/api/opname/approve", async (req, res) => {
   try {
-    const { item_id, kontraktor_username } = req.body || {};
+    const { item_id, kontraktor_username, catatan } = req.body || {}; // ← tambahkan catatan
     if (!item_id) {
       return res.status(400).json({ message: "item_id diperlukan." });
     }
@@ -1126,17 +1127,16 @@ app.patch("/api/opname/approve", async (req, res) => {
       target.set("kontraktor", kontraktor_username);
     }
 
-     if (typeof catatan === "string" && catatan.trim()) {
-       const prev = target.get("catatan") || "";
-       const stamp = new Date().toLocaleString("id-ID", {
-         timeZone: "Asia/Jakarta",
-       });
-       const appended = prev
-         ? `${prev}\n[APPROVE ${stamp}] ${catatan.trim()}`
-         : `[APPROVE ${stamp}] ${catatan.trim()}`;
-       target.set("catatan", appended);
-     }
-
+    if (typeof catatan === "string" && catatan.trim()) {
+      const prev = target.get("catatan") || "";
+      const stamp = new Date().toLocaleString("id-ID", {
+        timeZone: "Asia/Jakarta",
+      });
+      const appended = prev
+        ? `${prev}\n[APPROVE ${stamp}] ${catatan.trim()}`
+        : `[APPROVE ${stamp}] ${catatan.trim()}`;
+      target.set("catatan", appended);
+    }
 
     await target.save();
 
@@ -1150,7 +1150,7 @@ app.patch("/api/opname/approve", async (req, res) => {
 // --- Endpoint REJECT item opname ---
 app.patch("/api/opname/reject", async (req, res) => {
   try {
-    const { item_id, kontraktor_username } = req.body;
+    const { item_id, kontraktor_username, catatan } = req.body; // ← tambahkan catatan
     if (!item_id) {
       return res.status(400).json({ message: "item_id diperlukan." });
     }
@@ -1187,7 +1187,6 @@ app.patch("/api/opname/reject", async (req, res) => {
       row.set("catatan", appended);
     }
 
-    
     await row.save();
 
     return res.status(200).json({ message: "Item berhasil di-reject." });
