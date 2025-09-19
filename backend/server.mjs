@@ -19,12 +19,20 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 // 3. Middleware
-const vercelFrontendURL = "https://opnamebnm.vercel.app";
+const allowedOrigins = [
+  "https://opnamebnm.vercel.app",
+  "http://localhost:3000", // Next.js dev
+  "http://127.0.0.1:3000",
+];
 app.use(
   cors({
-    origin: vercelFrontendURL,
+    origin: (origin, cb) => {
+      if (!origin || allowedOrigins.includes(origin)) return cb(null, true);
+      return cb(new Error("Not allowed by CORS"));
+    },
   })
 );
+
 
 app.use(express.json());
 const upload = multer({ storage: multer.memoryStorage() });
@@ -37,19 +45,22 @@ cloudinary.config({
 });
 
 // Validasi environment variables yang diperlukan
-if (
-  !process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL ||
-  !process.env.GOOGLE_PRIVATE_KEY ||
-  !process.env.SPREADSHEET_ID
-) {
-  console.error(
-    "Error: Environment variables untuk Google Sheets tidak lengkap!"
-  );
-  console.error(
-    "Pastikan ada: GOOGLE_SERVICE_ACCOUNT_EMAIL, GOOGLE_PRIVATE_KEY, SPREADSHEET_ID"
-  );
+if (!process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL || !process.env.GOOGLE_PRIVATE_KEY || !process.env.SPREADSHEET_ID) {
+  console.error("Error: Environment variables untuk Google Sheets tidak lengkap!");
+  console.error("Pastikan ada: GOOGLE_SERVICE_ACCOUNT_EMAIL, GOOGLE_PRIVATE_KEY, SPREADSHEET_ID");
   process.exit(1);
 }
+// Test koneksi Google Sheets saat startup
+const serviceAccountAuth = new JWT({
+  email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
+  key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, "\n"),
+  scopes: ["https://www.googleapis.com/auth/spreadsheets"],
+});
+const doc = new GoogleSpreadsheet(
+  process.env.SPREADSHEET_ID,
+  serviceAccountAuth
+);
+
 // Test koneksi Google Sheets saat startup
 (async () => {
   try {
@@ -62,15 +73,7 @@ if (
     console.error("Check your environment variables");
   }
 })();
-const serviceAccountAuth = new JWT({
-  email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
-  key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, "\n"),
-  scopes: ["https://www.googleapis.com/auth/spreadsheets"],
-});
-const doc = new GoogleSpreadsheet(
-  process.env.SPREADSHEET_ID,
-  serviceAccountAuth
-);
+
 
 // =================================================================
 // FUNGSI BANTU
@@ -93,7 +96,7 @@ const logLoginAttempt = async (username, status) => {
 // >>>>> PASTE BLOCK INI DI SINI <<<<<
 // -- helper pembuat kunci stabil untuk RAB --
 const _normKey = (v) => (v ?? "").toString().trim().toUpperCase();
-const _numKey = (v) => {
+const _numKey  = (v) => {
   const n = Number(String(v).replace(/[^0-9.\-]/g, ""));
   return Number.isFinite(n) ? n : 0;
 };
@@ -102,19 +105,13 @@ const _numKey = (v) => {
  * Bisa dipanggil dengan row GoogleSheet (punya .get) atau object itemData.
  */
 const makeRabKey = (src) => {
-  const kode = _normKey(src.get ? src.get("kode_toko") : src.kode_toko);
-  const ulok = _normKey(src.get ? src.get("no_ulok") : src.no_ulok);
-  const ling = _normKey(
-    src.get ? src.get("lingkup_pekerjaan") : src.lingkup_pekerjaan
-  );
-  const jenis = _normKey(
-    src.get ? src.get("jenis_pekerjaan") : src.jenis_pekerjaan
-  );
+  const kode   = _normKey(src.get ? src.get("kode_toko") : src.kode_toko);
+  const ulok   = _normKey(src.get ? src.get("no_ulok") : src.no_ulok);
+  const ling   = _normKey(src.get ? src.get("lingkup_pekerjaan") : src.lingkup_pekerjaan);
+  const jenis  = _normKey(src.get ? src.get("jenis_pekerjaan") : src.jenis_pekerjaan);
   const satuan = _normKey(src.get ? src.get("satuan") : src.satuan);
-  const hmat = _numKey(
-    src.get ? src.get("harga_material") : src.harga_material
-  );
-  const hupah = _numKey(src.get ? src.get("harga_upah") : src.harga_upah);
+  const hmat   = _numKey(src.get ? src.get("harga_material") : src.harga_material);
+  const hupah  = _numKey(src.get ? src.get("harga_upah") : src.harga_upah);
   return [kode, ulok, ling, jenis, satuan, hmat, hupah].join("||");
 };
 // <<<<< SAMPAI SINI >>>>>
@@ -498,6 +495,18 @@ app.get("/api/opname", async (req, res) => {
     };
 
     // KUMPULKAN SEMUA SUBMISSION (LIST, BUKAN MAP) → supaya bisa match satu-per-satu
+    // tambahkan helper di atas .map()
+    const getCatatan = (r) =>
+      r.get("catatan") ||
+      r.get("Catatan") ||
+      r.get("CATATAN") ||
+      r.get("notes") ||
+      r.get("Notes") ||
+      r.get("NOTE") ||
+      r.get("") || // kalau header kosong
+      "";
+
+    // lalu di dalam .map() ganti bagian catatan
     const submittedList = finalRows
       .filter(
         (row) =>
@@ -514,12 +523,12 @@ app.get("/api/opname", async (req, res) => {
         approval_status: row.get("approval_status"),
         tanggal_submit: row.get("tanggal_submit"),
         foto_url: row.get("foto_url"),
-        // field pembeda tambahan untuk matching unik
         satuan: row.get("satuan"),
         harga_material: row.get("harga_material"),
         harga_upah: row.get("harga_upah"),
         rab_key: row.get("rab_key") || "",
-        catatan: row.get("catatan") || "", // ⬅️ ini tambahan
+
+        catatan: getCatatan(row), // ⬅️ pakai helper
       }));
 
     const takeMatch = (
@@ -592,6 +601,7 @@ app.get("/api/opname", async (req, res) => {
           approval_status: matched?.approval_status || "Not Submitted",
           submissionTime: matched?.tanggal_submit || null,
           foto_url: matched?.foto_url || null,
+          catatan: matched?.catatan || "", // ⬅️ penting
         };
       });
 
@@ -647,10 +657,10 @@ app.post("/api/opname/item/submit", async (req, res) => {
   try {
     const itemData = req.body;
 
-    // Pastikan rab_key ada (kalau belum dikirim FE karena RAB kosong, generate di sini)
-    if (!itemData.rab_key || String(itemData.rab_key).trim() === "") {
-      itemData.rab_key = makeRabKey(itemData);
-    }
+ // Pastikan rab_key ada (kalau belum dikirim FE karena RAB kosong, generate di sini)
+ if (!itemData.rab_key || String(itemData.rab_key).trim() === "") {
+   itemData.rab_key = makeRabKey(itemData);
+}
 
     // Validasi minimum (tetap sama + pic_username wajib)
     if (
@@ -710,33 +720,32 @@ app.post("/api/opname/item/submit", async (req, res) => {
 
     // Cek duplikasi: hanya dianggap duplikat jika SEMUA field identik.
     // Ini agar "jenis pekerjaan sama" tetap bisa disimpan berulang jika volume/harga/lingkup/satuan berbeda.
-    let existingRow = null;
-    if (itemData.rab_key) {
-      existingRow = rows.find(
-        (row) =>
-          (row.get("rab_key") || "") === (itemData.rab_key || "") &&
-          row.get("kode_toko") === (itemData.kode_toko || "") &&
-          row.get("no_ulok") === (itemData.no_ulok || "") &&
-          row.get("pic_username") === (itemData.pic_username || "") &&
-          toNum(row.get("volume_akhir")) === toNum(itemData.volume_akhir)
-      );
-    }
-    if (!existingRow) {
-      existingRow = rows.find(
-        (row) =>
-          row.get("kode_toko") === (itemData.kode_toko || "") &&
-          row.get("no_ulok") === (itemData.no_ulok || "") &&
-          row.get("jenis_pekerjaan") === (itemData.jenis_pekerjaan || "") &&
-          row.get("pic_username") === (itemData.pic_username || "") &&
-          (row.get("lingkup_pekerjaan") || "") ===
-            (itemData.lingkup_pekerjaan || "") &&
-          String(row.get("satuan") || "") === String(itemData.satuan || "") &&
-          toNum(row.get("vol_rab")) === toNum(itemData.vol_rab) &&
-          toNum(row.get("harga_material")) === toNum(itemData.harga_material) &&
-          toNum(row.get("harga_upah")) === toNum(itemData.harga_upah) &&
-          toNum(row.get("volume_akhir")) === toNum(itemData.volume_akhir)
-      );
-    }
+ let existingRow = null;
+ if (itemData.rab_key) {
+   existingRow = rows.find(
+     (row) =>
+       (row.get("rab_key") || "") === (itemData.rab_key || "") &&
+       row.get("kode_toko") === (itemData.kode_toko || "") &&
+       row.get("no_ulok") === (itemData.no_ulok || "") &&
+       row.get("pic_username") === (itemData.pic_username || "") &&
+       toNum(row.get("volume_akhir")) === toNum(itemData.volume_akhir)
+   );
+ }
+ if (!existingRow) {
+   existingRow = rows.find(
+     (row) =>
+       row.get("kode_toko") === (itemData.kode_toko || "") &&
+       row.get("no_ulok") === (itemData.no_ulok || "") &&
+       row.get("jenis_pekerjaan") === (itemData.jenis_pekerjaan || "") &&
+       row.get("pic_username") === (itemData.pic_username || "") &&
+       (row.get("lingkup_pekerjaan") || "") === (itemData.lingkup_pekerjaan || "") &&
+       String(row.get("satuan") || "") === String(itemData.satuan || "") &&
+       toNum(row.get("vol_rab")) === toNum(itemData.vol_rab) &&
+       toNum(row.get("harga_material")) === toNum(itemData.harga_material) &&
+       toNum(row.get("harga_upah")) === toNum(itemData.harga_upah) &&
+       toNum(row.get("volume_akhir")) === toNum(itemData.volume_akhir)
+   );
+ }
 
     // ID & timestamp
     const timestamp = new Date().toLocaleString("id-ID", {
@@ -932,9 +941,11 @@ app.get("/api/opname/final", async (req, res) => {
     return res.status(200).json(submissions);
   } catch (error) {
     console.error("Error di /api/opname/final:", error);
-    return res.status(500).json({
-      message: "Terjadi kesalahan pada server saat membaca data final.",
-    });
+    return res
+      .status(500)
+      .json({
+        message: "Terjadi kesalahan pada server saat membaca data final.",
+      });
   }
 });
 
@@ -955,15 +966,11 @@ app.get("/api/rab", async (req, res) => {
     const rows = await rabSheet.getRows();
 
     const norm = (v) => (v ?? "").toString().trim().toUpperCase();
-    let rabItems = rows.filter(
-      (row) => norm(row.get("kode_toko")) === norm(kode_toko)
-    );
+    let rabItems = rows.filter((row) => norm(row.get("kode_toko")) === norm(kode_toko));
 
     // Filter berdasarkan no_ulok jika disediakan
     if (no_ulok) {
-      rabItems = rabItems.filter(
-        (row) => norm(row.get("no_ulok")) === norm(no_ulok)
-      );
+      rabItems = rabItems.filter((row) => norm(row.get("no_ulok")) === norm(no_ulok));
     }
     if (lingkup) {
       rabItems = rabItems.filter(
@@ -1074,6 +1081,7 @@ app.get("/api/debug/sheet-headers", async (req, res) => {
   }
 });
 
+
 // --- Ambil item Pending untuk persetujuan ---
 app.get("/api/opname/pending", async (req, res) => {
   try {
@@ -1148,19 +1156,32 @@ app.patch("/api/opname/approve", async (req, res) => {
 
     target.set("approval_status", "APPROVED"); // konsisten
     if (kontraktor_username && String(kontraktor_username).trim()) {
-      target.set("kontraktor", kontraktor_username);
+      target.set("kontraktor_username", kontraktor_username); // ✅ konsisten
     }
 
-    if (typeof catatan === "string" && catatan.trim()) {
-      const prev = target.get("catatan") || "";
-      const stamp = new Date().toLocaleString("id-ID", {
-        timeZone: "Asia/Jakarta",
-      });
-      const appended = prev
-        ? `${prev}\n[APPROVE ${stamp}] ${catatan.trim()}`
-        : `[APPROVE ${stamp}] ${catatan.trim()}`;
-      target.set("catatan", appended);
-    }
+await finalSheet.loadHeaderRow();
+const headers = finalSheet.headerValues || [];
+const CAT_KEY = headers.includes("catatan")
+  ? "catatan"
+  : headers.includes("Catatan")
+  ? "Catatan"
+  : headers.includes("CATATAN")
+  ? "CATATAN"
+  : headers.includes("")
+  ? ""
+  : "catatan";
+
+if (typeof catatan === "string" && catatan.trim()) {
+  const prev = target.get(CAT_KEY) || "";
+  const stamp = new Date().toLocaleString("id-ID", {
+    timeZone: "Asia/Jakarta",
+  });
+  const appended = prev
+    ? `${prev}\n[APPROVE ${stamp}] ${catatan.trim()}`
+    : `[APPROVE ${stamp}] ${catatan.trim()}`;
+  target.set(CAT_KEY, appended);
+}
+
 
     await target.save();
 
@@ -1194,22 +1215,34 @@ app.patch("/api/opname/reject", async (req, res) => {
     }
 
     // Update status jadi REJECTED
-    row.set("approval_status", "Rejected");
+    row.set("approval_status", "REJECTED");
     if (kontraktor_username) {
       row.set("kontraktor_username", kontraktor_username);
     }
 
     // 🔹 Tambah catatan
-    if (typeof catatan === "string" && catatan.trim()) {
-      const prev = row.get("catatan") || "";
-      const stamp = new Date().toLocaleString("id-ID", {
-        timeZone: "Asia/Jakarta",
-      });
-      const appended = prev
-        ? `${prev}\n[REJECT ${stamp}] ${catatan.trim()}`
-        : `[REJECT ${stamp}] ${catatan.trim()}`;
-      row.set("catatan", appended);
-    }
+await finalSheet.loadHeaderRow();
+const headers = finalSheet.headerValues || [];
+const CAT_KEY = headers.includes("catatan")
+  ? "catatan"
+  : headers.includes("Catatan")
+  ? "Catatan"
+  : headers.includes("CATATAN")
+  ? "CATATAN"
+  : headers.includes("")
+  ? ""
+  : "catatan";
+
+if (typeof catatan === "string" && catatan.trim()) {
+  const prev = row.get(CAT_KEY) || "";
+  const stamp = new Date().toLocaleString("id-ID", {
+    timeZone: "Asia/Jakarta",
+  });
+  const appended = prev
+    ? `${prev}\n[REJECT ${stamp}] ${catatan.trim()}`
+    : `[REJECT ${stamp}] ${catatan.trim()}`;
+  row.set(CAT_KEY, appended);
+}
 
     await row.save();
 
