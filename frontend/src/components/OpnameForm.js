@@ -473,6 +473,7 @@ const withLingkup = lk ? base + `&lingkup=${encodeURIComponent(lk)}` : null;
                 >
                   Foto
                 </th>
+                <th style={{ padding: "12px", minWidth: "220px" }}>Catatan</th>
                 <th style={{ padding: "12px", textAlign: "center" }}>Status</th>
                 <th style={{ padding: "12px", textAlign: "center" }}>Aksi</th>
               </tr>
@@ -482,12 +483,16 @@ const withLingkup = lk ? base + `&lingkup=${encodeURIComponent(lk)}` : null;
                 <tr
                   key={item.id}
                   style={{
-                    background:
-                      item.approval_status === "Rejected"
-                        ? "#ffe5e5" // merah muda untuk rejected
+                    background: (() => {
+                      const ST = String(
+                        item.approval_status || ""
+                      ).toUpperCase();
+                      return ST === "REJECTED"
+                        ? "#ffe5e5"
                         : item.isSubmitted
-                        ? "#f0fff0" // hijau untuk tersimpan
-                        : "transparent",
+                        ? "#f0fff0"
+                        : "transparent";
+                    })(),
                     borderBottom: "1px solid #ddd",
                   }}
                 >
@@ -590,64 +595,101 @@ const withLingkup = lk ? base + `&lingkup=${encodeURIComponent(lk)}` : null;
                       </a>
                     )}
                   </td>
+
+                  {/* Catatan */}
+                  <td style={{ padding: "12px" }}>
+                    {item.catatan ? (
+                      <pre
+                        style={{
+                          whiteSpace: "pre-wrap",
+                          fontSize: "12px",
+                          color: "#444",
+                        }}
+                      >
+                        {item.catatan}
+                      </pre>
+                    ) : (
+                      <span style={{ color: "#aaa" }}>—</span>
+                    )}
+                  </td>
+
                   <td style={{ padding: "12px", textAlign: "center" }}>
-                    <span
-                      className={`badge ${
-                        item.approval_status === "Pending"
+                    {(() => {
+                      const ST = String(
+                        item.approval_status || ""
+                      ).toUpperCase();
+                      const badge =
+                        ST === "PENDING"
                           ? "badge-warning"
-                          : item.approval_status === "Approved"
+                          : ST === "APPROVED"
                           ? "badge-success"
-                          : item.approval_status === "Rejected"
+                          : ST === "REJECTED"
                           ? "badge-error"
-                          : "badge-light"
-                      }`}
-                    >
-                      {item.approval_status}
-                    </span>
+                          : "badge-light";
+                      return (
+                        <span className={`badge ${badge}`}>
+                          {item.approval_status || "-"}
+                        </span>
+                      );
+                    })()}
                   </td>
                   <td style={{ padding: "12px", textAlign: "center" }}>
-                    {item.approval_status === "Rejected" ? (
-                      <button
-                        className="btn btn-warning btn-sm"
-                        onClick={() =>
-                          setOpnameItems((prev) =>
-                            prev.map((x) =>
-                              x.id === item.id
-                                ? {
-                                    ...x,
-                                    isSubmitted: false, // buka kembali agar bisa diisi ulang
-                                    approval_status: "Pending", // reset status
-                                    volume_akhir: "",
-                                    selisih: "",
-                                    total_harga: 0,
-                                  }
-                                : x
-                            )
-                          )
-                        }
-                      >
-                        Perbaiki
-                      </button>
-                    ) : item.isSubmitted ? (
-                      <div style={{ fontSize: "12px", color: "green" }}>
-                        <strong>Tersimpan</strong>
-                        <br />
-                        <small>{item.submissionTime}</small>
-                      </div>
-                    ) : (
-                      <button
-                        className="btn btn-primary btn-sm"
-                        onClick={() => handleItemSubmit(item.id)}
-                        disabled={
-                          item.isSubmitting ||
-                          item.volume_akhir === "" ||
-                          item.volume_akhir === null ||
-                          item.volume_akhir === undefined
-                        }
-                      >
-                        {item.isSubmitting ? "..." : "Simpan"}
-                      </button>
-                    )}
+                    {(() => {
+                      const ST = String(
+                        item.approval_status || ""
+                      ).toUpperCase();
+
+                      if (ST === "REJECTED") {
+                        return (
+                          <button
+                            className="btn btn-warning btn-sm"
+                            onClick={() =>
+                              setOpnameItems((prev) =>
+                                prev.map((x) =>
+                                  x.id === item.id
+                                    ? {
+                                        ...x,
+                                        isSubmitted: false, // buka kembali agar bisa diisi ulang
+                                        approval_status: "Pending", // reset status
+                                        volume_akhir: "",
+                                        selisih: "",
+                                        total_harga: 0,
+                                      }
+                                    : x
+                                )
+                              )
+                            }
+                          >
+                            Perbaiki
+                          </button>
+                        );
+                      }
+
+                      if (item.isSubmitted) {
+                        return (
+                          <div style={{ fontSize: "12px", color: "green" }}>
+                            <strong>Tersimpan</strong>
+                            <br />
+                            <small>{item.submissionTime}</small>
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <button
+                          className="btn btn-primary btn-sm"
+                          onClick={() => handleItemSubmit(item.id)}
+                          disabled={
+                            item.isSubmitting ||
+                            item.volume_akhir === "" ||
+                            item.volume_akhir === null ||
+                            item.volume_akhir === undefined
+                          }
+                        >
+                          {item.isSubmitting ? "..." : "Simpan"}
+                        </button>
+                      );
+                    })()}
                   </td>
                 </tr>
               ))}
