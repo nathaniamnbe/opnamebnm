@@ -505,7 +505,7 @@ app.get("/api/opname", async (req, res) => {
         harga_material: row.get("harga_material"),
         harga_upah: row.get("harga_upah"),
         rab_key: row.get("rab_key") || "",
-        
+        catatan: row.get("catatan") || "", // ⬅️ ini tambahan
       }));
 
  const takeMatch = (subs, rabJenis, rabLingkup, rabSatuan, rabHargaMat, rabHargaUpah, rabKey) => {
