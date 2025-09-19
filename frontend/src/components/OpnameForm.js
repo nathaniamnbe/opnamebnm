@@ -308,9 +308,9 @@ const withLingkup = lk ? base + `&lingkup=${encodeURIComponent(lk)}` : null;
     return (
       <div
         className="container"
-        style={{ paddingTop: "20px", maxWidth: "1500px" }}
+        style={{ paddingTop: "20px", width: "100%", maxWidth: "100%" }}
       >
-        <div className="card">
+        <div className="card" style={{ width: "100%" }}>
           <div
             style={{
               display: "flex",
