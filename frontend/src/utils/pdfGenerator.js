@@ -132,13 +132,17 @@ async function fetchPicKontraktorData(noUlok) {
 
 // FUNGSI TAMBAHAN BARU: Mengambil data PIC dan Kontraktor dari opname_final di Google Sheets (fallback tambahan)
 async function fetchPicKontraktorOpnameData(noUlok) {
-  const url = `${API_BASE_URL}/api/pic-kontraktor-opname?no_ulok=${encodeURIComponent(noUlok)}`;
+  const url = `${API_BASE_URL}/api/pic-kontraktor-opname?no_ulok=${encodeURIComponent(
+    noUlok
+  )}`;
   const res = await fetch(url);
-  if (!res.ok) return { pic_username: "N/A", kontraktor_username: "N/A" };
+  if (!res.ok)
+    return { pic_username: "N/A", kontraktor_username: "N/A", name: "" };
   const json = await res.json();
   return {
     pic_username: json.pic_username ?? "N/A",
     kontraktor_username: json.kontraktor_username ?? "N/A",
+    name: json.name ?? "", // ← penting
   };
 }
 
@@ -194,54 +198,38 @@ export const generateFinalOpnamePDF = async (
     selectedLingkup // 🔑 kirim ME/SIPIL
   );
   // --- Ambil Data PIC dan Kontraktor berdasarkan no_ulok ---
-  const picKontraktorData = await fetchPicKontraktorData(selectedUlok);
-  // Fallback: kalau API kosong/N/A, ambil dari rabData
-  if (
-    !picKontraktorData?.pic_username ||
-    picKontraktorData.pic_username === "N/A"
-  ) {
-    const r = (rabData || []).find(
-      (x) => x?.pic_username && String(x.pic_username).trim()
-    );
-    if (r) picKontraktorData.pic_username = r.pic_username;
+const picKontraktorData = await fetchPicKontraktorData(selectedUlok);
+
+// --- Selalu ambil 'name' dari opname_final (jika ada) ---
+const fromOpname = await fetchPicKontraktorOpnameData(selectedUlok);
+if (fromOpname?.name && String(fromOpname.name).trim()) {
+  picKontraktorData.name = String(fromOpname.name).trim(); // ← isi nama PIC
+}
+
+// Fallback email PIC kalau kosong
+if (
+  !picKontraktorData?.pic_username ||
+  picKontraktorData.pic_username === "N/A"
+) {
+  if (fromOpname?.pic_username && String(fromOpname.pic_username).trim()) {
+    picKontraktorData.pic_username = String(fromOpname.pic_username).trim();
   }
+}
+
+// Fallback kontraktor
+if (
+  !picKontraktorData?.kontraktor_username ||
+  picKontraktorData.kontraktor_username === "N/A"
+) {
   if (
-    !picKontraktorData?.kontraktor_username ||
-    picKontraktorData.kontraktor_username === "N/A"
+    fromOpname?.kontraktor_username &&
+    String(fromOpname.kontraktor_username).trim()
   ) {
-    const r = (rabData || []).find(
-      (x) =>
-        (x?.kontraktor || x?.kontraktor_username) &&
-        String(x.kontraktor || x.kontraktor_username).trim()
-    );
-    if (r)
-      picKontraktorData.kontraktor_username =
-        r.kontraktor || r.kontraktor_username;
+    picKontraktorData.kontraktor_username = String(
+      fromOpname.kontraktor_username
+    ).trim();
   }
-  // --- Fallback terakhir: cek tab opname_final lewat endpoint baru ---
-  if (
-    !picKontraktorData?.pic_username ||
-    picKontraktorData.pic_username === "N/A"
-  ) {
-    const fromOpname = await fetchPicKontraktorOpnameData(selectedUlok);
-    if (fromOpname?.pic_username && String(fromOpname.pic_username).trim()) {
-      picKontraktorData.pic_username = String(fromOpname.pic_username).trim();
-    }
-  }
-  if (
-    !picKontraktorData?.kontraktor_username ||
-    picKontraktorData.kontraktor_username === "N/A"
-  ) {
-    const fromOpname = await fetchPicKontraktorOpnameData(selectedUlok);
-    if (
-      fromOpname?.kontraktor_username &&
-      String(fromOpname.kontraktor_username).trim()
-    ) {
-      picKontraktorData.kontraktor_username = String(
-        fromOpname.kontraktor_username
-      ).trim();
-    }
-  }
+}
 
   // --- PENGATURAN HALAMAN ---
   const pageWidth = doc.internal.pageSize.getWidth();
