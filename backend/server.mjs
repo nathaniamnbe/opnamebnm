@@ -83,17 +83,38 @@ const doc = new GoogleSpreadsheet(
 const getContractorNameByUsername = async (username) => {
   try {
     await doc.loadInfo();
-    const usersSheet = doc.sheetsByTitle["users"];
-    if (!usersSheet) return "";
-    const rows = await usersSheet.getRows();
+
     const norm = (v) => (v ?? "").toString().trim().toLowerCase();
-    const r = rows.find((row) => norm(row.get("username")) === norm(username));
-    return r?.get("name") || "";
+
+    // 1) Coba cari di tab 'users' (kalau kebetulan ada)
+    const usersSheet = doc.sheetsByTitle["users"];
+    if (usersSheet) {
+      const urows = await usersSheet.getRows();
+      const ur = urows.find(
+        (row) => norm(row.get("username")) === norm(username)
+      );
+      if (ur?.get("name")) return String(ur.get("name")).trim();
+    }
+
+    // 2) Fallback: cari di tab 'data_kontraktor' via 'nama_kontraktor'
+    const kontrSheet = doc.sheetsByTitle["data_kontraktor"];
+    if (kontrSheet) {
+      const krows = await kontrSheet.getRows();
+      const kr = krows.find(
+        (row) => norm(row.get("nama_kontraktor")) === norm(username)
+      );
+      if (kr?.get("nama_kontraktor"))
+        return String(kr.get("nama_kontraktor")).trim();
+    }
+
+    // 3) Terakhir: pakai saja nilai yang dikirim (biar tetap terisi)
+    return (username ?? "").toString().trim();
   } catch (e) {
     console.error("Gagal membaca nama kontraktor:", e);
-    return "";
+    return (username ?? "").toString().trim();
   }
 };
+
 
 const getPicNameByUsername = async (username) => {
   try {
