@@ -367,10 +367,16 @@ const withLingkup = lk ? base + `&lingkup=${encodeURIComponent(lk)}` : null;
   // STEP 3: jika ULOK & LINGKUP sudah ada -> tampilkan tabel input
   return (
     <div
-      className="container"
-      style={{ paddingTop: "20px", maxWidth: "1500px" }}
+      style={{
+        paddingTop: "20px",
+        width: "100%",
+        maxWidth: "100%",
+        margin: "0", // hilangkan margin default
+        paddingLeft: "0", // hilangkan padding kiri
+        paddingRight: "0", // hilangkan padding kanan
+      }}
     >
-      <div className="card">
+      <div className="card" style={{ width: "100%", borderRadius: 0 }}>
         <div
           style={{
             display: "flex",
