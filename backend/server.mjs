@@ -507,7 +507,7 @@ app.get("/api/opname", async (req, res) => {
       "";
 
     // lalu di dalam .map() ganti bagian catatan
-    const submittedList = finalRows
+    let submittedList = finalRows
       .filter(
         (row) =>
           norm(row.get("kode_toko")) === norm(kode_toko) &&
@@ -527,9 +527,29 @@ app.get("/api/opname", async (req, res) => {
         harga_material: row.get("harga_material"),
         harga_upah: row.get("harga_upah"),
         rab_key: row.get("rab_key") || "",
-
-        catatan: getCatatan(row), // ⬅️ pakai helper
+        catatan: getCatatan(row),
       }));
+
+    // 🔹 Urutkan agar entri terbaru & non-rejected diprioritaskan
+    const statusRank = (s) => {
+      switch (String(s || "").toUpperCase()) {
+        case "PENDING":
+          return 3;
+        case "APPROVED":
+          return 2;
+        case "REJECTED":
+          return 1;
+        default:
+          return 0;
+      }
+    };
+    submittedList.sort((a, b) => {
+      const tb = Date.parse(b.tanggal_submit) || 0;
+      const ta = Date.parse(a.tanggal_submit) || 0;
+      if (tb !== ta) return tb - ta; // terbaru duluan
+      return statusRank(b.approval_status) - statusRank(a.approval_status);
+    });
+
 
     const takeMatch = (
       subs,
