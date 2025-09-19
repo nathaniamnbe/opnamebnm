@@ -206,157 +206,162 @@ const ApprovalPage = ({ onBack, selectedStore }) => {
   }
 
   // Step: daftar pending untuk APPROVAL
-return (
-  <div
-    className="container"
-    style={{
-      paddingTop: "20px",
-      // ⬇️ full lebar layar
-      maxWidth: "100%",
-      width: "100%",
-      margin: 0,
-      paddingLeft: "12px",
-      paddingRight: "12px",
-    }}
-  >
+  // Step: daftar pending untuk APPROVAL
+  return (
     <div
-      className="card"
+      // ⬇️ JANGAN pakai class "container" supaya tidak kena max-width global
       style={{
-        // ⬇️ card juga ikut full
-        width: "100%",
+        paddingTop: 20,
+        paddingLeft: 16,
+        paddingRight: 16,
+        width: "100vw",
+        maxWidth: "100vw",
         margin: 0,
+        boxSizing: "border-box",
       }}
     >
       <div
+        // ⬇️ JANGAN pakai class "card" juga; bikin card sendiri biar 100%
         style={{
-          display: "flex",
-          alignItems: "center",
-          marginBottom: "24px",
-          gap: "16px",
-          flexWrap: "wrap",
+          width: "100%",
+          maxWidth: "100%",
+          margin: 0,
+          borderRadius: 12,
+          background: "#fff",
+          boxShadow: "0 2px 10px rgba(0,0,0,.06)",
+          padding: 16,
+          boxSizing: "border-box",
         }}
       >
-        <button onClick={onBack} className="btn btn-outline">
-          ← Kembali
-        </button>
-        <h2 style={{ color: "var(--alfamart-red)" }}>
-          Persetujuan Opname — {selectedStore.kode_toko} (ULOK: {selectedUlok} •
-          Lingkup: {selectedLingkup})
-        </h2>
-      </div>
-
-      {message && (
         <div
-          className={`alert ${
-            message.startsWith("Error") ? "alert-error" : "alert-success"
-          }`}
-        >
-          {message}
-        </div>
-      )}
-
-      <div style={{ overflowX: "auto" }}>
-        <table
           style={{
-            width: "100%",
-            borderCollapse: "collapse",
-            textAlign: "left",
-            // ⬇️ opsional: kolom stabil saat full width
-            tableLayout: "fixed",
+            display: "flex",
+            alignItems: "center",
+            marginBottom: 24,
+            gap: 16,
+            flexWrap: "wrap",
           }}
         >
-          <thead>
-            <tr style={{ backgroundColor: "#f2f2f2" }}>
-              <th style={{ padding: "12px", minWidth: "140px" }}>Kategori</th>
-              <th style={{ padding: "12px" }}>Jenis Pekerjaan</th>
-              <th style={{ padding: "12px", textAlign: "center" }}>
-                Volume Akhir
-              </th>
-              <th style={{ padding: "12px", textAlign: "center" }}>Foto</th>
-              <th style={{ padding: "12px" }}>PIC</th>
-              <th style={{ padding: "12px" }}>Waktu Submit</th>
-              {/* ⬇️ Tambah ini */}
-              <th style={{ padding: "12px", minWidth: 220 }}>Catatan</th>
-              <th style={{ padding: "12px", textAlign: "center" }}>Aksi</th>
-            </tr>
-          </thead>
-          <tbody>
-            {pendingItems.map((item) => (
-              <tr
-                key={item.item_id || Math.random()}
-                style={{ borderBottom: "1px solid #ddd" }}
-              >
-                <td style={{ padding: "12px" }}>{item.kategori_pekerjaan}</td>
-                <td style={{ padding: "12px" }}>{item.jenis_pekerjaan}</td>
-                <td style={{ padding: "12px", textAlign: "center" }}>
-                  {item.volume_akhir} {item.satuan || ""}
-                </td>
-                <td style={{ padding: "12px", textAlign: "center" }}>
-                  {item.foto_url ? (
-                    <a
-                      href={item.foto_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      Lihat Foto
-                    </a>
-                  ) : (
-                    <span style={{ color: "#999" }}>—</span>
-                  )}
-                </td>
-                <td style={{ padding: "12px" }}>{item.pic_username}</td>
-                <td style={{ padding: "12px" }}>{item.tanggal_submit}</td>
-                {/* ⬇️ Tambahkan ini sebelum kolom Aksi */}
-                <td style={{ padding: "12px" }}>
-                  <textarea
-                    value={notes[item.item_id] ?? ""}
-                    onChange={(e) =>
-                      setNotes((prev) => ({
-                        ...prev,
-                        [item.item_id]: e.target.value,
-                      }))
-                    }
-                    placeholder="Tambahkan catatan (opsional)…"
-                    rows={2}
-                    style={{ width: "100%" }}
-                  />
-                </td>
-                <td style={{ padding: "12px", textAlign: "center" }}>
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "center",
-                      gap: "10px",
-                    }}
-                  >
-                    <button
-                      className="btn btn-success btn-sm"
-                      onClick={() => handleApprove(item.item_id)}
-                    >
-                      Approve
-                    </button>
-                    <button
-                      className="btn btn-error btn-sm"
-                      onClick={() => handleReject(item.item_id)}
-                    >
-                      Reject
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+          <button onClick={onBack} className="btn btn-outline">
+            ← Kembali
+          </button>
+          <h2 style={{ color: "var(--alfamart-red)" }}>
+            Persetujuan Opname — {selectedStore.kode_toko} (ULOK: {selectedUlok}{" "}
+            • Lingkup: {selectedLingkup})
+          </h2>
+        </div>
 
-        {pendingItems.length === 0 && !loading && (
-          <p style={{ textAlign: "center", padding: "20px" }}>
-            Tidak ada opname yang menunggu persetujuan untuk pilihan ini.
-          </p>
+        {message && (
+          <div
+            className={`alert ${
+              message.startsWith("Error") ? "alert-error" : "alert-success"
+            }`}
+          >
+            {message}
+          </div>
         )}
+
+        <div style={{ overflowX: "auto" }}>
+          <table
+            style={{
+              width: "100%",
+              borderCollapse: "collapse",
+              textAlign: "left",
+              tableLayout: "fixed", // kolom stabil saat full width
+            }}
+          >
+            <thead>
+              <tr style={{ backgroundColor: "#f2f2f2" }}>
+                <th style={{ padding: "12px", minWidth: "140px" }}>Kategori</th>
+                <th style={{ padding: "12px" }}>Jenis Pekerjaan</th>
+                <th style={{ padding: "12px", textAlign: "center" }}>
+                  Volume Akhir
+                </th>
+                <th style={{ padding: "12px", textAlign: "center" }}>Foto</th>
+                <th style={{ padding: "12px" }}>PIC</th>
+                <th style={{ padding: "12px" }}>Waktu Submit</th>
+                {/* ⬇️ Tambah ini */}
+                <th style={{ padding: "12px", minWidth: 220 }}>Catatan</th>
+                <th style={{ padding: "12px", textAlign: "center" }}>Aksi</th>
+              </tr>
+            </thead>
+            <tbody>
+              {pendingItems.map((item) => (
+                <tr
+                  key={item.item_id || Math.random()}
+                  style={{ borderBottom: "1px solid #ddd" }}
+                >
+                  <td style={{ padding: "12px" }}>{item.kategori_pekerjaan}</td>
+                  <td style={{ padding: "12px" }}>{item.jenis_pekerjaan}</td>
+                  <td style={{ padding: "12px", textAlign: "center" }}>
+                    {item.volume_akhir} {item.satuan || ""}
+                  </td>
+                  <td style={{ padding: "12px", textAlign: "center" }}>
+                    {item.foto_url ? (
+                      <a
+                        href={item.foto_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        Lihat Foto
+                      </a>
+                    ) : (
+                      <span style={{ color: "#999" }}>—</span>
+                    )}
+                  </td>
+                  <td style={{ padding: "12px" }}>{item.pic_username}</td>
+                  <td style={{ padding: "12px" }}>{item.tanggal_submit}</td>
+                  {/* ⬇️ Tambahkan ini sebelum kolom Aksi */}
+                  <td style={{ padding: "12px" }}>
+                    <textarea
+                      value={notes[item.item_id] ?? ""}
+                      onChange={(e) =>
+                        setNotes((prev) => ({
+                          ...prev,
+                          [item.item_id]: e.target.value,
+                        }))
+                      }
+                      placeholder="Tambahkan catatan (opsional)…"
+                      rows={2}
+                      style={{ width: "100%" }}
+                    />
+                  </td>
+                  <td style={{ padding: "12px", textAlign: "center" }}>
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "center",
+                        gap: "10px",
+                      }}
+                    >
+                      <button
+                        className="btn btn-success btn-sm"
+                        onClick={() => handleApprove(item.item_id)}
+                      >
+                        Approve
+                      </button>
+                      <button
+                        className="btn btn-error btn-sm"
+                        onClick={() => handleReject(item.item_id)}
+                      >
+                        Reject
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          {pendingItems.length === 0 && !loading && (
+            <p style={{ textAlign: "center", padding: 20 }}>
+              Tidak ada opname yang menunggu persetujuan untuk pilihan ini.
+            </p>
+          )}
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
 };
 
 export default ApprovalPage;
