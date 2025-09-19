@@ -79,6 +79,22 @@ const doc = new GoogleSpreadsheet(
 // FUNGSI BANTU
 // =================================================================
 // --- Ambil nama PIC dari sheet 'users' berdasarkan username (email)
+// --- Ambil nama KONTRAKTOR dari sheet 'users' berdasarkan username
+const getContractorNameByUsername = async (username) => {
+  try {
+    await doc.loadInfo();
+    const usersSheet = doc.sheetsByTitle["users"];
+    if (!usersSheet) return "";
+    const rows = await usersSheet.getRows();
+    const norm = (v) => (v ?? "").toString().trim().toLowerCase();
+    const r = rows.find((row) => norm(row.get("username")) === norm(username));
+    return r?.get("name") || "";
+  } catch (e) {
+    console.error("Gagal membaca nama kontraktor:", e);
+    return "";
+  }
+};
+
 const getPicNameByUsername = async (username) => {
   try {
     await doc.loadInfo();
@@ -1198,9 +1214,15 @@ app.patch("/api/opname/approve", async (req, res) => {
     }
 
     target.set("approval_status", "APPROVED"); // konsisten
-    if (kontraktor_username && String(kontraktor_username).trim()) {
-      target.set("kontraktor_username", kontraktor_username); // ✅ konsisten
-    }
+if (kontraktor_username && String(kontraktor_username).trim()) {
+  target.set("kontraktor_username", kontraktor_username);
+
+  // simpan juga nama kontraktor
+  const kontraktorName = await getContractorNameByUsername(kontraktor_username);
+  if (kontraktorName) {
+    target.set("kontraktor", kontraktorName);
+  }
+}
 
 await finalSheet.loadHeaderRow();
 const headers = finalSheet.headerValues || [];
@@ -1259,9 +1281,15 @@ app.patch("/api/opname/reject", async (req, res) => {
 
     // Update status jadi REJECTED
     row.set("approval_status", "REJECTED");
-    if (kontraktor_username) {
-      row.set("kontraktor_username", kontraktor_username);
-    }
+if (kontraktor_username) {
+  row.set("kontraktor_username", kontraktor_username);
+
+  // simpan juga nama kontraktor
+  const kontraktorName = await getContractorNameByUsername(kontraktor_username);
+  if (kontraktorName) {
+    row.set("kontraktor", kontraktorName);
+  }
+}
 
     // 🔹 Tambah catatan
 await finalSheet.loadHeaderRow();

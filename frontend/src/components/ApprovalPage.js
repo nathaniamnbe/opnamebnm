@@ -309,7 +309,7 @@ const ApprovalPage = ({ onBack, selectedStore }) => {
                       <span style={{ color: "#999" }}>—</span>
                     )}
                   </td>
-                  <td style={{ padding: "12px" }}>{item.pic_username}</td>
+                  <td style={{ padding: "12px" }}>{item.name}</td>
                   <td style={{ padding: "12px" }}>{item.tanggal_submit}</td>
                   {/* ⬇️ Tambahkan ini sebelum kolom Aksi */}
                   <td style={{ padding: "12px" }}>
