@@ -570,6 +570,7 @@ const matched = takeMatch(
           approval_status: matched?.approval_status || "Not Submitted",
           submissionTime: matched?.tanggal_submit || null,
           foto_url: matched?.foto_url || null,
+          catatan: matched?.catatan || "", // ⬅️ penting
         };
       });
 
@@ -1170,7 +1171,7 @@ app.patch("/api/opname/reject", async (req, res) => {
     }
 
     // Update status jadi REJECTED
-    row.set("approval_status", "Rejected");
+    row.set("approval_status", "REJECTED");
     if (kontraktor_username) {
       row.set("kontraktor_username", kontraktor_username);
     }
