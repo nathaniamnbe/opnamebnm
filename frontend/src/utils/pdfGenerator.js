@@ -276,7 +276,7 @@ export const generateFinalOpnamePDF = async (
   doc.text(`TANGGAL OPNAME : ${currentDate}`, margin, startY);
   startY += 7;
   doc.text(
-    `NAMA PIC : ${picKontraktorData.pic_username || "N/A"}`,
+    `NAMA PIC : ${picKontraktorData.name || "N/A"}`,
     margin,
     startY
   );
