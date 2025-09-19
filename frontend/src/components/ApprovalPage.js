@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 import LingkupSelection from "./LingkupSelection"; // ← step baru: pilih ME/SIPIL
 import { useAuth } from "../context/AuthContext";
 
+
 const API_BASE_URL = process.env.REACT_APP_API_URL || "";
 
 const ApprovalPage = ({ onBack, selectedStore }) => {
@@ -13,7 +14,7 @@ const ApprovalPage = ({ onBack, selectedStore }) => {
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
   const { user } = useAuth();
-
+  const [notes, setNotes] = useState({});
   // Step 1: pilih ULOK
   const [uloks, setUloks] = useState([]);
   const [selectedUlok, setSelectedUlok] = useState(null);
@@ -56,6 +57,13 @@ const ApprovalPage = ({ onBack, selectedStore }) => {
       .then((res) => res.json())
       .then((data) => {
         setPendingItems(data || []);
+        // ⬇️ Inisialisasi catatan kosong per item
+        const initial = {};
+        (data || []).forEach((it) => {
+          if (it.item_id) initial[it.item_id] = "";
+        });
+        setNotes(initial);
+
         setLoading(false);
       })
       .catch((err) => {
@@ -83,12 +91,18 @@ const ApprovalPage = ({ onBack, selectedStore }) => {
           item_id: itemId,
           kontraktor_username:
             user?.email || user?.username || user?.name || "",
+          catatan: notes[itemId] || "", // ⬅️ kirim catatan
         }),
       });
       const result = await response.json();
       if (!response.ok) throw new Error(result.message || "Gagal approve");
       setMessage("Berhasil di-approve!");
       setTimeout(() => setMessage(""), 2500);
+      setNotes((prev) => {
+        const next = { ...prev };
+        delete next[itemId];
+        return next;
+      });
     } catch (error) {
       setMessage(`Error: ${error.message}`);
       setPendingItems(original); // rollback
@@ -109,12 +123,18 @@ const ApprovalPage = ({ onBack, selectedStore }) => {
           item_id: itemId,
           kontraktor_username:
             user?.email || user?.username || user?.name || "",
+          catatan: notes[itemId] || "", // ⬅️ kirim catatan
         }),
       });
       const result = await response.json();
       if (!response.ok) throw new Error(result.message || "Gagal reject");
       setMessage("Berhasil di-reject!");
       setTimeout(() => setMessage(""), 2500);
+      setNotes((prev) => {
+        const next = { ...prev };
+        delete next[itemId];
+        return next;
+      });
     } catch (error) {
       setMessage(`Error: ${error.message}`);
       setPendingItems(original); // rollback
@@ -235,6 +255,8 @@ const ApprovalPage = ({ onBack, selectedStore }) => {
                 <th style={{ padding: "12px", textAlign: "center" }}>Foto</th>
                 <th style={{ padding: "12px" }}>PIC</th>
                 <th style={{ padding: "12px" }}>Waktu Submit</th>
+                {/* ⬇️ Tambah ini */}
+                <th style={{ padding: "12px", minWidth: 220 }}>Catatan</th>
                 <th style={{ padding: "12px", textAlign: "center" }}>Aksi</th>
               </tr>
             </thead>
@@ -264,6 +286,21 @@ const ApprovalPage = ({ onBack, selectedStore }) => {
                   </td>
                   <td style={{ padding: "12px" }}>{item.pic_username}</td>
                   <td style={{ padding: "12px" }}>{item.tanggal_submit}</td>
+                  {/* ⬇️ Tambahkan ini sebelum kolom Aksi */}
+                  <td style={{ padding: "12px" }}>
+                    <textarea
+                      value={notes[item.item_id] ?? ""}
+                      onChange={(e) =>
+                        setNotes((prev) => ({
+                          ...prev,
+                          [item.item_id]: e.target.value,
+                        }))
+                      }
+                      placeholder="Tambahkan catatan (opsional)…"
+                      rows={2}
+                      style={{ width: "100%" }}
+                    />
+                  </td>
                   <td style={{ padding: "12px", textAlign: "center" }}>
                     <div
                       style={{
