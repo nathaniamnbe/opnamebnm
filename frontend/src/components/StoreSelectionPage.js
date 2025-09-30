@@ -5,8 +5,6 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || "";
-
 const StoreSelectionPage = ({ onSelectStore, onBack, type }) => {
   const { user } = useAuth();
   const [stores, setStores] = useState([]);
@@ -24,12 +22,12 @@ const StoreSelectionPage = ({ onSelectStore, onBack, type }) => {
 
     // Tentukan API mana yang akan dipanggil berdasarkan peran pengguna dan tujuan halaman
     if ((type === "opname" || type === "final-opname") && user.role === "pic") {
-      storeApiUrl = `${API_BASE_URL}/api/toko?username=${user.username}`;
+      storeApiUrl = `/api/toko?username=${user.username}`;
     } else if (
       (type === "approval" || type === "history") &&
       user.role === "kontraktor"
     ) {
-      storeApiUrl = `${API_BASE_URL}/api/toko_kontraktor?username=${user.username}`;
+      storeApiUrl = `/api/toko_kontraktor?username=${user.username}`;
     } else {
       setLoading(false);
       return;
@@ -54,7 +52,7 @@ const StoreSelectionPage = ({ onSelectStore, onBack, type }) => {
 
     // Jika kontraktor, ambil juga jumlah notifikasi pending untuk badge
     if (user.role === "kontraktor" && type === "approval") {
-      fetch(`${API_BASE_URL}/api/opname/pending/counts?username=${user.username}`)
+      fetch(`/api/opname/pending/counts?username=${user.username}`)
         .then((res) => res.json())
         .then((counts) => setNotificationCounts(counts || {}))
         .catch((err) => console.error("Error fetching counts:", err));
