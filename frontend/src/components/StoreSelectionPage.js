@@ -62,11 +62,13 @@ const StoreSelectionPage = ({ onSelectStore, onBack, type }) => {
   }, [type, user]);
 
   // Logika untuk memfilter daftar toko berdasarkan input di kolom pencarian
-  const filteredStores = Array.isArray(stores)
-    ? stores.filter((store) =>
-        store.kode_toko.toLowerCase().includes(searchTerm.toLowerCase())
-      )
-    : [];
+const filteredStores = Array.isArray(stores)
+  ? stores.filter((store) =>
+      (store.kode_toko || store.nama_toko || "")
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase())
+    )
+  : [];
 
   if (loading) {
     return (
@@ -122,9 +124,9 @@ const StoreSelectionPage = ({ onSelectStore, onBack, type }) => {
           }}
         >
           {/* Gunakan `filteredStores` untuk me-render tombol */}
-          {filteredStores.map((toko) => (
+          {filteredStores.map((toko, idx) => (
             <button
-              key={toko.kode_toko}
+              key={toko.kode_toko || toko.nama_toko || idx}
               onClick={() => onSelectStore(toko)}
               className="btn btn-secondary"
               style={{
@@ -140,9 +142,9 @@ const StoreSelectionPage = ({ onSelectStore, onBack, type }) => {
             >
               <span style={{ fontSize: "28px" }}>🏪</span>
               <div>
-                <strong>{toko.kode_toko}</strong>
+                <strong>{toko.kode_toko || "-"}</strong>
               </div>
-              <div style={{ fontSize: "14px" }}>{toko.nama_toko}</div>
+              <div style={{ fontSize: "14px" }}>{toko.nama_toko || ""}</div>
               {user.role === "kontraktor" &&
                 type === "approval" &&
                 notificationCounts[toko.kode_toko] > 0 && (
