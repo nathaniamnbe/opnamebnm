@@ -126,7 +126,7 @@ const filteredStores = Array.isArray(stores)
           {/* Gunakan `filteredStores` untuk me-render tombol */}
           {filteredStores.map((toko, idx) => (
             <button
-              key={toko.kode_toko || toko.nama_toko || idx}
+              key={toko.nama_toko || idx}
               onClick={() => onSelectStore(toko)}
               className="btn btn-secondary"
               style={{
@@ -142,9 +142,8 @@ const filteredStores = Array.isArray(stores)
             >
               <span style={{ fontSize: "28px" }}>🏪</span>
               <div>
-                <strong>{toko.kode_toko || "-"}</strong>
+                <strong>{toko.nama_toko || "-"}</strong>
               </div>
-              <div style={{ fontSize: "14px" }}>{toko.nama_toko || ""}</div>
               {user.role === "kontraktor" &&
                 type === "approval" &&
                 notificationCounts[toko.kode_toko] > 0 && (
