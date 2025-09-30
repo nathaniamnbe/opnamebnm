@@ -62,20 +62,11 @@ const StoreSelectionPage = ({ onSelectStore, onBack, type }) => {
   }, [type, user]);
 
   // Logika untuk memfilter daftar toko berdasarkan input di kolom pencarian
-const filteredStores = Array.isArray(stores)
-  ? stores
-      .filter(
-        (s) => s && typeof s.kode_toko === "string" && s.kode_toko.trim() !== ""
+  const filteredStores = Array.isArray(stores)
+    ? stores.filter((store) =>
+        store.kode_toko.toLowerCase().includes(searchTerm.toLowerCase())
       )
-      .filter((store) => {
-        const kode = store.kode_toko.toLowerCase();
-        const nama = String(store.nama_toko ?? "").toLowerCase();
-        const q = String(searchTerm ?? "").toLowerCase();
-        return kode.includes(q) || nama.includes(q);
-      })
-  : [];
-
-
+    : [];
 
   if (loading) {
     return (
@@ -131,9 +122,9 @@ const filteredStores = Array.isArray(stores)
           }}
         >
           {/* Gunakan `filteredStores` untuk me-render tombol */}
-          {filteredStores.map((toko, idx) => (
+          {filteredStores.map((toko) => (
             <button
-              key={toko.kode_toko || toko.nama_toko || idx}
+              key={toko.kode_toko}
               onClick={() => onSelectStore(toko)}
               className="btn btn-secondary"
               style={{

@@ -477,8 +477,7 @@ app.get("/api/toko", async (req, res) => {
 
     const storesMap = new Map();
     assignedRows.forEach((row) => {
-      const kode_toko = (row.get("kode_toko") || "").trim();
-      if (!kode_toko) return; // ← skip entri kosong
+      const kode_toko = row.get("kode_toko");
       if (!storesMap.has(kode_toko)) {
         storesMap.set(kode_toko, {
           kode_toko,
@@ -949,8 +948,7 @@ app.get("/api/toko_kontraktor", async (req, res) => {
 
     const storesMap = new Map();
     assignedRows.forEach((row) => {
-      const kode_toko = (row.get("kode_toko") || "").trim();
-      if (!kode_toko) return; // ← skip entri kosong
+      const kode_toko = row.get("kode_toko");
       if (!storesMap.has(kode_toko)) {
         storesMap.set(kode_toko, {
           kode_toko,
