@@ -62,11 +62,16 @@ const StoreSelectionPage = ({ onSelectStore, onBack, type }) => {
   }, [type, user]);
 
   // Logika untuk memfilter daftar toko berdasarkan input di kolom pencarian
-  const filteredStores = Array.isArray(stores)
-    ? stores.filter((store) =>
-        store.kode_toko.toLowerCase().includes(searchTerm.toLowerCase())
-      )
-    : [];
+const filteredStores = Array.isArray(stores)
+  ? stores
+      .filter(Boolean) // buang null/undefined jika ada
+      .filter((store) => {
+        const kode = (store?.kode_toko ?? "").toString().toLowerCase();
+        const q = (searchTerm ?? "").toString().toLowerCase();
+        return kode.includes(q);
+      })
+  : [];
+
 
   if (loading) {
     return (

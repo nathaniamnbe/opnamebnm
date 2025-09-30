@@ -259,7 +259,9 @@ if (
   startY += 7;
   doc.text(`NOMOR ULOK : ${selectedUlok || "undefined"}`, margin, startY);
   startY += 7;
-  
+  // 🔹 Tambahkan Lingkup Pekerjaan dari data submissions
+doc.text(`LINGKUP PEKERJAAN : ${selectedLingkup || "N/A"}`, margin, startY);
+startY += 7;
   doc.text(`ALAMAT : ${selectedStore.nama_toko}`, margin, startY);
   startY += 7;
   doc.text(`TANGGAL OPNAME : ${currentDate}`, margin, startY);
