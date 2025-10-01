@@ -1,9 +1,12 @@
 // src/utils/pdfGenerator.js
 
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || "";
+const { default: jsPDF } = await import("jspdf");
+const { default: autoTable } = await import("jspdf-autotable");
+
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL || process.env.REACT_APP_API_URL || "";
+
 
 // --- PENGATURAN TEKS ---
 const companyName = "PT. SUMBER ALFARIA TRIJAYA, Tbk";
@@ -256,6 +259,8 @@ export const generateFinalOpnamePDF = async (
 
   // --- PENGATURAN HALAMAN ---
   const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const margin = 14;
 
   // --- HEADER ---
   doc.setFillColor(229, 30, 37);
@@ -266,7 +271,7 @@ export const generateFinalOpnamePDF = async (
   doc.setFontSize(9);
   doc.text(branch, pageWidth / 2, 20, { align: "center" });
   doc.setTextColor(0, 0, 0);
-  startY = 40;
+  let startY = 40;
 
   // --- JUDUL DOKUMEN ---
   doc.setFontSize(14).setFont(undefined, "bold");
@@ -364,14 +369,13 @@ export const generateFinalOpnamePDF = async (
     });
 
     // Tambah baris SUB TOTAL
-    const categoryTotal = rabCategories[categoryName].reduce(
-      (sum, item) =>
-        sum +
-        sum +
-        toNumberVol(item.volume) * toNumberID(item.harga_material) +
-        toNumberVol(item.volume) * toNumberID(item.harga_upah),
-      0
-    );
+const categoryTotal = rabCategories[categoryName].reduce((sum, item) => {
+  const vol = toNumberVol(item.volume);
+  const material = vol * toNumberID(item.harga_material);
+  const upah = vol * toNumberID(item.harga_upah);
+  return sum + material + upah;
+}, 0);
+
 
     categoryTableBody.push([
       "",
@@ -461,7 +465,7 @@ export const generateFinalOpnamePDF = async (
       },
     });
 
-    lastY = doc.lastAutoTable.finalY + 10;
+    lastY = (doc.lastAutoTable?.finalY ?? lastY) + 10;
   });
 
   // GRAND TOTAL untuk RAB
@@ -504,7 +508,8 @@ export const generateFinalOpnamePDF = async (
     },
   });
 
-  lastY = doc.lastAutoTable.finalY + 15;
+  lastY = (doc.lastAutoTable?.finalY ?? lastY) + 15;
+
 
   // --- BAGIAN LAPORAN OPNAME FINAL ---
   if (submissions && submissions.length > 0) {
@@ -605,7 +610,7 @@ export const generateFinalOpnamePDF = async (
         },
       });
 
-      lastY = doc.lastAutoTable.finalY + 10;
+      lastY = (doc.lastAutoTable?.finalY ?? lastY) + 10;
       kategoriIndex += 1;
     }
 
@@ -654,7 +659,8 @@ export const generateFinalOpnamePDF = async (
       },
     });
 
-    lastY = doc.lastAutoTable.finalY + 15;
+    lastY = (doc.lastAutoTable?.finalY ?? lastY) + 15;
+
 
     // --- STATUS PEKERJAAN (DIPERAPiHKAN) ---
     addFooter(doc.getNumberOfPages());
@@ -747,7 +753,8 @@ export const generateFinalOpnamePDF = async (
       },
     });
 
-    lastY = doc.lastAutoTable.finalY + 15;
+    lastY = (doc.lastAutoTable?.finalY ?? lastY) + 15;
+
 
     // --- LAMPIRAN FOTO ---
     const itemsWithPhotos = (submissions || []).filter((item) => item.foto_url);
