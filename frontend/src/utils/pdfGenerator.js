@@ -50,13 +50,13 @@ const toNumberVol = (v) => {
   return Number.isFinite(n) ? n : 0;
 };
 
-
-
 // Fungsi bantu untuk mengambil gambar dan mengubahnya ke Base64
 const toBase64 = async (url) => {
   try {
     if (!url) return null;
-    const proxyUrl = `${API_BASE_URL}/api/image-proxy?url=${encodeURIComponent(url)}`;
+    const proxyUrl = `${API_BASE_URL}/api/image-proxy?url=${encodeURIComponent(
+      url
+    )}`;
     const response = await fetch(proxyUrl);
     if (!response.ok)
       throw new Error(
@@ -103,11 +103,11 @@ const wrapText = (doc, text, maxWidth) => {
 // Fungsi untuk mengambil data RAB dari API
 const fetchRabData = async (kode_toko, no_ulok, lingkup) => {
   try {
-   const url = new URL(`${API_BASE_URL}/api/rab`);
-   url.searchParams.set("kode_toko", kode_toko);
-   if (no_ulok)  url.searchParams.set("no_ulok",  no_ulok);
-   if (lingkup)  url.searchParams.set("lingkup",  lingkup); // 🔑 tambah filter
-   const response = await fetch(url.toString());
+    const url = new URL(`${API_BASE_URL}/api/rab`);
+    url.searchParams.set("kode_toko", kode_toko);
+    if (no_ulok) url.searchParams.set("no_ulok", no_ulok);
+    if (lingkup) url.searchParams.set("lingkup", lingkup); // 🔑 tambah filter
+    const response = await fetch(url.toString());
     if (!response.ok) throw new Error("Gagal mengambil data RAB");
     return await response.json();
   } catch (error) {
@@ -190,46 +190,48 @@ export const generateFinalOpnamePDF = async (
   };
 
   // --- Ambil Data RAB dari server (terfilter lingkup) ---
-  const selectedLingkup =
-    (submissions && submissions[0]?.lingkup_pekerjaan || "").toUpperCase();
+  const selectedLingkup = (
+    (submissions && submissions[0]?.lingkup_pekerjaan) ||
+    ""
+  ).toUpperCase();
   const rabData = await fetchRabData(
     selectedStore.kode_toko,
     selectedUlok,
     selectedLingkup // 🔑 kirim ME/SIPIL
   );
   // --- Ambil Data PIC dan Kontraktor berdasarkan no_ulok ---
-const picKontraktorData = await fetchPicKontraktorData(selectedUlok);
+  const picKontraktorData = await fetchPicKontraktorData(selectedUlok);
 
-// --- Selalu ambil 'name' dari opname_final (jika ada) ---
-const fromOpname = await fetchPicKontraktorOpnameData(selectedUlok);
-if (fromOpname?.name && String(fromOpname.name).trim()) {
-  picKontraktorData.name = String(fromOpname.name).trim(); // ← isi nama PIC
-}
-
-// Fallback email PIC kalau kosong
-if (
-  !picKontraktorData?.pic_username ||
-  picKontraktorData.pic_username === "N/A"
-) {
-  if (fromOpname?.pic_username && String(fromOpname.pic_username).trim()) {
-    picKontraktorData.pic_username = String(fromOpname.pic_username).trim();
+  // --- Selalu ambil 'name' dari opname_final (jika ada) ---
+  const fromOpname = await fetchPicKontraktorOpnameData(selectedUlok);
+  if (fromOpname?.name && String(fromOpname.name).trim()) {
+    picKontraktorData.name = String(fromOpname.name).trim(); // ← isi nama PIC
   }
-}
 
-// Fallback kontraktor
-if (
-  !picKontraktorData?.kontraktor_username ||
-  picKontraktorData.kontraktor_username === "N/A"
-) {
+  // Fallback email PIC kalau kosong
   if (
-    fromOpname?.kontraktor_username &&
-    String(fromOpname.kontraktor_username).trim()
+    !picKontraktorData?.pic_username ||
+    picKontraktorData.pic_username === "N/A"
   ) {
-    picKontraktorData.kontraktor_username = String(
-      fromOpname.kontraktor_username
-    ).trim();
+    if (fromOpname?.pic_username && String(fromOpname.pic_username).trim()) {
+      picKontraktorData.pic_username = String(fromOpname.pic_username).trim();
+    }
   }
-}
+
+  // Fallback kontraktor
+  if (
+    !picKontraktorData?.kontraktor_username ||
+    picKontraktorData.kontraktor_username === "N/A"
+  ) {
+    if (
+      fromOpname?.kontraktor_username &&
+      String(fromOpname.kontraktor_username).trim()
+    ) {
+      picKontraktorData.kontraktor_username = String(
+        fromOpname.kontraktor_username
+      ).trim();
+    }
+  }
 
   // --- PENGATURAN HALAMAN ---
   const pageWidth = doc.internal.pageSize.getWidth();
@@ -260,14 +262,16 @@ if (
   doc.text(`NOMOR ULOK : ${selectedUlok || "undefined"}`, margin, startY);
   startY += 7;
   // 🔹 Tambahkan Lingkup Pekerjaan dari data submissions
-doc.text(`LINGKUP PEKERJAAN : ${selectedLingkup || "N/A"}`, margin, startY);
-startY += 7;
+  doc.text(`LINGKUP PEKERJAAN : ${selectedLingkup || "N/A"}`, margin, startY);
+  startY += 7;
   doc.text(`ALAMAT : ${selectedStore.nama_toko}`, margin, startY);
   startY += 7;
   doc.text(`TANGGAL OPNAME : ${currentDate}`, margin, startY);
   startY += 7;
   doc.text(
-    `NAMA PIC : ${picKontraktorData.name || "N/A"}`,
+    `NAMA PIC : ${
+      picKontraktorData.name || picKontraktorData.pic_username || "N/A"
+    }`,
     margin,
     startY
   );
@@ -508,79 +512,83 @@ startY += 7;
       "Total Harga Akhir",
     ];
 
-const groups = {};
-(submissions || []).forEach((it) => {
-  const key = (it.kategori_pekerjaan || "LAINNYA").toString();
-  if (!groups[key]) groups[key] = [];
-  groups[key].push(it);
-});
+    const groups = {};
+    (submissions || []).forEach((it) => {
+      const key = (it.kategori_pekerjaan || "LAINNYA").toString();
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(it);
+    });
 
-let kategoriIndex = 1;
-for (const [kategori, items] of Object.entries(groups)) {
-  // jika mepet bawah halaman, pindah halaman
-  if (lastY + 20 > pageHeight - 20) {
-    addFooter(doc.getNumberOfPages());
-    doc.addPage();
-    lastY = margin + 10;
-  }
-
-  // judul kategori seperti RAB: "1. PEKERJAAN PERSIAPAN"
-  doc.setFontSize(11).setFont(undefined, "bold");
-  doc.text(`${kategoriIndex}. ${kategori.toUpperCase()}`, margin, lastY + 8);
-  lastY += 12;
-
-  // susun baris untuk kategori ini
-  const rows = items.map((item, idx) => [
-    idx + 1,
-    item.jenis_pekerjaan,
-    item.vol_rab,
-    item.satuan,
-    item.volume_akhir,
-    `${item.selisih} ${item.satuan}`,
-    formatRupiah(item.total_harga_akhir),
-  ]);
-
-  // tabel untuk kategori ini
-  autoTable(doc, {
-    head: [opnameTableColumn],
-    body: rows,
-    startY: lastY,
-    margin: { left: margin, right: margin },
-    theme: "grid",
-    styles: { fontSize: 7, cellPadding: 1.5, overflow: "linebreak" },
-    headStyles: {
-      fillColor: [34, 139, 34],
-      textColor: [255, 255, 255],
-      halign: "center",
-      valign: "middle",
-      fontSize: 7,
-      fontStyle: "bold",
-    },
-    bodyStyles: {
-      fontSize: 7,
-      valign: "middle",
-      lineColor: [150, 150, 150],
-      lineWidth: 0.2,
-    },
-    columnStyles: {
-      0: { halign: "center", cellWidth: 8 }, // No
-      1: { cellWidth: "auto", minCellWidth: 40 }, // Jenis Pekerjaan
-      2: { halign: "center", cellWidth: 12 }, // Vol RAB
-      3: { halign: "center", cellWidth: 12 }, // Satuan
-      4: { halign: "center", cellWidth: 15 }, // Volume Akhir
-      5: { halign: "center", cellWidth: 15 }, // Selisih
-      6: { halign: "right", cellWidth: 25, fontStyle: "bold" }, // Total Harga Akhir
-    },
-    didDrawPage: function (data) {
-      if (data.settings.startY + data.table.height > pageHeight - 20) {
+    let kategoriIndex = 1;
+    for (const [kategori, items] of Object.entries(groups)) {
+      // jika mepet bawah halaman, pindah halaman
+      if (lastY + 20 > pageHeight - 20) {
         addFooter(doc.getNumberOfPages());
+        doc.addPage();
+        lastY = margin + 10;
       }
-    },
-  });
 
-  lastY = doc.lastAutoTable.finalY + 10;
-  kategoriIndex += 1;
-}
+      // judul kategori seperti RAB: "1. PEKERJAAN PERSIAPAN"
+      doc.setFontSize(11).setFont(undefined, "bold");
+      doc.text(
+        `${kategoriIndex}. ${kategori.toUpperCase()}`,
+        margin,
+        lastY + 8
+      );
+      lastY += 12;
+
+      // susun baris untuk kategori ini
+      const rows = items.map((item, idx) => [
+        idx + 1,
+        item.jenis_pekerjaan,
+        item.vol_rab,
+        item.satuan,
+        item.volume_akhir,
+        `${item.selisih} ${item.satuan}`,
+        formatRupiah(item.total_harga_akhir),
+      ]);
+
+      // tabel untuk kategori ini
+      autoTable(doc, {
+        head: [opnameTableColumn],
+        body: rows,
+        startY: lastY,
+        margin: { left: margin, right: margin },
+        theme: "grid",
+        styles: { fontSize: 7, cellPadding: 1.5, overflow: "linebreak" },
+        headStyles: {
+          fillColor: [34, 139, 34],
+          textColor: [255, 255, 255],
+          halign: "center",
+          valign: "middle",
+          fontSize: 7,
+          fontStyle: "bold",
+        },
+        bodyStyles: {
+          fontSize: 7,
+          valign: "middle",
+          lineColor: [150, 150, 150],
+          lineWidth: 0.2,
+        },
+        columnStyles: {
+          0: { halign: "center", cellWidth: 8 }, // No
+          1: { cellWidth: "auto", minCellWidth: 40 }, // Jenis Pekerjaan
+          2: { halign: "center", cellWidth: 12 }, // Vol RAB
+          3: { halign: "center", cellWidth: 12 }, // Satuan
+          4: { halign: "center", cellWidth: 15 }, // Volume Akhir
+          5: { halign: "center", cellWidth: 15 }, // Selisih
+          6: { halign: "right", cellWidth: 25, fontStyle: "bold" }, // Total Harga Akhir
+        },
+        didDrawPage: function (data) {
+          if (data.settings.startY + data.table.height > pageHeight - 20) {
+            addFooter(doc.getNumberOfPages());
+          }
+        },
+      });
+
+      lastY = doc.lastAutoTable.finalY + 10;
+      kategoriIndex += 1;
+    }
 
     // GRAND TOTAL untuk Opname
     if (lastY + 40 > pageHeight - 20) {
@@ -837,4 +845,4 @@ for (const [kategori, items] of Object.entries(groups)) {
     );
     console.log("PDF dengan format kategori berhasil dibuat.");
   }
-}
+};
