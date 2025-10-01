@@ -289,7 +289,7 @@ export const generateFinalOpnamePDF = async (
   const picLine =
     picList && picList.length > 0
       ? picList.join(", ")
-      : picKontraktorData.name || picKontraktorData.pic_username || "N/A";
+      : picKontraktorData.name || picKontraktorData.pic_username || "N/a";
 
   doc.text(`NAMA PIC : ${picLine}`, margin, startY);
   startY += 7;
