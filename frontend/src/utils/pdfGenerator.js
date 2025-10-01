@@ -142,8 +142,21 @@ async function fetchPicKontraktorOpnameData(noUlok) {
   return {
     pic_username: json.pic_username ?? "N/A",
     kontraktor_username: json.kontraktor_username ?? "N/A",
-    name: json.name ?? "", // ← penting
+    name: json.name ?? "",
   };
+}
+
+// --- FUNGSI BARU: ambil daftar PIC unik utk no_ulok + lingkup (+opsi kode_toko)
+async function fetchPicList({ noUlok, lingkup, kodeToko }) {
+  const url = new URL(`${API_BASE_URL}/api/pic-list`);
+  url.searchParams.set("no_ulok", noUlok);
+  if (lingkup)  url.searchParams.set("lingkup", lingkup);
+  if (kodeToko) url.searchParams.set("kode_toko", kodeToko);
+
+  const res = await fetch(url.toString());
+  if (!res.ok) return [];
+  const json = await res.json();
+  return Array.isArray(json.pic_list) ? json.pic_list : [];
 }
 
 // Fungsi untuk mengelompokkan data berdasarkan kategori
@@ -233,11 +246,15 @@ export const generateFinalOpnamePDF = async (
     }
   }
 
+  // 🔹 AMBIL SEMUA PIC untuk ULOK + LINGKUP (opsional filter kode_toko)
+  const picList = await fetchPicList({
+    noUlok: selectedUlok,
+    lingkup: selectedLingkup,
+    kodeToko: selectedStore.kode_toko,
+  });
+
   // --- PENGATURAN HALAMAN ---
   const pageWidth = doc.internal.pageSize.getWidth();
-  const pageHeight = doc.internal.pageSize.getHeight();
-  const margin = 10;
-  let startY = 20;
 
   // --- HEADER ---
   doc.setFillColor(229, 30, 37);
@@ -268,13 +285,13 @@ export const generateFinalOpnamePDF = async (
   startY += 7;
   doc.text(`TANGGAL OPNAME : ${currentDate}`, margin, startY);
   startY += 7;
-  doc.text(
-    `NAMA PIC : ${
-      picKontraktorData.name || picKontraktorData.pic_username || "N/A"
-    }`,
-    margin,
-    startY
-  );
+  // Jika ada banyak PIC, gabungkan dengan koma
+  const picLine =
+    picList && picList.length > 0
+      ? picList.join(", ")
+      : picKontraktorData.name || picKontraktorData.pic_username || "N/A";
+
+  doc.text(`NAMA PIC : ${picLine}`, margin, startY);
   startY += 7;
   doc.text(
     `NAMA KONTRAKTOR : ${picKontraktorData.kontraktor_username || "N/A"}`,

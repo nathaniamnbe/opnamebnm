@@ -1361,6 +1361,50 @@ app.patch("/api/opname/reject", async (req, res) => {
   }
 });
 
+// --- ENDPOINT BARU: daftar unik PIC (by no_ulok + lingkup, opsi filter kode_toko) ---
+app.get("/api/pic-list", async (req, res) => {
+  try {
+    const { no_ulok, lingkup, kode_toko } = req.query;
+    if (!no_ulok) return res.status(400).json({ message: "No. Ulok diperlukan." });
+
+    await doc.loadInfo();
+    const finalSheet = doc.sheetsByTitle["opname_final"];
+    if (!finalSheet) {
+      return res.status(500).json({ message: "Sheet 'opname_final' tidak ditemukan." });
+    }
+
+    const rows = await finalSheet.getRows();
+    const norm = (v) => (v ?? "").toString().trim().toUpperCase();
+
+    let filtered = rows.filter((r) => norm(r.get("no_ulok")) === norm(no_ulok));
+
+    if (lingkup) {
+      filtered = filtered.filter((r) => norm(r.get("lingkup_pekerjaan")) === norm(lingkup));
+    }
+    if (kode_toko) {
+      filtered = filtered.filter((r) => norm(r.get("kode_toko")) === norm(kode_toko));
+    }
+
+    // Ambil yang APPROVED saja biar akurat
+    filtered = filtered.filter((r) => norm(r.get("approval_status")) === "APPROVED");
+
+    // Kumpulkan nama dari kolom 'name' (fallback ke 'pic_username' kalau kolom name kosong)
+    const names = new Set();
+    for (const r of filtered) {
+      const display =
+        (r.get("name") || "").toString().trim() ||
+        (r.get("pic_username") || "").toString().trim();
+      if (display) names.add(display);
+    }
+
+    res.status(200).json({ pic_list: Array.from(names) });
+  } catch (e) {
+    console.error("Error di /api/pic-list:", e);
+    res.status(500).json({ message: "Gagal mengambil daftar PIC." });
+  }
+});
+
+
 // 6. Menjalankan server
 // ✅ Route untuk uptime monitor (UptimeRobot)
 app.get("/health", (req, res) => {
