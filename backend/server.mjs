@@ -1026,6 +1026,8 @@ app.get("/api/opname/final", async (req, res) => {
       foto_url: row.get("foto_url"),
       tanggal_submit: row.get("tanggal_submit"),
       no_ulok: row.get("no_ulok"),
+      pic_name: row.get("name") || "",
+      kontraktor_name: row.get("kontraktor") || "",
     }));
 
     return res.status(200).json(submissions);

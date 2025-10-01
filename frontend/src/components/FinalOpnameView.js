@@ -193,6 +193,9 @@ const FinalOpnameView = ({ onBack, selectedStore }) => {
                     Status
                   </th>
                   <th style={{ padding: "12px" }}>Tanggal Submit</th>
+                  <th style={{ padding: "12px" }}>PIC</th> {/* 🔹 tambahan */}
+                  <th style={{ padding: "12px" }}>Kontraktor</th>{" "}
+                  {/* 🔹 tambahan */}
                 </tr>
               </thead>
               <tbody>
@@ -219,6 +222,12 @@ const FinalOpnameView = ({ onBack, selectedStore }) => {
                       </span>
                     </td>
                     <td style={{ padding: "12px" }}>{item.tanggal_submit}</td>
+
+                    {/* 🔹 tambahan kolom */}
+                    <td style={{ padding: "12px" }}>{item.pic_name || "-"}</td>
+                    <td style={{ padding: "12px" }}>
+                      {item.kontraktor_name || "-"}
+                    </td>
                   </tr>
                 ))}
               </tbody>
