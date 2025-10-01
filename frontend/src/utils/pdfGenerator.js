@@ -142,7 +142,7 @@ async function fetchPicKontraktorOpnameData(noUlok) {
   return {
     pic_username: json.pic_username ?? "N/A",
     kontraktor_username: json.kontraktor_username ?? "N/A",
-    name: json.name ?? "",
+    name: json.name ?? "", // ← penting
   };
 }
 
@@ -150,7 +150,7 @@ async function fetchPicKontraktorOpnameData(noUlok) {
 async function fetchPicList({ noUlok, lingkup, kodeToko }) {
   const url = new URL(`${API_BASE_URL}/api/pic-list`);
   url.searchParams.set("no_ulok", noUlok);
-  if (lingkup)  url.searchParams.set("lingkup", lingkup);
+  if (lingkup) url.searchParams.set("lingkup", lingkup);
   if (kodeToko) url.searchParams.set("kode_toko", kodeToko);
 
   const res = await fetch(url.toString());
@@ -158,6 +158,7 @@ async function fetchPicList({ noUlok, lingkup, kodeToko }) {
   const json = await res.json();
   return Array.isArray(json.pic_list) ? json.pic_list : [];
 }
+
 
 // Fungsi untuk mengelompokkan data berdasarkan kategori
 const groupDataByCategory = (data) => {
@@ -286,10 +287,11 @@ export const generateFinalOpnamePDF = async (
   doc.text(`TANGGAL OPNAME : ${currentDate}`, margin, startY);
   startY += 7;
   // Jika ada banyak PIC, gabungkan dengan koma
+  // Jika ada banyak PIC, gabungkan dengan koma
   const picLine =
     picList && picList.length > 0
       ? picList.join(", ")
-      : picKontraktorData.name || picKontraktorData.pic_username || "N/a";
+      : picKontraktorData.name || picKontraktorData.pic_username || "N/A";
 
   doc.text(`NAMA PIC : ${picLine}`, margin, startY);
   startY += 7;
