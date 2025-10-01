@@ -691,6 +691,8 @@ export const generateFinalOpnamePDF = async (
         },
       ],
       ["TOTAL", formatRupiah(grandTotalOpname)],
+      ["PPN 11%", formatRupiah(ppnOpname)],
+      ["GRAND TOTAL", formatRupiah(totalSetelahPPNOpname)],
     ];
 
     autoTable(doc, {
