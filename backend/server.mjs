@@ -33,6 +33,7 @@ app.use(
   })
 );
 
+
 app.use(express.json());
 const upload = multer({ storage: multer.memoryStorage() });
 
@@ -44,17 +45,9 @@ cloudinary.config({
 });
 
 // Validasi environment variables yang diperlukan
-if (
-  !process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL ||
-  !process.env.GOOGLE_PRIVATE_KEY ||
-  !process.env.SPREADSHEET_ID
-) {
-  console.error(
-    "Error: Environment variables untuk Google Sheets tidak lengkap!"
-  );
-  console.error(
-    "Pastikan ada: GOOGLE_SERVICE_ACCOUNT_EMAIL, GOOGLE_PRIVATE_KEY, SPREADSHEET_ID"
-  );
+if (!process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL || !process.env.GOOGLE_PRIVATE_KEY || !process.env.SPREADSHEET_ID) {
+  console.error("Error: Environment variables untuk Google Sheets tidak lengkap!");
+  console.error("Pastikan ada: GOOGLE_SERVICE_ACCOUNT_EMAIL, GOOGLE_PRIVATE_KEY, SPREADSHEET_ID");
   process.exit(1);
 }
 // Test koneksi Google Sheets saat startup
@@ -80,6 +73,7 @@ const doc = new GoogleSpreadsheet(
     console.error("Check your environment variables");
   }
 })();
+
 
 // =================================================================
 // FUNGSI BANTU
@@ -121,6 +115,7 @@ const getContractorNameByUsername = async (username) => {
   }
 };
 
+
 const getPicNameByUsername = async (username) => {
   try {
     await doc.loadInfo();
@@ -129,13 +124,15 @@ const getPicNameByUsername = async (username) => {
     const rows = await usersSheet.getRows();
 
     const norm = (v) => (v ?? "").toString().trim().toLowerCase();
-    const r = rows.find((row) => norm(row.get("username")) === norm(username));
+    const r = rows.find(row => norm(row.get("username")) === norm(username));
     return r?.get("name") || "";
   } catch (e) {
     console.error("Gagal membaca nama PIC dari 'users':", e);
     return "";
   }
 };
+
+
 
 const logLoginAttempt = async (username, status) => {
   try {
@@ -155,7 +152,7 @@ const logLoginAttempt = async (username, status) => {
 // >>>>> PASTE BLOCK INI DI SINI <<<<<
 // -- helper pembuat kunci stabil untuk RAB --
 const _normKey = (v) => (v ?? "").toString().trim().toUpperCase();
-const _numKey = (v) => {
+const _numKey  = (v) => {
   const n = Number(String(v).replace(/[^0-9.\-]/g, ""));
   return Number.isFinite(n) ? n : 0;
 };
@@ -164,19 +161,13 @@ const _numKey = (v) => {
  * Bisa dipanggil dengan row GoogleSheet (punya .get) atau object itemData.
  */
 const makeRabKey = (src) => {
-  const kode = _normKey(src.get ? src.get("kode_toko") : src.kode_toko);
-  const ulok = _normKey(src.get ? src.get("no_ulok") : src.no_ulok);
-  const ling = _normKey(
-    src.get ? src.get("lingkup_pekerjaan") : src.lingkup_pekerjaan
-  );
-  const jenis = _normKey(
-    src.get ? src.get("jenis_pekerjaan") : src.jenis_pekerjaan
-  );
+  const kode   = _normKey(src.get ? src.get("kode_toko") : src.kode_toko);
+  const ulok   = _normKey(src.get ? src.get("no_ulok") : src.no_ulok);
+  const ling   = _normKey(src.get ? src.get("lingkup_pekerjaan") : src.lingkup_pekerjaan);
+  const jenis  = _normKey(src.get ? src.get("jenis_pekerjaan") : src.jenis_pekerjaan);
   const satuan = _normKey(src.get ? src.get("satuan") : src.satuan);
-  const hmat = _numKey(
-    src.get ? src.get("harga_material") : src.harga_material
-  );
-  const hupah = _numKey(src.get ? src.get("harga_upah") : src.harga_upah);
+  const hmat   = _numKey(src.get ? src.get("harga_material") : src.harga_material);
+  const hupah  = _numKey(src.get ? src.get("harga_upah") : src.harga_upah);
   return [kode, ulok, ling, jenis, satuan, hmat, hupah].join("||");
 };
 // <<<<< SAMPAI SINI >>>>>
@@ -354,7 +345,6 @@ app.get("/api/pic-kontraktor-opname", async (req, res) => {
       const withValues = matches
         .map((r) => ({
           pic: getAny(r, ["pic_username", "PIC_USERNAME", "pic", "PIC"]),
-          name: getAny(r, ["name", "Name", "PIC_NAME"]), // ← ambil kolom name
           kontr: getAny(r, [
             "kontraktor_username",
             "KONTRAKTOR_USERNAME",
@@ -365,12 +355,10 @@ app.get("/api/pic-kontraktor-opname", async (req, res) => {
         }))
         .sort((a, b) => String(b.tgl).localeCompare(String(a.tgl)));
 
-      const best =
-        withValues.find((x) => x.pic || x.kontr || x.name) || withValues[0];
+      const best = withValues.find((x) => x.pic || x.kontr) || withValues[0];
       return res.status(200).json({
         pic_username: best.pic || "N/A",
         kontraktor_username: best.kontr || "N/A",
-        name: best.name || "", // ← kirim nama PIC
       });
     }
 
@@ -618,6 +606,7 @@ app.get("/api/opname", async (req, res) => {
       return statusRank(b.approval_status) - statusRank(a.approval_status);
     });
 
+
     const takeMatch = (
       subs,
       rabJenis,
@@ -744,10 +733,10 @@ app.post("/api/opname/item/submit", async (req, res) => {
   try {
     const itemData = req.body;
 
-    // Pastikan rab_key ada (kalau belum dikirim FE karena RAB kosong, generate di sini)
-    if (!itemData.rab_key || String(itemData.rab_key).trim() === "") {
-      itemData.rab_key = makeRabKey(itemData);
-    }
+ // Pastikan rab_key ada (kalau belum dikirim FE karena RAB kosong, generate di sini)
+ if (!itemData.rab_key || String(itemData.rab_key).trim() === "") {
+   itemData.rab_key = makeRabKey(itemData);
+}
 
     // Validasi minimum (tetap sama + pic_username wajib)
     if (
@@ -794,7 +783,7 @@ app.post("/api/opname/item/submit", async (req, res) => {
       "rab_key",
     ].forEach((h) => headers.add(h));
     headers.add("catatan");
-    headers.add("name");
+    headers.add("name"); 
     await finalSheet.setHeaderRow([...headers]);
 
     const rows = await finalSheet.getRows();
@@ -808,33 +797,32 @@ app.post("/api/opname/item/submit", async (req, res) => {
 
     // Cek duplikasi: hanya dianggap duplikat jika SEMUA field identik.
     // Ini agar "jenis pekerjaan sama" tetap bisa disimpan berulang jika volume/harga/lingkup/satuan berbeda.
-    let existingRow = null;
-    if (itemData.rab_key) {
-      existingRow = rows.find(
-        (row) =>
-          (row.get("rab_key") || "") === (itemData.rab_key || "") &&
-          row.get("kode_toko") === (itemData.kode_toko || "") &&
-          row.get("no_ulok") === (itemData.no_ulok || "") &&
-          row.get("pic_username") === (itemData.pic_username || "") &&
-          toNum(row.get("volume_akhir")) === toNum(itemData.volume_akhir)
-      );
-    }
-    if (!existingRow) {
-      existingRow = rows.find(
-        (row) =>
-          row.get("kode_toko") === (itemData.kode_toko || "") &&
-          row.get("no_ulok") === (itemData.no_ulok || "") &&
-          row.get("jenis_pekerjaan") === (itemData.jenis_pekerjaan || "") &&
-          row.get("pic_username") === (itemData.pic_username || "") &&
-          (row.get("lingkup_pekerjaan") || "") ===
-            (itemData.lingkup_pekerjaan || "") &&
-          String(row.get("satuan") || "") === String(itemData.satuan || "") &&
-          toNum(row.get("vol_rab")) === toNum(itemData.vol_rab) &&
-          toNum(row.get("harga_material")) === toNum(itemData.harga_material) &&
-          toNum(row.get("harga_upah")) === toNum(itemData.harga_upah) &&
-          toNum(row.get("volume_akhir")) === toNum(itemData.volume_akhir)
-      );
-    }
+ let existingRow = null;
+ if (itemData.rab_key) {
+   existingRow = rows.find(
+     (row) =>
+       (row.get("rab_key") || "") === (itemData.rab_key || "") &&
+       row.get("kode_toko") === (itemData.kode_toko || "") &&
+       row.get("no_ulok") === (itemData.no_ulok || "") &&
+       row.get("pic_username") === (itemData.pic_username || "") &&
+       toNum(row.get("volume_akhir")) === toNum(itemData.volume_akhir)
+   );
+ }
+ if (!existingRow) {
+   existingRow = rows.find(
+     (row) =>
+       row.get("kode_toko") === (itemData.kode_toko || "") &&
+       row.get("no_ulok") === (itemData.no_ulok || "") &&
+       row.get("jenis_pekerjaan") === (itemData.jenis_pekerjaan || "") &&
+       row.get("pic_username") === (itemData.pic_username || "") &&
+       (row.get("lingkup_pekerjaan") || "") === (itemData.lingkup_pekerjaan || "") &&
+       String(row.get("satuan") || "") === String(itemData.satuan || "") &&
+       toNum(row.get("vol_rab")) === toNum(itemData.vol_rab) &&
+       toNum(row.get("harga_material")) === toNum(itemData.harga_material) &&
+       toNum(row.get("harga_upah")) === toNum(itemData.harga_upah) &&
+       toNum(row.get("volume_akhir")) === toNum(itemData.volume_akhir)
+   );
+ }
 
     // ID & timestamp
     const timestamp = new Date().toLocaleString("id-ID", {
@@ -878,6 +866,8 @@ app.post("/api/opname/item/submit", async (req, res) => {
     };
 
     const newRow = await finalSheet.addRow(rowToAdd);
+
+
 
     return res.status(201).json({
       success: true,
@@ -1031,9 +1021,11 @@ app.get("/api/opname/final", async (req, res) => {
     return res.status(200).json(submissions);
   } catch (error) {
     console.error("Error di /api/opname/final:", error);
-    return res.status(500).json({
-      message: "Terjadi kesalahan pada server saat membaca data final.",
-    });
+    return res
+      .status(500)
+      .json({
+        message: "Terjadi kesalahan pada server saat membaca data final.",
+      });
   }
 });
 
@@ -1054,15 +1046,11 @@ app.get("/api/rab", async (req, res) => {
     const rows = await rabSheet.getRows();
 
     const norm = (v) => (v ?? "").toString().trim().toUpperCase();
-    let rabItems = rows.filter(
-      (row) => norm(row.get("kode_toko")) === norm(kode_toko)
-    );
+    let rabItems = rows.filter((row) => norm(row.get("kode_toko")) === norm(kode_toko));
 
     // Filter berdasarkan no_ulok jika disediakan
     if (no_ulok) {
-      rabItems = rabItems.filter(
-        (row) => norm(row.get("no_ulok")) === norm(no_ulok)
-      );
+      rabItems = rabItems.filter((row) => norm(row.get("no_ulok")) === norm(no_ulok));
     }
     if (lingkup) {
       rabItems = rabItems.filter(
@@ -1173,6 +1161,7 @@ app.get("/api/debug/sheet-headers", async (req, res) => {
   }
 });
 
+
 // --- Ambil item Pending untuk persetujuan ---
 app.get("/api/opname/pending", async (req, res) => {
   try {
@@ -1246,40 +1235,39 @@ app.patch("/api/opname/approve", async (req, res) => {
     }
 
     target.set("approval_status", "APPROVED"); // konsisten
-    if (kontraktor_username && String(kontraktor_username).trim()) {
-      target.set("kontraktor_username", kontraktor_username);
+if (kontraktor_username && String(kontraktor_username).trim()) {
+  target.set("kontraktor_username", kontraktor_username);
 
-      // simpan juga nama kontraktor
-      const kontraktorName = await getContractorNameByUsername(
-        kontraktor_username
-      );
-      if (kontraktorName) {
-        target.set("kontraktor", kontraktorName);
-      }
-    }
+  // simpan juga nama kontraktor
+  const kontraktorName = await getContractorNameByUsername(kontraktor_username);
+  if (kontraktorName) {
+    target.set("kontraktor", kontraktorName);
+  }
+}
 
-    await finalSheet.loadHeaderRow();
-    const headers = finalSheet.headerValues || [];
-    const CAT_KEY = headers.includes("catatan")
-      ? "catatan"
-      : headers.includes("Catatan")
-      ? "Catatan"
-      : headers.includes("CATATAN")
-      ? "CATATAN"
-      : headers.includes("")
-      ? ""
-      : "catatan";
+await finalSheet.loadHeaderRow();
+const headers = finalSheet.headerValues || [];
+const CAT_KEY = headers.includes("catatan")
+  ? "catatan"
+  : headers.includes("Catatan")
+  ? "Catatan"
+  : headers.includes("CATATAN")
+  ? "CATATAN"
+  : headers.includes("")
+  ? ""
+  : "catatan";
 
-    if (typeof catatan === "string" && catatan.trim()) {
-      const prev = target.get(CAT_KEY) || "";
-      const stamp = new Date().toLocaleString("id-ID", {
-        timeZone: "Asia/Jakarta",
-      });
-      const appended = prev
-        ? `${prev}\n[APPROVE ${stamp}] ${catatan.trim()}`
-        : `[APPROVE ${stamp}] ${catatan.trim()}`;
-      target.set(CAT_KEY, appended);
-    }
+if (typeof catatan === "string" && catatan.trim()) {
+  const prev = target.get(CAT_KEY) || "";
+  const stamp = new Date().toLocaleString("id-ID", {
+    timeZone: "Asia/Jakarta",
+  });
+  const appended = prev
+    ? `${prev}\n[APPROVE ${stamp}] ${catatan.trim()}`
+    : `[APPROVE ${stamp}] ${catatan.trim()}`;
+  target.set(CAT_KEY, appended);
+}
+
 
     await target.save();
 
@@ -1314,41 +1302,39 @@ app.patch("/api/opname/reject", async (req, res) => {
 
     // Update status jadi REJECTED
     row.set("approval_status", "REJECTED");
-    if (kontraktor_username) {
-      row.set("kontraktor_username", kontraktor_username);
+if (kontraktor_username) {
+  row.set("kontraktor_username", kontraktor_username);
 
-      // simpan juga nama kontraktor
-      const kontraktorName = await getContractorNameByUsername(
-        kontraktor_username
-      );
-      if (kontraktorName) {
-        row.set("kontraktor", kontraktorName);
-      }
-    }
+  // simpan juga nama kontraktor
+  const kontraktorName = await getContractorNameByUsername(kontraktor_username);
+  if (kontraktorName) {
+    row.set("kontraktor", kontraktorName);
+  }
+}
 
     // 🔹 Tambah catatan
-    await finalSheet.loadHeaderRow();
-    const headers = finalSheet.headerValues || [];
-    const CAT_KEY = headers.includes("catatan")
-      ? "catatan"
-      : headers.includes("Catatan")
-      ? "Catatan"
-      : headers.includes("CATATAN")
-      ? "CATATAN"
-      : headers.includes("")
-      ? ""
-      : "catatan";
+await finalSheet.loadHeaderRow();
+const headers = finalSheet.headerValues || [];
+const CAT_KEY = headers.includes("catatan")
+  ? "catatan"
+  : headers.includes("Catatan")
+  ? "Catatan"
+  : headers.includes("CATATAN")
+  ? "CATATAN"
+  : headers.includes("")
+  ? ""
+  : "catatan";
 
-    if (typeof catatan === "string" && catatan.trim()) {
-      const prev = row.get(CAT_KEY) || "";
-      const stamp = new Date().toLocaleString("id-ID", {
-        timeZone: "Asia/Jakarta",
-      });
-      const appended = prev
-        ? `${prev}\n[REJECT ${stamp}] ${catatan.trim()}`
-        : `[REJECT ${stamp}] ${catatan.trim()}`;
-      row.set(CAT_KEY, appended);
-    }
+if (typeof catatan === "string" && catatan.trim()) {
+  const prev = row.get(CAT_KEY) || "";
+  const stamp = new Date().toLocaleString("id-ID", {
+    timeZone: "Asia/Jakarta",
+  });
+  const appended = prev
+    ? `${prev}\n[REJECT ${stamp}] ${catatan.trim()}`
+    : `[REJECT ${stamp}] ${catatan.trim()}`;
+  row.set(CAT_KEY, appended);
+}
 
     await row.save();
 

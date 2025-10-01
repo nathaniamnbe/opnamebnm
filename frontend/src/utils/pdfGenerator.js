@@ -266,12 +266,11 @@ startY += 7;
   startY += 7;
   doc.text(`TANGGAL OPNAME : ${currentDate}`, margin, startY);
   startY += 7;
-doc.text(
-  `NAMA PIC : ${
-    picKontraktorData.name || picKontraktorData.pic_username || "N/A" }`,
-  margin,
-  startY
-);
+  doc.text(
+    `NAMA PIC : ${picKontraktorData.name || "N/A"}`,
+    margin,
+    startY
+  );
   startY += 7;
   doc.text(
     `NAMA KONTRAKTOR : ${picKontraktorData.kontraktor_username || "N/A"}`,
