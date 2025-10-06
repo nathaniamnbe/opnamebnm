@@ -10,7 +10,6 @@ const API_BASE_URL =
 
 // --- PENGATURAN TEKS ---
 const companyName = "PT. SUMBER ALFARIA TRIJAYA, Tbk";
-const branch = "CABANG: HEAD OFFICE";
 const reportTitle = "BERITA ACARA OPNAME PEKERJAAN";
 const logoUrl =
   "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9e/Alfamart_logo.svg/1280px-Alfamart_logo.svg.png";
@@ -280,7 +279,7 @@ export const generateFinalOpnamePDF = async (
 
   // --- INFO PROYEK ---
   doc.setFontSize(10);
-  doc.text(`NAMA PROYEK : ${selectedStore.nama_toko}`, margin, startY);
+  doc.text(`CABANG : ${selectedStore.nama_toko}`, margin, startY);
   startY += 7;
   doc.text(`NOMOR ULOK : ${selectedUlok || "undefined"}`, margin, startY);
   startY += 7;
