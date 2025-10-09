@@ -1011,26 +1011,35 @@ app.get("/api/toko_kontraktor", async (req, res) => {
       }
     }
 
-    // ---- susun hasil unik per toko + no_ulok ----
-    const seen = new Set();
-    const result = [];
+    // ---- kelompokkan per kode_toko, gabungkan semua no_ulok ----
+    const storesMap = new Map();
+
     for (const row of assignedRows) {
       const kode_toko = (row.get("kode_toko") || "").toString().trim();
       const nama_toko = (row.get("nama_toko") || "").toString().trim();
       const no_ulok = (row.get("no_ulok") || "").toString().trim();
-      if (!kode_toko || !no_ulok) continue;
+      const link_pdf = (row.get("link_pdf") || "").toString().trim();
+      if (!kode_toko) continue;
 
-      const key = `${kode_toko}||${no_ulok}`;
-      if (!seen.has(key)) {
-        seen.add(key);
-        result.push({
+      if (!storesMap.has(kode_toko)) {
+        storesMap.set(kode_toko, {
           kode_toko,
           nama_toko,
-          no_ulok,
-          link_pdf: row.get("link_pdf") || "",
+          link_pdf,
+          no_uloks: new Set(),
         });
       }
+      if (no_ulok) {
+        storesMap.get(kode_toko).no_uloks.add(no_ulok);
+      }
     }
+
+    const result = Array.from(storesMap.values()).map((s) => ({
+      kode_toko: s.kode_toko,
+      nama_toko: s.nama_toko,
+      link_pdf: s.link_pdf,
+      no_uloks: Array.from(s.no_uloks), // FE pakai ini untuk pilihan ULOK di langkah berikutnya
+    }));
 
     return res.status(200).json(result);
   } catch (error) {
