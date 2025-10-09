@@ -10,7 +10,7 @@ const API_BASE_URL =
 
 // --- PENGATURAN TEKS ---
 const companyName = "PT. SUMBER ALFARIA TRIJAYA, Tbk";
-
+const branch = "CABANG: HEAD OFFICE";
 const reportTitle = "BERITA ACARA OPNAME PEKERJAAN";
 const logoUrl =
   "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9e/Alfamart_logo.svg/1280px-Alfamart_logo.svg.png";
