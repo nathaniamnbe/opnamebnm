@@ -117,7 +117,7 @@ const Dashboard = () => {
           >
             <div className="card">
               <h2 style={{ color: "var(--alfamart-red)", textAlign: "center" }}>
-                Selamat Datang, {user.name}!
+                Selamat Datang, {user.kontraktor_username || user.name}!
               </h2>
               <p
                 style={{
@@ -125,8 +125,7 @@ const Dashboard = () => {
                   color: "#666",
                   marginBottom: "32px",
                 }}
-              >
-              </p>
+              ></p>
 
               <div
                 style={{

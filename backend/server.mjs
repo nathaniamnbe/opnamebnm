@@ -336,29 +336,40 @@ app.post("/api/login", async (req, res) => {
       );
     });
 
-    if (kRow) {
-      const status = (kRow.get("status_kontraktor") || "")
-        .toString()
-        .trim()
-        .toUpperCase();
-      if (status && status !== "AKTIF") {
-        await logLoginAttempt(inputUsername, "FAILED(NOT_ACTIVE)");
-        return res
-          .status(403)
-          .json({ message: "Akun kontraktor tidak aktif." });
-      }
+if (kRow) {
+  const status = (kRow.get("status_kontraktor") || "")
+    .toString()
+    .trim()
+    .toUpperCase();
+  if (status && status !== "AKTIF") {
+    await logLoginAttempt(inputUsername, "FAILED(NOT_ACTIVE)");
+    return res.status(403).json({ message: "Akun kontraktor tidak aktif." });
+  }
 
-      await logLoginAttempt(inputUsername, "SUCCESS(KONTRAKTOR)");
-      return res.status(200).json({
-        id: kRow.get("no") || "",
-        username: kRow.get("nama_kontraktor") || inputUsername,
-        name: kRow.get("nama_kontraktor") || inputUsername,
-        role: "kontraktor",
-        company: kRow.get("nama_kontraktor") || "",
-        cabang: kRow.get("nama_cabang") || "",
-        status_kontraktor: kRow.get("status_kontraktor") || "",
-      });
-    }
+  // Ambil username standar dari kolom E (kontraktor_username)
+  const kontraktorUsername = (kRow.get("kontraktor_username") || "")
+    .toString()
+    .trim();
+  const namaKontraktor = (kRow.get("nama_kontraktor") || "").toString().trim();
+
+  await logLoginAttempt(inputUsername, "SUCCESS(KONTRAKTOR)");
+  return res.status(200).json({
+    id: kRow.get("no") || "",
+    // Pakai kontraktor_username sebagai username & name yang akan tampil di UI
+    username: kontraktorUsername || namaKontraktor || inputUsername,
+    name: kontraktorUsername || namaKontraktor || inputUsername,
+
+    // Tetap kirim field khusus ini agar FE bisa akses langsung bila perlu
+    kontraktor_username: kontraktorUsername || "",
+
+    role: "kontraktor",
+    // company = nama perusahaan (kolom C)
+    company: namaKontraktor,
+    cabang: kRow.get("nama_cabang") || "",
+    status_kontraktor: kRow.get("status_kontraktor") || "",
+  });
+}
+
 
     // 3) Jika tidak cocok di keduanya
     await logLoginAttempt(inputUsername, "FAILED");
