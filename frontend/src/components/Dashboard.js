@@ -10,7 +10,7 @@ import FinalOpnameView from "./FinalOpnameView";
 import ApprovalPage from "./ApprovalPage";
 
 const Dashboard = () => {
-  // Hook useAuth hanya mengambil 'user', karena logout diasumsikan ada di header utama
+  // Hook useAuth hanya mengambil 'user', karena logout diasumsikan ada di header utamas
   const { user } = useAuth();
   const [activeView, setActiveView] = useState("dashboard");
   const [selectedStore, setSelectedStore] = useState(null);

@@ -308,6 +308,7 @@ const ApprovalPage = ({ onBack, selectedStore }) => {
                     ) : (
                       <span style={{ color: "#999" }}>—</span>
                     )}
+                    
                   </td>
                   <td style={{ padding: "12px" }}>{item.name}</td>
                   <td style={{ padding: "12px" }}>{item.tanggal_submit}</td>
