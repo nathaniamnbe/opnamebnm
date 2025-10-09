@@ -1104,6 +1104,7 @@ app.get("/api/opname/final", async (req, res) => {
       kontraktor_username: row.get("kontraktor_username") || "",
       kontraktor_name: row.get("kontraktor") || "",
       display_kontraktor:
+      
         (row.get("kontraktor_username") || "").toString().trim() ||
         (row.get("kontraktor") || "").toString().trim(),
 
