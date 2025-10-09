@@ -84,6 +84,60 @@ const doc = new GoogleSpreadsheet(
 // =================================================================
 // FUNGSI BANTU
 // =================================================================
+
+// Cari "username" kontraktor standar dari data_kontraktor (kolom E: kontraktor_username)
+// Input bisa berupa email, nama perusahaan, atau sudah username; keluaran: username standar (mis. "PIPIT")
+const resolveContractorUsername = async (input) => {
+  try {
+    await doc.loadInfo();
+    const kontrSheet = doc.sheetsByTitle["data_kontraktor"];
+    if (!kontrSheet) return (input ?? "").toString().trim();
+
+    const rows = await kontrSheet.getRows();
+    const norm = (v) => (v ?? "").toString().trim().toLowerCase();
+
+    const r = rows.find((row) => {
+      const byUsername = norm(row.get("kontraktor_username")) === norm(input);
+      const byCompany  = norm(row.get("nama_kontraktor"))   === norm(input);
+      // jika kolom "nama_kontraktor" kadang berisi email (kasus di screenshot)
+      const byEmailLike = norm(row.get("nama_kontraktor")) === norm(input);
+      return byUsername || byCompany || byEmailLike;
+    });
+
+    return r?.get("kontraktor_username")
+      ? String(r.get("kontraktor_username")).trim()
+      : (input ?? "").toString().trim();
+  } catch {
+    return (input ?? "").toString().trim();
+  }
+};
+
+// Ambil NAMA perusahaan (kolom C: nama_kontraktor) dari data_kontraktor berdasar input apa pun
+const resolveContractorCompanyName = async (input) => {
+  try {
+    await doc.loadInfo();
+    const kontrSheet = doc.sheetsByTitle["data_kontraktor"];
+    if (!kontrSheet) return (input ?? "").toString().trim();
+
+    const rows = await kontrSheet.getRows();
+    const norm = (v) => (v ?? "").toString().trim().toLowerCase();
+
+    const r = rows.find((row) => {
+      return (
+        norm(row.get("kontraktor_username")) === norm(input) ||
+        norm(row.get("nama_kontraktor"))     === norm(input)
+      );
+    });
+
+    return r?.get("nama_kontraktor")
+      ? String(r.get("nama_kontraktor")).trim()
+      : (input ?? "").toString().trim();
+  } catch {
+    return (input ?? "").toString().trim();
+  }
+};
+
+
 // --- Ambil nama PIC dari sheet 'users' berdasarkan username (email)
 // --- Ambil nama KONTRAKTOR dari sheet 'users' berdasarkan username
 const getContractorNameByUsername = async (username) => {
@@ -1248,17 +1302,18 @@ app.patch("/api/opname/approve", async (req, res) => {
     }
 
     target.set("approval_status", "APPROVED"); // konsisten
-    if (kontraktor_username && String(kontraktor_username).trim()) {
-      target.set("kontraktor_username", kontraktor_username);
+if (kontraktor_username && String(kontraktor_username).trim()) {
+  // Ubah input apa pun (email/nama perusahaan/username) menjadi username standar dari data_kontraktor (kolom E)
+  const storedUsername = await resolveContractorUsername(kontraktor_username);
+  target.set("kontraktor_username", storedUsername);
 
-      // simpan juga nama kontraktor
-      const kontraktorName = await getContractorNameByUsername(
-        kontraktor_username
-      );
-      if (kontraktorName) {
-        target.set("kontraktor", kontraktorName);
-      }
-    }
+  // Isi kolom 'kontraktor' dengan NAMA PERUSAHAAN dari data_kontraktor (kolom C)
+  const companyName = await resolveContractorCompanyName(storedUsername);
+  if (companyName) {
+    target.set("kontraktor", companyName);
+  }
+}
+
 
     await finalSheet.loadHeaderRow();
     const headers = finalSheet.headerValues || [];
@@ -1316,17 +1371,16 @@ app.patch("/api/opname/reject", async (req, res) => {
 
     // Update status jadi REJECTED
     row.set("approval_status", "REJECTED");
-    if (kontraktor_username) {
-      row.set("kontraktor_username", kontraktor_username);
+if (kontraktor_username && String(kontraktor_username).trim()) {
+  const storedUsername = await resolveContractorUsername(kontraktor_username);
+  row.set("kontraktor_username", storedUsername);
 
-      // simpan juga nama kontraktor
-      const kontraktorName = await getContractorNameByUsername(
-        kontraktor_username
-      );
-      if (kontraktorName) {
-        row.set("kontraktor", kontraktorName);
-      }
-    }
+  const companyName = await resolveContractorCompanyName(storedUsername);
+  if (companyName) {
+    row.set("kontraktor", companyName);
+  }
+}
+
 
     // 🔹 Tambah catatan
     await finalSheet.loadHeaderRow();
