@@ -87,30 +87,32 @@ const doc = new GoogleSpreadsheet(
 
 // Cari "username" kontraktor standar dari data_kontraktor (kolom E: kontraktor_username)
 // Input bisa berupa email, nama perusahaan, atau sudah username; keluaran: username standar (mis. "PIPIT")
+// Normalisasi input (email / nama_kontraktor / username) → kontraktor_username dari sheet data_kontraktor (kolom E)
 const resolveContractorUsername = async (input) => {
   try {
     await doc.loadInfo();
-    const kontrSheet = doc.sheetsByTitle["data_kontraktor"];
-    if (!kontrSheet) return (input ?? "").toString().trim();
+    const sheet = doc.sheetsByTitle["data_kontraktor"];
+    if (!sheet) return (input ?? "").toString().trim();
 
-    const rows = await kontrSheet.getRows();
+    const rows = await sheet.getRows();
     const norm = (v) => (v ?? "").toString().trim().toLowerCase();
+    const raw  = (input ?? "").toString().trim();
 
-    const r = rows.find((row) => {
-      const byUsername = norm(row.get("kontraktor_username")) === norm(input);
-      const byCompany  = norm(row.get("nama_kontraktor"))   === norm(input);
-      // jika kolom "nama_kontraktor" kadang berisi email (kasus di screenshot)
-      const byEmailLike = norm(row.get("nama_kontraktor")) === norm(input);
-      return byUsername || byCompany || byEmailLike;
-    });
+    const hit = rows.find(r =>
+      norm(r.get("kontraktor_username")) === norm(raw) ||
+      norm(r.get("nama_kontraktor"))     === norm(raw) ||
+      // beberapa baris kolom C pernah berisi email → samakan juga
+      norm(r.get("nama_kontraktor"))     === norm(raw.split(",")[0])
+    );
 
-    return r?.get("kontraktor_username")
-      ? String(r.get("kontraktor_username")).trim()
-      : (input ?? "").toString().trim();
+    return hit?.get("kontraktor_username")
+      ? String(hit.get("kontraktor_username")).trim()
+      : raw;
   } catch {
     return (input ?? "").toString().trim();
   }
 };
+
 
 // Ambil NAMA perusahaan (kolom C: nama_kontraktor) dari data_kontraktor berdasar input apa pun
 const resolveContractorCompanyName = async (input) => {
@@ -353,21 +355,17 @@ if (kRow) {
   const namaKontraktor = (kRow.get("nama_kontraktor") || "").toString().trim();
 
   await logLoginAttempt(inputUsername, "SUCCESS(KONTRAKTOR)");
-  return res.status(200).json({
-    id: kRow.get("no") || "",
-    // Pakai kontraktor_username sebagai username & name yang akan tampil di UI
-    username: kontraktorUsername || namaKontraktor || inputUsername,
-    name: kontraktorUsername || namaKontraktor || inputUsername,
-
-    // Tetap kirim field khusus ini agar FE bisa akses langsung bila perlu
-    kontraktor_username: kontraktorUsername || "",
-
-    role: "kontraktor",
-    // company = nama perusahaan (kolom C)
-    company: namaKontraktor,
-    cabang: kRow.get("nama_cabang") || "",
-    status_kontraktor: kRow.get("status_kontraktor") || "",
-  });
+return res.status(200).json({
+  id: kRow.get("no") || "",
+  // pakai username standar dari kolom E
+  username: kontraktorUsername || namaKontraktor || inputUsername,
+  name: kontraktorUsername || namaKontraktor || inputUsername,
+  kontraktor_username: kontraktorUsername || "",
+  role: "kontraktor",
+  company: namaKontraktor, // kolom C = nama perusahaan
+  cabang: kRow.get("nama_cabang") || "",
+  status_kontraktor: kRow.get("status_kontraktor") || "",
+});
 }
 
 
@@ -964,81 +962,83 @@ app.post("/api/opname/item/submit", async (req, res) => {
 // --- Endpoint untuk Kontraktor ---
 app.get("/api/toko_kontraktor", async (req, res) => {
   try {
-    const { username } = req.query;
-    if (!username)
+    // Terima email / nama_kontraktor / kontraktor_username → normalkan dulu
+    const raw = (req.query.username || req.query.email || "").toString().trim();
+    if (!raw) {
       return res
         .status(400)
         .json({ message: "Username Kontraktor diperlukan." });
+    }
+    const kontraktorUsername = await resolveContractorUsername(raw);
 
     await doc.loadInfo();
     const rabSheet = doc.sheetsByTitle["data_rab"];
     const kontrSheet = doc.sheetsByTitle["data_kontraktor"];
-    if (!rabSheet)
+    if (!rabSheet) {
       return res
         .status(500)
         .json({ message: "Sheet 'data_rab' tidak ditemukan." });
+    }
 
     const rabRows = await rabSheet.getRows();
+    const norm = (v) => (v ?? "").toString().trim().toLowerCase();
 
-    // 1) Coba cara lama dulu: langsung dari kolom kontraktor_username di data_rab
+    // 1) filter utama: kolom kontraktor_username di data_rab
     let assignedRows = rabRows.filter(
-      (row) =>
-        (row.get("kontraktor_username") || "").trim().toLowerCase() ===
-        username.trim().toLowerCase()
+      (row) => norm(row.get("kontraktor_username")) === norm(kontraktorUsername)
     );
 
-    // 2) Bila kosong, gunakan peta cabang dari tab data_kontraktor (status AKTIF)
+    // 2) fallback: pakai peta cabang dari data_kontraktor berbasis kontraktor_username (bukan nama)
     if (assignedRows.length === 0 && kontrSheet) {
       const kRows = await kontrSheet.getRows();
       const cabangs = new Set(
         kRows
           .filter(
             (r) =>
-              (r.get("nama_kontraktor") || "").trim().toLowerCase() ===
-                username.trim().toLowerCase() &&
-              (r.get("status_kontraktor") || "").toUpperCase() === "AKTIF"
+              norm(r.get("kontraktor_username")) === norm(kontraktorUsername) &&
+              String(r.get("status_kontraktor") || "").toUpperCase() === "AKTIF"
           )
-          .map((r) => (r.get("nama_cabang") || "").trim())
+          .map((r) => (r.get("nama_cabang") || "").toString().trim())
       );
 
       if (cabangs.size > 0) {
         assignedRows = rabRows.filter((row) => {
-          const kode = (row.get("kode_toko") || "").trim();
-          const nama = (row.get("nama_toko") || "").trim();
-          // Cocokkan salah satu ke nama_cabang (fleksibel, karena struktur tiap sheet bisa berbeda)
+          const kode = (row.get("kode_toko") || "").toString().trim();
+          const nama = (row.get("nama_toko") || "").toString().trim();
+          // sesuaikan jika kamu juga menyimpan 'nama_cabang' di data_rab
           return cabangs.has(kode) || cabangs.has(nama);
         });
       }
     }
 
-    const storesMap = new Map();
-    assignedRows.forEach((row) => {
-      const kode_toko = row.get("kode_toko");
-      if (!storesMap.has(kode_toko)) {
-        storesMap.set(kode_toko, {
+    // ---- susun hasil unik per toko + no_ulok ----
+    const seen = new Set();
+    const result = [];
+    for (const row of assignedRows) {
+      const kode_toko = (row.get("kode_toko") || "").toString().trim();
+      const nama_toko = (row.get("nama_toko") || "").toString().trim();
+      const no_ulok = (row.get("no_ulok") || "").toString().trim();
+      if (!kode_toko || !no_ulok) continue;
+
+      const key = `${kode_toko}||${no_ulok}`;
+      if (!seen.has(key)) {
+        seen.add(key);
+        result.push({
           kode_toko,
-          nama_toko: row.get("nama_toko"),
-          no_uloks: new Set(),
+          nama_toko,
+          no_ulok,
           link_pdf: row.get("link_pdf") || "",
         });
       }
-      const s = storesMap.get(kode_toko);
-      if (row.get("no_ulok")) s.no_uloks.add(row.get("no_ulok"));
-    });
+    }
 
-    const stores = Array.from(storesMap.values()).map((s) => ({
-      kode_toko: s.kode_toko,
-      nama_toko: s.nama_toko,
-      link_pdf: s.link_pdf,
-      no_uloks: Array.from(s.no_uloks),
-    }));
-
-    res.status(200).json(stores);
+    return res.status(200).json(result);
   } catch (error) {
     console.error("Error di /api/toko_kontraktor:", error);
-    res.status(500).json({ message: "Terjadi kesalahan pada server." });
+    return res.status(500).json({ message: "Terjadi kesalahan pada server." });
   }
 });
+
 
 // --- Endpoint untuk Melihat Data Final (Approved) ---
 // --- Endpoint untuk Melihat Data Final (Approved) dengan filter no_ulok & lingkup ---
