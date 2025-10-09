@@ -1101,7 +1101,11 @@ app.get("/api/opname/final", async (req, res) => {
       tanggal_submit: row.get("tanggal_submit"),
       no_ulok: row.get("no_ulok"),
       pic_name: row.get("name") || "",
+      kontraktor_username: row.get("kontraktor_username") || "",
       kontraktor_name: row.get("kontraktor") || "",
+      display_kontraktor:
+        (row.get("kontraktor_username") || "").toString().trim() ||
+        (row.get("kontraktor") || "").toString().trim(),
     }));
 
     return res.status(200).json(submissions);

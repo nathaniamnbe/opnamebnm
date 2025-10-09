@@ -226,7 +226,10 @@ const FinalOpnameView = ({ onBack, selectedStore }) => {
                     {/* 🔹 tambahan kolom */}
                     <td style={{ padding: "12px" }}>{item.pic_name || "-"}</td>
                     <td style={{ padding: "12px" }}>
-                      {item.kontraktor_name || "-"}
+                      {item.kontraktor_username ||
+                        item.display_kontraktor ||
+                        item.kontraktor_name ||
+                        "-"}
                     </td>
                   </tr>
                 ))}
