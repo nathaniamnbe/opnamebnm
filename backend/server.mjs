@@ -1106,8 +1106,9 @@ app.get("/api/opname/final", async (req, res) => {
       display_kontraktor:
         (row.get("kontraktor_username") || "").toString().trim() ||
         (row.get("kontraktor") || "").toString().trim(),
-        
+
     }));
+    
 
     return res.status(200).json(submissions);
   } catch (error) {
