@@ -441,75 +441,77 @@ export const generateFinalOpnamePDF = async (
       formatRupiah(catMaterialTotal + catUpahTotal), // kolom total harga
     ]);
 
-    autoTable(doc, {
-      head: [
-        [
-          "NO.",
-          "JENIS PEKERJAAN",
-          "SATUAN",
-          "VOLUME",
-          {
-            content: "HARGA SATUAN (Rp)",
-            colSpan: 2,
-            styles: { halign: "center" },
-          },
-          {
-            content: "TOTAL HARGA (Rp)",
-            colSpan: 3,
-            styles: { halign: "center" },
-          },
-        ],
-        [
-          "",
-          "",
-          "",
-          "",
-          "Material (b)",
-          "Upah (c)",
-          "Material (d=a*b)",
-          "Upah (e=a*c)",
-          "TOTAL HARGA (Rp)",
-        ],
-      ],
-      body: categoryTableBody,
-      startY: lastY,
-      margin: { left: margin, right: margin },
-      theme: "grid",
-      styles: { fontSize: 7, cellPadding: 1.5, overflow: "linebreak" },
-      headStyles: {
-        fillColor: [173, 216, 230],
-        textColor: [0, 0, 0],
-        halign: "center",
-        valign: "middle",
-        fontSize: 7,
-        fontStyle: "bold",
-      },
-      bodyStyles: {
-        fontSize: 7,
-        valign: "middle",
-        lineColor: [150, 150, 150],
-        lineWidth: 0.2,
-      },
-      columnStyles: {
-        0: { halign: "center", cellWidth: 8 },
-        1: { cellWidth: "auto", minCellWidth: 40 },
-        2: { halign: "center", cellWidth: 12 },
-        3: { halign: "right", cellWidth: 12 },
-        4: { halign: "right", cellWidth: 20 },
-        5: { halign: "right", cellWidth: 20 },
-        6: { halign: "right", cellWidth: 20 },
-        7: { halign: "right", cellWidth: 20 },
-        8: { halign: "right", cellWidth: 25, fontStyle: "bold" },
-      },
-      didParseCell: function (data) {
-        if (
-          data.row.index === data.table.body.length - 1 &&
-          data.column.index > 4
-        ) {
-          data.cell.styles.fontStyle = "bold";
-          data.cell.styles.fillColor = [240, 240, 240];
-        }
-      },
+autoTable(doc, {
+  head: [
+    [
+      "NO.",
+      "JENIS PEKERJAAN",
+      "SATUAN",
+      "VOLUME",
+      { content: "HARGA SATUAN (Rp)", colSpan: 2, styles: { halign: "center" } },
+      { content: "TOTAL HARGA (Rp)",  colSpan: 3, styles: { halign: "center" } },
+    ],
+    ["", "", "", "", "Material (b)", "Upah (c)", "Material (d=a*b)", "Upah (e=a*c)", "TOTAL HARGA (Rp)"],
+  ],
+  body: categoryTableBody,
+  startY: lastY,
+  margin: { left: margin, right: margin },
+  theme: "grid",
+
+  // ▸ dasar tipografi & garis
+  styles: {
+    fontSize: 8,
+    cellPadding: 3,
+    overflow: "linebreak",
+    lineColor: [120, 120, 120],  // abu-abu tegas
+    lineWidth: 0.3,
+  },
+
+  // ▸ header biru muda, border sedikit lebih tebal
+  headStyles: {
+    fillColor: [205, 234, 242],  // biru muda lembut
+    textColor: [0, 0, 0],
+    halign: "center",
+    valign: "middle",
+    fontSize: 8,
+    fontStyle: "bold",
+    lineColor: [100, 100, 100],
+    lineWidth: 0.4,
+  },
+
+  // ▸ body selaras & rapi
+  bodyStyles: {
+    fontSize: 8,
+    valign: "middle",
+    lineColor: [120, 120, 120],
+    lineWidth: 0.3,
+  },
+
+  // ▸ border luar tabel sedikit lebih tebal (kesan ‘frame’)
+  tableLineColor: [90, 90, 90],
+  tableLineWidth: 0.6,
+
+  // ▸ lebar kolom
+  columnStyles: {
+    0: { halign: "center", cellWidth: 10 },
+    1: { cellWidth: "auto", minCellWidth: 58 },
+    2: { halign: "center", cellWidth: 14 },
+    3: { halign: "right",  cellWidth: 16 },
+    4: { halign: "right",  cellWidth: 24 },
+    5: { halign: "right",  cellWidth: 24 },
+    6: { halign: "right",  cellWidth: 26 },
+    7: { halign: "right",  cellWidth: 26 },
+    8: { halign: "right",  cellWidth: 28, fontStyle: "bold" },
+  },
+
+  // ▸ styling baris SUB TOTAL (abu-abu) + bold angka
+  didParseCell(data) {
+    const isSubtotalRow = data.row.index === data.table.body.length - 1;
+    if (isSubtotalRow) {
+      data.cell.styles.fillColor = [242, 242, 242]; // abu-abu muda
+      data.cell.styles.fontStyle = data.column.index >= 5 ? "bold" : "normal";
+    }
+  },
       didDrawPage: function (data) {
         if (data.settings.startY + data.table.height > pageHeight - 20) {
           addFooter(doc.getNumberOfPages());
