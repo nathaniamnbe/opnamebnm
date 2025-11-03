@@ -475,7 +475,8 @@ autoTable(doc, {
   // ▸ dasar tipografi & garis
   styles: {
     fontSize: 8,
-    cellPadding: 3,
+    cellPadding: 2.5,
+    lineHeight: 1.05,
     overflow: "linebreak",
     lineColor: [120, 120, 120], // abu-abu tegas
     lineWidth: 0.3,
@@ -491,6 +492,8 @@ autoTable(doc, {
     fontStyle: "bold",
     lineColor: [100, 100, 100],
     lineWidth: 0.4,
+    cellPadding: 2,
+    lineHeight: 1.0,
   },
 
   // ▸ body selaras & rapi
@@ -501,19 +504,17 @@ autoTable(doc, {
     lineWidth: 0.3,
   },
 
-
-
   // ▸ lebar kolom
   columnStyles: {
-    0: { halign: "center", cellWidth: 8 }, // NO
-    1: { cellWidth: 44, minCellWidth: 44 }, // JENIS PEKERJAAN
-    2: { halign: "center", cellWidth: 12 }, // SATUAN
-    3: { halign: "right", cellWidth: 14 }, // VOLUME
-    4: { halign: "right", cellWidth: 20 }, // Harga satuan - Material
-    5: { halign: "right", cellWidth: 20 }, // Harga satuan - Upah
-    6: { halign: "right", cellWidth: 20 }, // Total - Material
-    7: { halign: "right", cellWidth: 20 }, // Total - Upah
-    8: { halign: "right", cellWidth: 20, fontStyle: "bold" }, // GRAND TOTAL
+    0: { halign: "center", cellWidth: 8 }, // NO.
+    1: { cellWidth: 40, minCellWidth: 40 }, // JENIS PEKERJAAN (sedikit dipersempit)
+    2: { halign: "center", cellWidth: 18 }, // SATUAN (was 12)
+    3: { halign: "right", cellWidth: 18 }, // VOLUME (was 14)
+    4: { halign: "right", cellWidth: 18 }, // Material (b) (was 20)
+    5: { halign: "right", cellWidth: 18 }, // Upah (c)     (was 20)
+    6: { halign: "right", cellWidth: 19 }, // Material (d=a*b) (was 20)
+    7: { halign: "right", cellWidth: 19 }, // Upah (e=a*c)     (was 20)
+    8: { halign: "right", cellWidth: 22, fontStyle: "bold" }, // TOTAL HARGA (kompensasi)
   },
 
   // ▸ styling baris SUB TOTAL (abu-abu) + bold angka
