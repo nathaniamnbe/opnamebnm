@@ -978,73 +978,77 @@ export const generateFinalOpnamePDF = async (
         doc.line(margin, photoY + 2, pageWidth - margin, photoY + 2);
         photoY += 12;
 
-        for (const [kategori, photos] of Object.entries(categories)) {
-          // Nama kategori (misal: PEKERJAAN PASANGAN)
-          doc.setFontSize(11).setFont(undefined, "bold");
-          doc.text(kategori, margin, photoY);
-          photoY += 8;
+for (const [kategori, photos] of Object.entries(categories)) {
+  // Cek sisa ruang, pindah halaman jika tidak cukup untuk judul kategori
+  if (photoY > pageBottom - 40) {
+    addFooter(pageNum);
+    doc.addPage();
+    pageNum++;
+    photoY = 35;
+  }
 
-          let columnIndex = 0;
-          let counter = 0;
+  // Nama kategori (contoh: PEKERJAAN TANAH)
+  doc.setFontSize(11).setFont(undefined, "bold");
+  doc.text(`${kategori.toUpperCase()}`, margin, photoY);
+  photoY += 8;
 
-          for (const item of photos) {
-            if (photoY > pageBottom - 90) {
-              addFooter(pageNum);
-              doc.addPage();
-              pageNum++;
-              photoY = 35;
-              columnIndex = 0;
-            }
+  let columnIndex = 0;
+  let counter = 0;
 
-            const imgData = await toBase64(item.foto_url);
-            if (!imgData) continue;
+  for (const item of photos) {
+    // Buat jeda otomatis jika tidak cukup ruang untuk dua foto
+    if (photoY > pageBottom - 90) {
+      addFooter(pageNum);
+      doc.addPage();
+      pageNum++;
+      photoY = 35;
+      columnIndex = 0;
+    }
 
-            const currentX = columnIndex === 0 ? leftColumnX : rightColumnX;
+    const imgData = await toBase64(item.foto_url);
+    if (!imgData) continue;
 
-            // Judul foto
-            doc.setFontSize(9).setFont(undefined, "bold");
-            const titleLines = wrapText(
-              doc,
-              `${++counter}. ${item.jenis_pekerjaan}`,
-              columnWidth - 10
-            );
-            let titleY = photoY;
-            for (const line of titleLines) {
-              doc.text(line, currentX, titleY);
-              titleY += 5;
-            }
+    const currentX = columnIndex === 0 ? leftColumnX : rightColumnX;
 
-            // Render foto
-            const imgProps = doc.getImageProperties(imgData);
-            const maxWidth = columnWidth - 10;
-            const maxHeight = 75;
-            let imgWidth = maxWidth;
-            let imgHeight = (imgProps.height * imgWidth) / imgProps.width;
-            if (imgHeight > maxHeight) {
-              imgHeight = maxHeight;
-              imgWidth = (imgProps.width * imgHeight) / imgProps.height;
-            }
+    // Judul foto (pakai wrapText agar tidak panjang keluar margin)
+    doc.setFontSize(9).setFont(undefined, "bold");
+    const title = `${++counter}. ${item.jenis_pekerjaan}`;
+    const lines = wrapText(doc, title, columnWidth - 8);
+    let titleY = photoY;
+    lines.forEach((line) => {
+      doc.text(line, currentX, titleY);
+      titleY += 4;
+    });
 
-            doc.setDrawColor(200, 200, 200);
-            doc.rect(currentX, titleY, imgWidth + 4, imgHeight + 4);
-            doc.addImage(
-              imgData,
-              currentX + 2,
-              titleY + 2,
-              imgWidth,
-              imgHeight
-            );
+    // Gambar foto dengan rasio proporsional
+    const imgProps = doc.getImageProperties(imgData);
+    const maxWidth = columnWidth - 10;
+    const maxHeight = 70;
+    let imgWidth = maxWidth;
+    let imgHeight = (imgProps.height * imgWidth) / imgProps.width;
+    if (imgHeight > maxHeight) {
+      imgHeight = maxHeight;
+      imgWidth = (imgProps.width * imgHeight) / imgProps.height;
+    }
 
-            if (columnIndex === 0) {
-              columnIndex = 1;
-            } else {
-              columnIndex = 0;
-              photoY = titleY + imgHeight + 20;
-            }
-          }
+    doc.setDrawColor(200, 200, 200);
+    doc.rect(currentX, titleY, imgWidth + 4, imgHeight + 4);
+    doc.addImage(imgData, currentX + 2, titleY + 2, imgWidth, imgHeight);
 
-          photoY += 10;
-        }
+    // Atur posisi berikutnya
+    if (columnIndex === 0) {
+      columnIndex = 1;
+    } else {
+      columnIndex = 0;
+      photoY = titleY + imgHeight + 15; // jarak antar baris foto
+    }
+  }
+
+  // Setelah kategori selesai, beri jarak antar kategori
+  if (columnIndex === 1) photoY += 85; // kalau baris terakhir cuma 1 foto
+  else photoY += 10;
+}
+
       }
 
       addFooter(pageNum);
