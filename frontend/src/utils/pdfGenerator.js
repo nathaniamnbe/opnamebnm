@@ -652,11 +652,11 @@ export const generateFinalOpnamePDF = async (
       doc.setFontSize(12).setFont(undefined, "bold");
       const color =
         sectionName === "PEKERJAAN TAMBAH" ? [34, 139, 34] : [220, 20, 60];
-      doc.setFillColor(...color);
-      doc.rect(0, lastY - 5, pageWidth, 10, "F");
-      doc.setTextColor(255, 255, 255);
-      doc.text(sectionName, margin, lastY);
       doc.setTextColor(0, 0, 0);
+      doc.text(sectionName, margin, lastY);
+      doc.setDrawColor(180, 180, 180);
+      doc.setLineWidth(0.3);
+      doc.line(margin, lastY + 2, pageWidth - margin, lastY + 2);
       lastY += 10;
 
       let kategoriIndex = 1;
