@@ -930,107 +930,122 @@ export const generateFinalOpnamePDF = async (
 
     // --- LAMPIRAN FOTO ---
     // --- LAMPIRAN FOTO (TAMPILAN RAPI TANPA BLOK WARNA) ---
+    // --- LAMPIRAN FOTO (DIBAGI BERDASARKAN PEKERJAAN TAMBAH/KURANG & KATEGORI) ---
     const itemsWithPhotos = (submissions || []).filter((item) => item.foto_url);
     if (itemsWithPhotos.length > 0) {
       addFooter(doc.getNumberOfPages());
       doc.addPage();
       let pageNum = doc.getNumberOfPages();
 
-      // Header elegan tanpa warna blok
-      doc.setFontSize(12).setFont(undefined, "bold");
+      doc.setFontSize(13).setFont(undefined, "bold");
       doc.setTextColor(0, 0, 0);
       doc.text("LAMPIRAN FOTO BUKTI", pageWidth / 2, 20, { align: "center" });
 
-      // Garis tipis pemisah di bawah header
+      // Garis pemisah tipis
       doc.setDrawColor(180, 180, 180);
-      doc.setLineWidth(0.3);
       doc.line(margin, 25, pageWidth - margin, 25);
 
-      // Reset posisi awal foto
       let photoY = 35;
-      let photoCount = 0;
-      let columnIndex = 0;
       const columnWidth = (pageWidth - margin * 3) / 2;
       const leftColumnX = margin;
       const rightColumnX = margin + columnWidth + margin;
+      const pageBottom = pageHeight - 20;
 
-      // Ambil semua foto base64
-      const photoPromises = itemsWithPhotos.map((item) =>
-        toBase64(item.foto_url)
-      );
-      const base64Photos = await Promise.all(photoPromises);
-      const photoMap = {};
-      itemsWithPhotos.forEach((item, index) => {
-        if (base64Photos[index]) {
-          photoMap[item.jenis_pekerjaan] = base64Photos[index];
-        }
+      // --- Kelompokkan foto berdasarkan Tambah/Kurang dan Kategori ---
+      const photoGroups = { "PEKERJAAN TAMBAH": {}, "PEKERJAAN KURANG": {} };
+      itemsWithPhotos.forEach((it) => {
+        const total = Number(
+          String(it.total_harga_akhir || 0).replace(/[^0-9\.\-]/g, "")
+        );
+        const type = total >= 0 ? "PEKERJAAN TAMBAH" : "PEKERJAAN KURANG";
+        const cat = (it.kategori_pekerjaan || "LAINNYA").toUpperCase();
+        if (!photoGroups[type][cat]) photoGroups[type][cat] = [];
+        photoGroups[type][cat].push(it);
       });
 
-      // Render foto berpasangan
-      itemsWithPhotos.forEach((item) => {
-        const imgData = photoMap[item.jenis_pekerjaan];
-        if (imgData) {
-          const imgProps = doc.getImageProperties(imgData);
-          const maxWidth = columnWidth - 10;
-          const maxHeight = 80;
-          let imgWidth = maxWidth;
-          let imgHeight = (imgProps.height * imgWidth) / imgProps.width;
+      // --- Render tiap bagian ---
+      for (const [typeName, categories] of Object.entries(photoGroups)) {
+        // Page break tiap kali ganti Tambah/Kurang
+        addFooter(pageNum);
+        doc.addPage();
+        pageNum++;
+        photoY = 35;
 
-          if (imgHeight > maxHeight) {
-            imgHeight = maxHeight;
-            imgWidth = (imgProps.width * imgHeight) / imgProps.height;
+        // Header besar (PEKERJAAN TAMBAH / KURANG)
+        doc.setFontSize(12).setFont(undefined, "bold");
+        doc.text(typeName, margin, photoY);
+        doc.setDrawColor(160, 160, 160);
+        doc.line(margin, photoY + 2, pageWidth - margin, photoY + 2);
+        photoY += 12;
+
+        for (const [kategori, photos] of Object.entries(categories)) {
+          // Nama kategori (misal: PEKERJAAN PASANGAN)
+          doc.setFontSize(11).setFont(undefined, "bold");
+          doc.text(kategori, margin, photoY);
+          photoY += 8;
+
+          let columnIndex = 0;
+          let counter = 0;
+
+          for (const item of photos) {
+            if (photoY > pageBottom - 90) {
+              addFooter(pageNum);
+              doc.addPage();
+              pageNum++;
+              photoY = 35;
+              columnIndex = 0;
+            }
+
+            const imgData = await toBase64(item.foto_url);
+            if (!imgData) continue;
+
+            const currentX = columnIndex === 0 ? leftColumnX : rightColumnX;
+
+            // Judul foto
+            doc.setFontSize(9).setFont(undefined, "bold");
+            const titleLines = wrapText(
+              doc,
+              `${++counter}. ${item.jenis_pekerjaan}`,
+              columnWidth - 10
+            );
+            let titleY = photoY;
+            for (const line of titleLines) {
+              doc.text(line, currentX, titleY);
+              titleY += 5;
+            }
+
+            // Render foto
+            const imgProps = doc.getImageProperties(imgData);
+            const maxWidth = columnWidth - 10;
+            const maxHeight = 75;
+            let imgWidth = maxWidth;
+            let imgHeight = (imgProps.height * imgWidth) / imgProps.width;
+            if (imgHeight > maxHeight) {
+              imgHeight = maxHeight;
+              imgWidth = (imgProps.width * imgHeight) / imgProps.height;
+            }
+
+            doc.setDrawColor(200, 200, 200);
+            doc.rect(currentX, titleY, imgWidth + 4, imgHeight + 4);
+            doc.addImage(
+              imgData,
+              currentX + 2,
+              titleY + 2,
+              imgWidth,
+              imgHeight
+            );
+
+            if (columnIndex === 0) {
+              columnIndex = 1;
+            } else {
+              columnIndex = 0;
+              photoY = titleY + imgHeight + 20;
+            }
           }
 
-          const currentX = columnIndex === 0 ? leftColumnX : rightColumnX;
-
-          // Pindah halaman jika hampir penuh
-          if (photoY + imgHeight + 35 > pageHeight - 20) {
-            addFooter(pageNum);
-            doc.addPage();
-            pageNum++;
-            photoY = 35;
-            columnIndex = 0;
-          }
-
-          // Judul foto
-          doc.setFontSize(9).setFont(undefined, "bold");
-          const titleMaxWidth = columnWidth - 10;
-          const titleLines = wrapText(
-            doc,
-            `${++photoCount}. ${item.jenis_pekerjaan}`,
-            titleMaxWidth
-          );
-
-          let titleY = photoY;
-          titleLines.forEach((line) => {
-            doc.text(line, currentX, titleY);
-            titleY += 5;
-          });
-
-          const titleHeight = titleLines.length * 5;
-          const imageStartY = photoY + titleHeight + 2;
-
-          // Gambar dengan border lembut abu-abu
-          doc.setDrawColor(200, 200, 200);
-          doc.setLineWidth(0.3);
-          doc.rect(currentX, imageStartY, imgWidth + 4, imgHeight + 4);
-          doc.addImage(
-            imgData,
-            currentX + 2,
-            imageStartY + 2,
-            imgWidth,
-            imgHeight
-          );
-
-          // Pindah posisi
-          if (columnIndex === 0) {
-            columnIndex = 1;
-          } else {
-            columnIndex = 0;
-            photoY = imageStartY + imgHeight + 25; // spasi antar baris lebih lega
-          }
+          photoY += 10;
         }
-      });
+      }
 
       addFooter(pageNum);
     }
