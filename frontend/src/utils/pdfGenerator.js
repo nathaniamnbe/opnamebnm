@@ -929,178 +929,109 @@ export const generateFinalOpnamePDF = async (
     lastY = (doc.lastAutoTable?.finalY ?? lastY) + 15;
 
     // --- LAMPIRAN FOTO ---
-    // --- LAMPIRAN FOTO: dikelompokkan TAMBAH/KURANG -> KATEGORI, tampilan 2 kolom ---
-    const itemsWithPhotos = (submissions || []).filter((it) => it.foto_url);
-
+    // --- LAMPIRAN FOTO (TAMPILAN RAPI TANPA BLOK WARNA) ---
+    const itemsWithPhotos = (submissions || []).filter((item) => item.foto_url);
     if (itemsWithPhotos.length > 0) {
       addFooter(doc.getNumberOfPages());
       doc.addPage();
       let pageNum = doc.getNumberOfPages();
 
-      // ====== Header ======
+      // Header elegan tanpa warna blok
       doc.setFontSize(12).setFont(undefined, "bold");
       doc.setTextColor(0, 0, 0);
       doc.text("LAMPIRAN FOTO BUKTI", pageWidth / 2, 20, { align: "center" });
+
+      // Garis tipis pemisah di bawah header
       doc.setDrawColor(180, 180, 180);
       doc.setLineWidth(0.3);
       doc.line(margin, 25, pageWidth - margin, 25);
 
-      // ====== Helper ======
-      const getTypeLabel = (item) =>
-        Number(String(item.total_harga_akhir || 0).replace(/[^0-9.\-]/g, "")) >=
-        0
-          ? "PEKERJAAN TAMBAH"
-          : "PEKERJAAN KURANG";
-
-      // Group: { "PEKERJAAN TAMBAH": { "PERSIAPAN": [items...], ... }, "PEKERJAAN KURANG": {...} }
-      const grouped = {};
-      for (const it of itemsWithPhotos) {
-        const tipe = getTypeLabel(it);
-        const kategori = (it.kategori_pekerjaan || "LAINNYA")
-          .toString()
-          .toUpperCase();
-        if (!grouped[tipe]) grouped[tipe] = {};
-        if (!grouped[tipe][kategori]) grouped[tipe][kategori] = [];
-        grouped[tipe][kategori].push(it);
-      }
-
-      // Persiapan gambar base64 untuk semua foto
-      const base64Map = {};
-      await Promise.all(
-        itemsWithPhotos.map(async (it) => {
-          const b64 = await toBase64(it.foto_url);
-          if (b64) base64Map[it.foto_url] = b64;
-        })
-      );
-
-      // ====== Layout 2 kolom ======
+      // Reset posisi awal foto
+      let photoY = 35;
+      let photoCount = 0;
+      let columnIndex = 0;
       const columnWidth = (pageWidth - margin * 3) / 2;
-      const maxImgHeight = 80;
-      const maxImgWidth = columnWidth - 10;
-      const leftX = margin;
-      const rightX = margin + columnWidth + margin;
+      const leftColumnX = margin;
+      const rightColumnX = margin + columnWidth + margin;
 
-      let y = 35; // posisi Y berjalan
-      let col = 0; // 0 = kiri, 1 = kanan
-      let counter = 0; // penomoran foto per dokumen
-
-      // Utility: pindah halaman jika tidak muat
-      const ensureSpace = (needHeight = 30) => {
-        if (y + needHeight > pageHeight - 20) {
-          addFooter(pageNum);
-          doc.addPage();
-          pageNum++;
-          y = 35;
-          col = 0;
+      // Ambil semua foto base64
+      const photoPromises = itemsWithPhotos.map((item) =>
+        toBase64(item.foto_url)
+      );
+      const base64Photos = await Promise.all(photoPromises);
+      const photoMap = {};
+      itemsWithPhotos.forEach((item, index) => {
+        if (base64Photos[index]) {
+          photoMap[item.jenis_pekerjaan] = base64Photos[index];
         }
-      };
+      });
 
-      // Utility: tulis judul seksi (TAMBAH/KURANG)
-      const writeSectionTitle = (text) => {
-        ensureSpace(18);
-        doc.setFontSize(12).setFont(undefined, "bold");
-        doc.text(text, margin, y);
-        doc.setDrawColor(180, 180, 180);
-        doc.setLineWidth(0.3);
-        doc.line(margin, y + 2, pageWidth - margin, y + 2);
-        y += 10;
-        col = 0; // mulai baris baru
-      };
-
-      // Utility: tulis judul kategori
-      const writeCategoryTitle = (text) => {
-        ensureSpace(16);
-        doc.setFontSize(11).setFont(undefined, "bold");
-        doc.text(text, margin, y);
-        y += 8;
-        col = 0; // mulai baris baru
-      };
-
-      // Utility: render satu foto (judul item + gambar)
-      const renderPhoto = (title, fotoUrl) => {
-        const x = col === 0 ? leftX : rightX;
-
-        // judul foto (wrap)
-        doc.setFontSize(9).setFont(undefined, "bold");
-        const lines = wrapText(doc, `${++counter}. ${title}`, columnWidth - 10);
-        let titleY = y;
-        for (const ln of lines) {
-          doc.text(ln, x, titleY);
-          titleY += 5;
-        }
-
-        // gambar
-        const imgData = base64Map[fotoUrl];
+      // Render foto berpasangan
+      itemsWithPhotos.forEach((item) => {
+        const imgData = photoMap[item.jenis_pekerjaan];
         if (imgData) {
-          const prop = doc.getImageProperties(imgData);
-          let w = maxImgWidth;
-          let h = (prop.height * w) / prop.width;
-          if (h > maxImgHeight) {
-            h = maxImgHeight;
-            w = (prop.width * h) / prop.height;
+          const imgProps = doc.getImageProperties(imgData);
+          const maxWidth = columnWidth - 10;
+          const maxHeight = 80;
+          let imgWidth = maxWidth;
+          let imgHeight = (imgProps.height * imgWidth) / imgProps.width;
+
+          if (imgHeight > maxHeight) {
+            imgHeight = maxHeight;
+            imgWidth = (imgProps.width * imgHeight) / imgProps.height;
           }
 
-          const imgY = titleY + 2;
-          // cek muat halaman
-          if (imgY + h + 8 > pageHeight - 20) {
-            // pindah halaman dulu
+          const currentX = columnIndex === 0 ? leftColumnX : rightColumnX;
+
+          // Pindah halaman jika hampir penuh
+          if (photoY + imgHeight + 35 > pageHeight - 20) {
             addFooter(pageNum);
             doc.addPage();
             pageNum++;
-            y = 35;
-            col = 0;
-            return renderPhoto(title, fotoUrl); // render ulang di halaman baru
+            photoY = 35;
+            columnIndex = 0;
           }
 
-          // border lembut
+          // Judul foto
+          doc.setFontSize(9).setFont(undefined, "bold");
+          const titleMaxWidth = columnWidth - 10;
+          const titleLines = wrapText(
+            doc,
+            `${++photoCount}. ${item.jenis_pekerjaan}`,
+            titleMaxWidth
+          );
+
+          let titleY = photoY;
+          titleLines.forEach((line) => {
+            doc.text(line, currentX, titleY);
+            titleY += 5;
+          });
+
+          const titleHeight = titleLines.length * 5;
+          const imageStartY = photoY + titleHeight + 2;
+
+          // Gambar dengan border lembut abu-abu
           doc.setDrawColor(200, 200, 200);
           doc.setLineWidth(0.3);
-          doc.rect(x, imgY, w + 4, h + 4);
-          doc.addImage(imgData, x + 2, imgY + 2, w, h);
+          doc.rect(currentX, imageStartY, imgWidth + 4, imgHeight + 4);
+          doc.addImage(
+            imgData,
+            currentX + 2,
+            imageStartY + 2,
+            imgWidth,
+            imgHeight
+          );
 
-          // atur posisi berikutnya
-          if (col === 0) {
-            col = 1; // ke kanan
+          // Pindah posisi
+          if (columnIndex === 0) {
+            columnIndex = 1;
           } else {
-            col = 0;
-            y = imgY + h + 20; // baris baru, beri jarak
+            columnIndex = 0;
+            photoY = imageStartY + imgHeight + 25; // spasi antar baris lebih lega
           }
         }
-      };
+      });
 
-      // ====== Tulis konten per seksi & kategori ======
-      for (const sectionName of ["PEKERJAAN TAMBAH", "PEKERJAAN KURANG"]) {
-        if (!grouped[sectionName]) continue;
-
-        // jika seksi "KURANG", pastikan mulai halaman baru agar rapi (opsional)
-        if (sectionName === "PEKERJAAN KURANG" && (y > 40 || col !== 0)) {
-          addFooter(pageNum);
-          doc.addPage();
-          pageNum++;
-          y = 35;
-          col = 0;
-        }
-
-        writeSectionTitle(sectionName);
-
-        const categories = Object.keys(grouped[sectionName]).sort();
-        for (const kategori of categories) {
-          writeCategoryTitle(kategori);
-
-          for (const item of grouped[sectionName][kategori]) {
-            ensureSpace(40); // kira-kira ruang minimal satu kartu foto
-            renderPhoto(item.jenis_pekerjaan, item.foto_url);
-          }
-
-          // kalau kolom kanan terisi terakhir, turun baris baru
-          if (col === 1) {
-            col = 0;
-            y += 10;
-          }
-        }
-      }
-
-      // tutup footer halaman terakhir dari bagian foto
       addFooter(pageNum);
     }
 
