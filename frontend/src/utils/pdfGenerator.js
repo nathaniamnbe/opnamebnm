@@ -681,10 +681,11 @@ autoTable(doc, {
       "TOTAL HARGA AKHIR (Rp)",
     ],
   ],
-  
+
   body: rows,
   startY: lastY,
   margin: { left: margin, right: margin },
+  tableWidth: pageWidth - margin * 2,
   theme: "grid",
   styles: {
     fontSize: 8,
@@ -703,13 +704,13 @@ autoTable(doc, {
     fontStyle: "bold",
   },
   columnStyles: {
-    0: { halign: "center", cellWidth: 8 },
-    1: { cellWidth: 40 },
-    2: { halign: "right", cellWidth: 16 },
-    3: { halign: "center", cellWidth: 16 },
-    4: { halign: "right", cellWidth: 18 },
-    5: { halign: "right", cellWidth: 18 },
-    6: { halign: "right", cellWidth: 22, fontStyle: "bold" },
+    0: { halign: "center", cellWidth: 8 }, // NO.
+    1: { cellWidth: 70, minCellWidth: 60 }, // JENIS PEKERJAAN (lebih lebar)
+    2: { halign: "right", cellWidth: 16 }, // VOL RAB
+    3: { halign: "center", cellWidth: 16 }, // SATUAN
+    4: { halign: "right", cellWidth: 22 }, // VOLUME AKHIR
+    5: { halign: "right", cellWidth: 22 }, // SELISIH
+    6: { halign: "right", cellWidth: 28, fontStyle: "bold" }, // TOTAL
   },
 });
 
