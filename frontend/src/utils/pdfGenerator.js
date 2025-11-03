@@ -707,7 +707,7 @@ export const generateFinalOpnamePDF = async (
             fontStyle: "bold",
           },
           columnStyles: {
-            0: { halign: "center", cellWidth: 8 }, // NO.
+            0: { halign: "center", cellWidth: 10 }, // NO.
             1: { cellWidth: 70, minCellWidth: 60 }, // JENIS PEKERJAAN (lebih lebar)
             2: { halign: "right", cellWidth: 16 }, // VOL RAB
             3: { halign: "center", cellWidth: 16 }, // SATUAN
