@@ -589,7 +589,7 @@ doc.setTextColor(0, 0, 0);
 doc.text("LAPORAN OPNAME FINAL (APPROVED)", margin, lastY);
 doc.setDrawColor(120, 120, 120);
 doc.setLineWidth(0.3);
-doc.line(margin, lastY + 2, pageWidth - margin, lastY + 2); // garis tipis seperti RAB
+doc.line(margin, lastY + 2, pageWidth - margin, lastY + 2);
 lastY += 10;
 
 
@@ -681,12 +681,9 @@ autoTable(doc, {
       "TOTAL HARGA AKHIR (Rp)",
     ],
   ],
-  body: rows,
   startY: lastY,
   margin: { left: margin, right: margin },
   theme: "grid",
-
-  // selaras dengan RAB
   styles: {
     fontSize: 8,
     cellPadding: 2.5,
@@ -696,36 +693,23 @@ autoTable(doc, {
     lineWidth: 0.3,
   },
   headStyles: {
-    fillColor: [205, 234, 242], // biru muda seperti RAB
+    fillColor: [205, 234, 242],
     textColor: [0, 0, 0],
     halign: "center",
     valign: "middle",
     fontSize: 8,
     fontStyle: "bold",
-    lineColor: [100, 100, 100],
-    lineWidth: 0.4,
-    cellPadding: 2,
-    lineHeight: 1.0,
   },
-  bodyStyles: {
-    fontSize: 8,
-    valign: "middle",
-    lineColor: [120, 120, 120],
-    lineWidth: 0.3,
-  },
-
-  // ukuran kolom kecil & tidak memotong header
   columnStyles: {
-    0: { halign: "center", cellWidth: 8 }, // NO.
-    1: { cellWidth: 40, minCellWidth: 40 }, // JENIS PEKERJAAN
-    2: { halign: "right", cellWidth: 16 }, // VOL RAB
-    3: { halign: "center", cellWidth: 16 }, // SATUAN
-    4: { halign: "right", cellWidth: 18 }, // VOLUME AKHIR
-    5: { halign: "right", cellWidth: 18 }, // SELISIH
-    6: { halign: "right", cellWidth: 22, fontStyle: "bold" }, // TOTAL
+    0: { halign: "center", cellWidth: 8 },
+    1: { cellWidth: 40 },
+    2: { halign: "right", cellWidth: 16 },
+    3: { halign: "center", cellWidth: 16 },
+    4: { halign: "right", cellWidth: 18 },
+    5: { halign: "right", cellWidth: 18 },
+    6: { halign: "right", cellWidth: 22, fontStyle: "bold" },
   },
 });
-
 
         lastY = (doc.lastAutoTable?.finalY ?? lastY) + 10;
       }
