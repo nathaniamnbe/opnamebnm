@@ -708,8 +708,8 @@ autoTable(doc, {
     fontSize: 8.5,
     fontStyle: "bold",
     minCellHeight: 9,
-    overflow: "hidden", // ⬅️ cegah “NO.” terpecah
-    lineHeight: 1, // ⬅️ rapat supaya muat satu baris
+    lineHeight: 1.15, // ← beri ruang agar tidak kepotong
+    overflow: "linebreak", // ← paksa wrap, tidak dipotong
     cellPadding: 2,
   },
   columnStyles: {
