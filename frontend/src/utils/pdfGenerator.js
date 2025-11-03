@@ -834,14 +834,16 @@ export const generateFinalOpnamePDF = async (
     doc.addPage();
     lastY = margin + 10;
 
-    // Header bar konsisten (merah)
+    // Header tanpa warna (elegan minimalis)
     doc.setFontSize(12).setFont(undefined, "bold");
-    doc.setFillColor(229, 30, 37);
-    doc.rect(0, lastY - 5, pageWidth, 10, "F");
-    doc.setTextColor(255, 255, 255);
-    doc.text("STATUS PEKERJAAN", margin, lastY);
     doc.setTextColor(0, 0, 0);
-    lastY += 14;
+    doc.text("STATUS PEKERJAAN", margin, lastY);
+
+    // Garis tipis di bawah judul (gaya seperti RAB FINAL)
+    doc.setDrawColor(180, 180, 180);
+    doc.setLineWidth(0.3);
+    doc.line(margin, lastY + 2, pageWidth - margin, lastY + 2);
+    lastY += 10;
 
     // Tentukan status berdasarkan selisih Opname vs RAB (keduanya setelah PPN)
     const deltaNominal = totalSetelahPPNOpname - totalSetelahPPNRAB;
