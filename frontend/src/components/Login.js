@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import alfaLogo from "../images/Alfamart-Emblem.png";
 
@@ -9,17 +10,28 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
+
+  const { login, isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+
+  // Jika sudah login lalu buka /login, lempar balik ke beranda
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate("/");
+    }
+  }, [isAuthenticated, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError("");
 
-    const result = await login(username, password);
+    const result = await login(username.trim(), password);
 
-    if (!result.success) {
-      setError(result.message);
+    if (result.success) {
+      navigate("/"); // arahkan ke halaman utama
+    } else {
+      setError(result.message || "Login gagal. Coba lagi.");
     }
 
     setLoading(false);
@@ -44,11 +56,7 @@ const Login = () => {
         }}
       >
         <div style={{ textAlign: "center", marginBottom: "32px" }}>
-          <img
-            src={alfaLogo} // ⬅️ Gunakan hasil import
-            alt="Alfamart"
-            style={{ height: "40px" }}
-          />
+          <img src={alfaLogo} alt="Alfamart" style={{ height: "40px" }} />
           <h2 style={{ color: "black", marginBottom: "8px" }}>
             Sistem Opname Alfamart
           </h2>
@@ -69,6 +77,7 @@ const Login = () => {
               onChange={(e) => setUsername(e.target.value)}
               placeholder="Masukkan username"
               required
+              autoFocus
             />
           </div>
 
@@ -93,8 +102,6 @@ const Login = () => {
             {loading ? "Loading..." : "Login"}
           </button>
         </form>
-
-        
       </div>
     </div>
   );
