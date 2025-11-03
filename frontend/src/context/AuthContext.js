@@ -34,7 +34,7 @@ const login = async (username, password) => {
     const hour = wibTime.getHours();
 
     // ✅ Batasi jam operasional 06:00 - 18:00 WIB
-    if (hour < 6 || hour >= 15) {
+    if (hour < 6 || hour >= 18) {
       const currentTime = wibTime.toLocaleTimeString("id-ID", {
         hour: "2-digit",
         minute: "2-digit",
