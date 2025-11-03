@@ -672,50 +672,52 @@ export const generateFinalOpnamePDF = async (
           formatRupiah(item.total_harga_akhir),
         ]);
 
-        autoTable(doc, {
-          head: [
-            [
-              "NO.",
-              "JENIS PEKERJAAN",
-              "VOL RAB",
-              "SATUAN",
-              "VOLUME AKHIR",
-              "SELISIH",
-              "TOTAL HARGA AKHIR (Rp)",
-            ],
-          ],
+autoTable(doc, {
+  head: [
+    [
+      "NO.",
+      "JENIS PEKERJAAN",
+      "VOL RAB",
+      "SATUAN",
+      "VOLUME AKHIR",
+      "SELISIH",
+      "TOTAL HARGA AKHIR (Rp)",
+    ],
+  ],
 
-          body: rows,
-          startY: lastY,
-          margin: { left: margin, right: margin },
-          tableWidth: pageWidth - margin * 2,
-          theme: "grid",
-          styles: {
-            fontSize: 8,
-            cellPadding: 2.5,
-            lineHeight: 1.05,
-            overflow: "linebreak",
-            lineColor: [120, 120, 120],
-            lineWidth: 0.3,
-          },
-          headStyles: {
-            fillColor: [205, 234, 242],
-            textColor: [0, 0, 0],
-            halign: "center",
-            valign: "middle",
-            fontSize: 8,
-            fontStyle: "bold",
-          },
-          columnStyles: {
-            0: { halign: "center", cellWidth: 10 }, // NO.
-            1: { cellWidth: 70, minCellWidth: 60 }, // JENIS PEKERJAAN (lebih lebar)
-            2: { halign: "right", cellWidth: 16 }, // VOL RAB
-            3: { halign: "center", cellWidth: 16 }, // SATUAN
-            4: { halign: "right", cellWidth: 22 }, // VOLUME AKHIR
-            5: { halign: "right", cellWidth: 22 }, // SELISIH
-            6: { halign: "right", cellWidth: 28, fontStyle: "bold" }, // TOTAL
-          },
-        });
+  body: rows,
+  startY: lastY,
+  margin: { left: margin, right: margin },
+  tableWidth: pageWidth - margin * 2,
+  theme: "grid",
+  styles: {
+    fontSize: 8,
+    cellPadding: 3.5, // ➕ sedikit lebih lega agar teks tidak terpotong
+    lineHeight: 1.2, // ➕ beri ruang vertikal
+    overflow: "linebreak",
+    lineColor: [120, 120, 120],
+    lineWidth: 0.3,
+  },
+  headStyles: {
+    fillColor: [205, 234, 242],
+    textColor: [0, 0, 0],
+    halign: "center",
+    valign: "middle",
+    fontSize: 8.5, // ➕ sedikit lebih besar agar pas di satu baris
+    fontStyle: "bold",
+    minCellHeight: 10, // ➕ tinggi minimum agar tulisan tidak nempel
+  },
+  columnStyles: {
+    0: { halign: "center", cellWidth: 10, minCellHeight: 10 }, // ✅ lebih lebar agar "NO." muat
+    1: { cellWidth: 68 },
+    2: { halign: "right", cellWidth: 18 },
+    3: { halign: "center", cellWidth: 18 },
+    4: { halign: "right", cellWidth: 22 },
+    5: { halign: "right", cellWidth: 22 },
+    6: { halign: "right", cellWidth: 30, fontStyle: "bold" },
+  },
+});
+
 
         lastY = (doc.lastAutoTable?.finalY ?? lastY) + 10;
       }
