@@ -684,37 +684,51 @@ autoTable(doc, {
       "TOTAL HARGA AKHIR (Rp)",
     ],
   ],
-
   body: rows,
   startY: lastY,
   margin: { left: margin, right: margin },
   tableWidth: pageWidth - margin * 2,
   theme: "grid",
+
+  // beri ruang secukupnya, tapi tetap kompak
   styles: {
     fontSize: 8,
-    cellPadding: 3.5, // ➕ sedikit lebih lega agar teks tidak terpotong
-    lineHeight: 1.2, // ➕ beri ruang vertikal
+    cellPadding: 3,
+    lineHeight: 1.1,
     overflow: "linebreak",
     lineColor: [120, 120, 120],
     lineWidth: 0.3,
   },
+  // header TIDAK membungkus
   headStyles: {
     fillColor: [205, 234, 242],
     textColor: [0, 0, 0],
     halign: "center",
     valign: "middle",
-    fontSize: 8.5, // ➕ sedikit lebih besar agar pas di satu baris
+    fontSize: 8.5,
     fontStyle: "bold",
-    minCellHeight: 10, // ➕ tinggi minimum agar tulisan tidak nempel
+    minCellHeight: 9,
+    overflow: "hidden", // ⬅️ cegah “NO.” terpecah
+    lineHeight: 1, // ⬅️ rapat supaya muat satu baris
+    cellPadding: 2,
   },
   columnStyles: {
-    0: { halign: "center", cellWidth: 10, minCellHeight: 10 }, // ✅ lebih lebar agar "NO." muat
-    1: { cellWidth: 68 },
+    0: { halign: "center", cellWidth: 12, minCellHeight: 9 }, // ⬅️ lebarin dari 10 → 12
+    1: { cellWidth: 66 },
     2: { halign: "right", cellWidth: 18 },
     3: { halign: "center", cellWidth: 18 },
     4: { halign: "right", cellWidth: 22 },
     5: { halign: "right", cellWidth: 22 },
     6: { halign: "right", cellWidth: 30, fontStyle: "bold" },
+  },
+
+  // kecilkan font khusus sel header kolom 0 dan paksa tetap 1 baris
+  didParseCell(data) {
+    if (data.section === "head" && data.column.index === 0) {
+      data.cell.styles.fontSize = 8; // ⬅️ sedikit lebih kecil
+      data.cell.styles.overflow = "hidden";
+      data.cell.styles.lineHeight = 1;
+    }
   },
 });
 
