@@ -929,21 +929,32 @@ export const generateFinalOpnamePDF = async (
     lastY = (doc.lastAutoTable?.finalY ?? lastY) + 15;
 
     // --- LAMPIRAN FOTO ---
+    // --- LAMPIRAN FOTO (TAMPILAN RAPI TANPA BLOK WARNA) ---
     const itemsWithPhotos = (submissions || []).filter((item) => item.foto_url);
     if (itemsWithPhotos.length > 0) {
-      // Selalu mulai di halaman baru untuk Foto
       addFooter(doc.getNumberOfPages());
       doc.addPage();
       let pageNum = doc.getNumberOfPages();
 
-      // Header halaman foto
-      doc.setFillColor(229, 30, 37);
-      doc.rect(0, 0, pageWidth, 20, "F");
-      doc.setTextColor(255, 255, 255);
+      // Header elegan tanpa warna blok
       doc.setFontSize(12).setFont(undefined, "bold");
-      doc.text("LAMPIRAN FOTO BUKTI", pageWidth / 2, 13, { align: "center" });
       doc.setTextColor(0, 0, 0);
+      doc.text("LAMPIRAN FOTO BUKTI", pageWidth / 2, 20, { align: "center" });
 
+      // Garis tipis pemisah di bawah header
+      doc.setDrawColor(180, 180, 180);
+      doc.setLineWidth(0.3);
+      doc.line(margin, 25, pageWidth - margin, 25);
+
+      // Reset posisi awal foto
+      let photoY = 35;
+      let photoCount = 0;
+      let columnIndex = 0;
+      const columnWidth = (pageWidth - margin * 3) / 2;
+      const leftColumnX = margin;
+      const rightColumnX = margin + columnWidth + margin;
+
+      // Ambil semua foto base64
       const photoPromises = itemsWithPhotos.map((item) =>
         toBase64(item.foto_url)
       );
@@ -955,13 +966,7 @@ export const generateFinalOpnamePDF = async (
         }
       });
 
-      let photoY = 30;
-      let photoCount = 0;
-      let columnIndex = 0; // 0 kiri, 1 kanan
-      const columnWidth = (pageWidth - margin * 3) / 2;
-      const leftColumnX = margin;
-      const rightColumnX = margin + columnWidth + margin;
-
+      // Render foto berpasangan
       itemsWithPhotos.forEach((item) => {
         const imgData = photoMap[item.jenis_pekerjaan];
         if (imgData) {
@@ -978,16 +983,17 @@ export const generateFinalOpnamePDF = async (
 
           const currentX = columnIndex === 0 ? leftColumnX : rightColumnX;
 
+          // Pindah halaman jika hampir penuh
           if (photoY + imgHeight + 35 > pageHeight - 20) {
             addFooter(pageNum);
             doc.addPage();
             pageNum++;
-            photoY = 30;
+            photoY = 35;
             columnIndex = 0;
           }
 
           // Judul foto
-          doc.setFontSize(8).setFont(undefined, "bold");
+          doc.setFontSize(9).setFont(undefined, "bold");
           const titleMaxWidth = columnWidth - 10;
           const titleLines = wrapText(
             doc,
@@ -1004,8 +1010,9 @@ export const generateFinalOpnamePDF = async (
           const titleHeight = titleLines.length * 5;
           const imageStartY = photoY + titleHeight + 2;
 
-          // Gambar dengan border
-          doc.setLineWidth(0.5);
+          // Gambar dengan border lembut abu-abu
+          doc.setDrawColor(200, 200, 200);
+          doc.setLineWidth(0.3);
           doc.rect(currentX, imageStartY, imgWidth + 4, imgHeight + 4);
           doc.addImage(
             imgData,
@@ -1015,17 +1022,16 @@ export const generateFinalOpnamePDF = async (
             imgHeight
           );
 
-          // Pindah kolom / baris
+          // Pindah posisi
           if (columnIndex === 0) {
             columnIndex = 1;
           } else {
             columnIndex = 0;
-            photoY = imageStartY + imgHeight + 20;
+            photoY = imageStartY + imgHeight + 25; // spasi antar baris lebih lega
           }
         }
       });
 
-      // Footer halaman foto terakhir
       addFooter(pageNum);
     }
 
