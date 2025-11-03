@@ -584,13 +584,14 @@ autoTable(doc, {
     doc.addPage();
     lastY = margin + 10;
 
-    doc.setFontSize(12).setFont(undefined, "bold");
-    doc.setFillColor(34, 139, 34);
-    doc.rect(0, lastY - 5, pageWidth, 10, "F");
-    doc.setTextColor(255, 255, 255);
-    doc.text("LAPORAN OPNAME FINAL (APPROVED)", margin, lastY);
-    doc.setTextColor(0, 0, 0);
-    lastY += 10;
+doc.setFontSize(12).setFont(undefined, "bold");
+doc.setTextColor(0, 0, 0);
+doc.text("LAPORAN OPNAME FINAL (APPROVED)", margin, lastY);
+doc.setDrawColor(120, 120, 120);
+doc.setLineWidth(0.3);
+doc.line(margin, lastY + 2, pageWidth - margin, lastY + 2); // garis tipis seperti RAB
+lastY += 10;
+
 
     const opnameTableColumn = [
       "No",
@@ -640,9 +641,6 @@ autoTable(doc, {
       doc.setFontSize(12).setFont(undefined, "bold");
       const color =
         sectionName === "PEKERJAAN TAMBAH" ? [34, 139, 34] : [220, 20, 60];
-      doc.setFillColor(...color);
-      doc.rect(0, lastY - 5, pageWidth, 10, "F");
-      doc.setTextColor(255, 255, 255);
       doc.text(sectionName, margin, lastY);
       doc.setTextColor(0, 0, 0);
       lastY += 10;
@@ -655,13 +653,10 @@ autoTable(doc, {
           lastY = margin + 10;
         }
 
-        doc.setFontSize(11).setFont(undefined, "bold");
-        doc.text(
-          `${kategoriIndex}. ${kategori.toUpperCase()}`,
-          margin,
-          lastY + 8
-        );
-        lastY += 12;
+doc.setFontSize(11).setFont(undefined, "bold");
+doc.text(`${kategoriIndex}. ${kategori.toUpperCase()}`, margin, lastY);
+lastY += 10;
+
         kategoriIndex++;
 
         const rows = items.map((item, idx) => [
@@ -674,47 +669,63 @@ autoTable(doc, {
           formatRupiah(item.total_harga_akhir),
         ]);
 
-        autoTable(doc, {
-          head: [
-            [
-              "No",
-              "Jenis Pekerjaan",
-              "Vol RAB",
-              "Satuan",
-              "Volume Akhir",
-              "Selisih",
-              "Total Harga Akhir",
-            ],
-          ],
-          body: rows,
-          startY: lastY,
-          margin: { left: margin, right: margin },
-          theme: "grid",
-          styles: { fontSize: 7, cellPadding: 1.5, overflow: "linebreak" },
-          headStyles: {
-            fillColor: color,
-            textColor: [255, 255, 255],
-            halign: "center",
-            valign: "middle",
-            fontSize: 7,
-            fontStyle: "bold",
-          },
-          bodyStyles: {
-            fontSize: 7,
-            valign: "middle",
-            lineColor: [150, 150, 150],
-            lineWidth: 0.2,
-          },
-          columnStyles: {
-            0: { halign: "center", cellWidth: 8 },
-            1: { cellWidth: "auto", minCellWidth: 40 },
-            2: { halign: "center", cellWidth: 12 },
-            3: { halign: "right", cellWidth: 12 },
-            4: { halign: "right", cellWidth: 15 },
-            5: { halign: "right", cellWidth: 20 },
-            6: { halign: "right", cellWidth: 25 },
-          },
-        });
+autoTable(doc, {
+  head: [
+    [
+      "NO.",
+      "JENIS PEKERJAAN",
+      "VOL RAB",
+      "SATUAN",
+      "VOLUME AKHIR",
+      "SELISIH",
+      "TOTAL HARGA AKHIR (Rp)",
+    ],
+  ],
+  body: rows,
+  startY: lastY,
+  margin: { left: margin, right: margin },
+  theme: "grid",
+
+  // selaras dengan RAB
+  styles: {
+    fontSize: 8,
+    cellPadding: 2.5,
+    lineHeight: 1.05,
+    overflow: "linebreak",
+    lineColor: [120, 120, 120],
+    lineWidth: 0.3,
+  },
+  headStyles: {
+    fillColor: [205, 234, 242], // biru muda seperti RAB
+    textColor: [0, 0, 0],
+    halign: "center",
+    valign: "middle",
+    fontSize: 8,
+    fontStyle: "bold",
+    lineColor: [100, 100, 100],
+    lineWidth: 0.4,
+    cellPadding: 2,
+    lineHeight: 1.0,
+  },
+  bodyStyles: {
+    fontSize: 8,
+    valign: "middle",
+    lineColor: [120, 120, 120],
+    lineWidth: 0.3,
+  },
+
+  // ukuran kolom kecil & tidak memotong header
+  columnStyles: {
+    0: { halign: "center", cellWidth: 8 }, // NO.
+    1: { cellWidth: 40, minCellWidth: 40 }, // JENIS PEKERJAAN
+    2: { halign: "right", cellWidth: 16 }, // VOL RAB
+    3: { halign: "center", cellWidth: 16 }, // SATUAN
+    4: { halign: "right", cellWidth: 18 }, // VOLUME AKHIR
+    5: { halign: "right", cellWidth: 18 }, // SELISIH
+    6: { halign: "right", cellWidth: 22, fontStyle: "bold" }, // TOTAL
+  },
+});
+
 
         lastY = (doc.lastAutoTable?.finalY ?? lastY) + 10;
       }
@@ -724,36 +735,29 @@ autoTable(doc, {
         .flat()
         .reduce((sum, item) => sum + toNumberID(item.total_harga_akhir), 0);
 
-      autoTable(doc, {
-        body: [
-          ["TOTAL " + sectionName, formatRupiah(totalPerBlock)],
-          ["PPN 11%", formatRupiah(totalPerBlock * 0.11)],
-          ["GRAND TOTAL " + sectionName, formatRupiah(totalPerBlock * 1.11)],
-        ],
-        startY: lastY,
-        margin: { left: pageWidth - 90, right: margin },
-        tableWidth: 80,
-        theme: "grid",
-        styles: {
-          fontSize: 8,
-          fontStyle: "bold",
-          halign: "right",
-          cellPadding: 2,
-        },
-        columnStyles: {
-          0: { halign: "left", cellWidth: 30 },
-          1: { halign: "right", cellWidth: 50 },
-        },
-        didParseCell: function (data) {
-          if (data.row.index === 2) {
-            data.cell.styles.fillColor =
-              sectionName === "PEKERJAAN TAMBAH"
-                ? [34, 139, 34]
-                : [220, 20, 60];
-            data.cell.styles.textColor = [255, 255, 255];
-          }
-        },
-      });
+autoTable(doc, {
+  body: [
+    ["TOTAL " + sectionName, formatRupiah(totalPerBlock)],
+    ["PPN 11%", formatRupiah(totalPerBlock * 0.11)],
+    ["GRAND TOTAL " + sectionName, formatRupiah(totalPerBlock * 1.11)],
+  ],
+  startY: lastY,
+  margin: { left: pageWidth - 90, right: margin },
+  tableWidth: 80,
+  theme: "grid",
+  styles: { fontSize: 8, fontStyle: "bold", halign: "right", cellPadding: 2 },
+  columnStyles: {
+    0: { halign: "left", cellWidth: 30 },
+    1: { halign: "right", cellWidth: 50 },
+  },
+  didParseCell(data) {
+    if (data.row.index === 2) {
+      data.cell.styles.fillColor = [173, 216, 230]; // biru muda seperti RAB
+      data.cell.styles.textColor = [0, 0, 0];
+    }
+  },
+});
+
 
       lastY = (doc.lastAutoTable?.finalY ?? lastY) + 15;
     }
