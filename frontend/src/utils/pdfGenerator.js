@@ -448,10 +448,24 @@ autoTable(doc, {
       "JENIS PEKERJAAN",
       "SATUAN",
       "VOLUME",
-      { content: "HARGA SATUAN (Rp)", colSpan: 2, styles: { halign: "center" } },
-      { content: "TOTAL HARGA (Rp)",  colSpan: 3, styles: { halign: "center" } },
+      {
+        content: "HARGA SATUAN (Rp)",
+        colSpan: 2,
+        styles: { halign: "center" },
+      },
+      { content: "TOTAL HARGA (Rp)", colSpan: 3, styles: { halign: "center" } },
     ],
-    ["", "", "", "", "Material (b)", "Upah (c)", "Material (d=a*b)", "Upah (e=a*c)", "TOTAL HARGA (Rp)"],
+    [
+      "",
+      "",
+      "",
+      "",
+      "Material (b)",
+      "Upah (c)",
+      "Material (d=a*b)",
+      "Upah (e=a*c)",
+      "TOTAL HARGA (Rp)",
+    ],
   ],
   body: categoryTableBody,
   startY: lastY,
@@ -463,13 +477,13 @@ autoTable(doc, {
     fontSize: 8,
     cellPadding: 3,
     overflow: "linebreak",
-    lineColor: [120, 120, 120],  // abu-abu tegas
+    lineColor: [120, 120, 120], // abu-abu tegas
     lineWidth: 0.3,
   },
 
   // ▸ header biru muda, border sedikit lebih tebal
   headStyles: {
-    fillColor: [205, 234, 242],  // biru muda lembut
+    fillColor: [205, 234, 242], // biru muda lembut
     textColor: [0, 0, 0],
     halign: "center",
     valign: "middle",
@@ -493,15 +507,15 @@ autoTable(doc, {
 
   // ▸ lebar kolom
   columnStyles: {
-    0: { halign: "center", cellWidth: 10 },
-    1: { cellWidth: "auto", minCellWidth: 58 },
-    2: { halign: "center", cellWidth: 14 },
-    3: { halign: "right",  cellWidth: 16 },
-    4: { halign: "right",  cellWidth: 24 },
-    5: { halign: "right",  cellWidth: 24 },
-    6: { halign: "right",  cellWidth: 26 },
-    7: { halign: "right",  cellWidth: 26 },
-    8: { halign: "right",  cellWidth: 28, fontStyle: "bold" },
+    0: { halign: "center", cellWidth: 8 }, // NO
+    1: { cellWidth: 44, minCellWidth: 44 }, // JENIS PEKERJAAN
+    2: { halign: "center", cellWidth: 12 }, // SATUAN
+    3: { halign: "right", cellWidth: 14 }, // VOLUME
+    4: { halign: "right", cellWidth: 20 }, // Harga satuan - Material
+    5: { halign: "right", cellWidth: 20 }, // Harga satuan - Upah
+    6: { halign: "right", cellWidth: 20 }, // Total - Material
+    7: { halign: "right", cellWidth: 20 }, // Total - Upah
+    8: { halign: "right", cellWidth: 20, fontStyle: "bold" }, // GRAND TOTAL
   },
 
   // ▸ styling baris SUB TOTAL (abu-abu) + bold angka
@@ -512,12 +526,12 @@ autoTable(doc, {
       data.cell.styles.fontStyle = data.column.index >= 5 ? "bold" : "normal";
     }
   },
-      didDrawPage: function (data) {
-        if (data.settings.startY + data.table.height > pageHeight - 20) {
-          addFooter(doc.getNumberOfPages());
-        }
-      },
-    });
+  didDrawPage: function (data) {
+    if (data.settings.startY + data.table.height > pageHeight - 20) {
+      addFooter(doc.getNumberOfPages());
+    }
+  },
+});
 
     lastY = (doc.lastAutoTable?.finalY ?? lastY) + 10;
   });
