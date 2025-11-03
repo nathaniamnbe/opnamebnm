@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import alfaLogo from "../images/Alfamart-Emblem.png";
 
@@ -10,39 +9,21 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const { login } = useAuth();
 
-  const { login, isAuthenticated } = useAuth();
-  const navigate = useNavigate();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
 
-  // Jika sudah login lalu buka /login, lempar balik ke beranda
-  useEffect(() => {
-    if (isAuthenticated) {
-      navigate("/");
+    const result = await login(username, password);
+
+    if (!result.success) {
+      setError(result.message);
     }
-  }, [isAuthenticated, navigate]);
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  setLoading(true);
-  setError("");
-
-  try {
-    const result = await login(username.trim(), password);
-
-    // Cegah error kalau result-nya undefined atau tidak punya success
-    if (result && (result.success || result.ok === true)) {
-      navigate("/"); // arahkan ke halaman utama
-    } else {
-      setError(result?.message || "Login gagal. Coba lagi.");
-    }
-  } catch (err) {
-    console.error("Error saat login:", err);
-    setError("Terjadi kesalahan koneksi server.");
-  } finally {
     setLoading(false);
-  }
-};
-
+  };
 
   return (
     <div
@@ -63,7 +44,11 @@ const handleSubmit = async (e) => {
         }}
       >
         <div style={{ textAlign: "center", marginBottom: "32px" }}>
-          <img src={alfaLogo} alt="Alfamart" style={{ height: "40px" }} />
+          <img
+            src={alfaLogo} // ⬅️ Gunakan hasil import
+            alt="Alfamart"
+            style={{ height: "40px" }}
+          />
           <h2 style={{ color: "black", marginBottom: "8px" }}>
             Sistem Opname Alfamart
           </h2>
@@ -84,7 +69,6 @@ const handleSubmit = async (e) => {
               onChange={(e) => setUsername(e.target.value)}
               placeholder="Masukkan username"
               required
-              autoFocus
             />
           </div>
 
@@ -109,6 +93,8 @@ const handleSubmit = async (e) => {
             {loading ? "Loading..." : "Login"}
           </button>
         </form>
+
+        
       </div>
     </div>
   );
