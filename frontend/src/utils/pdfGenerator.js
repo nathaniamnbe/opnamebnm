@@ -533,106 +533,12 @@ const categoryTotal = rabCategories[categoryName].reduce((sum, item) => {
       "Total Harga Akhir",
     ];
 
-    // --- PEMISAH TAMBAH & KURANG ---
-    const tambahList = submissions.filter(
-      (it) => toNumberID(it.total_harga_akhir) > 0
-    );
-    const kurangList = submissions.filter(
-      (it) => toNumberID(it.total_harga_akhir) < 0
-    );
-
-    const groupByKategori = (arr) => {
-      const groups = {};
-      arr.forEach((it) => {
-        const key = (it.kategori_pekerjaan || "LAINNYA")
-          .toString()
-          .toUpperCase();
-        if (!groups[key]) groups[key] = [];
-        groups[key].push(it);
-      });
-      return groups;
-    };
-
-    const groupedTambah = groupByKategori(tambahList);
-    const groupedKurang = groupByKategori(kurangList);
-
-    const renderGroupSection = (title, groupedData) => {
-      if (Object.keys(groupedData).length === 0) return;
-
-      // Judul Pemisah: PEKERJAAN TAMBAH / KURANG
-      if (lastY + 10 > pageHeight - 20) {
-        addFooter(doc.getNumberOfPages());
-        doc.addPage();
-        lastY = margin + 10;
-      }
-      doc.setFontSize(11).setFont(undefined, "bold");
-      doc.setTextColor(0, 100, 0);
-      doc.text(title.toUpperCase(), margin, lastY);
-      lastY += 8;
-      doc.setTextColor(0, 0, 0);
-
-      let kategoriIndex = 1;
-      for (const [kategori, items] of Object.entries(groupedData)) {
-        if (lastY + 20 > pageHeight - 20) {
-          addFooter(doc.getNumberOfPages());
-          doc.addPage();
-          lastY = margin + 10;
-        }
-
-        doc.setFontSize(10).setFont(undefined, "bold");
-        doc.text(`${kategoriIndex}. ${kategori}`, margin + 5, lastY + 8);
-        lastY += 12;
-
-        const rows = items.map((item, idx) => [
-          idx + 1,
-          item.jenis_pekerjaan,
-          item.vol_rab,
-          item.satuan,
-          item.volume_akhir,
-          `${item.selisih} ${item.satuan}`,
-          formatRupiah(item.total_harga_akhir),
-        ]);
-
-        autoTable(doc, {
-          head: [opnameTableColumn],
-          body: rows,
-          startY: lastY,
-          margin: { left: margin, right: margin },
-          theme: "grid",
-          styles: { fontSize: 7, cellPadding: 1.5, overflow: "linebreak" },
-          headStyles: {
-            fillColor: [34, 139, 34],
-            textColor: [255, 255, 255],
-            halign: "center",
-            valign: "middle",
-            fontSize: 7,
-            fontStyle: "bold",
-          },
-          bodyStyles: {
-            fontSize: 7,
-            valign: "middle",
-            lineColor: [150, 150, 150],
-            lineWidth: 0.2,
-          },
-          columnStyles: {
-            0: { halign: "center", cellWidth: 8 },
-            1: { cellWidth: "auto", minCellWidth: 40 },
-            2: { halign: "center", cellWidth: 12 },
-            3: { halign: "center", cellWidth: 12 },
-            4: { halign: "center", cellWidth: 12 },
-            5: { halign: "right", cellWidth: 18 },
-            6: { halign: "right", cellWidth: 25 },
-          },
-        });
-
-        lastY = (doc.lastAutoTable?.finalY ?? lastY) + 10;
-        kategoriIndex++;
-      }
-    };
-
-    // Render dua bagian
-    renderGroupSection("Pekerjaan Tambah", groupedTambah);
-    renderGroupSection("Pekerjaan Kurang", groupedKurang);
+    const groups = {};
+    (submissions || []).forEach((it) => {
+      const key = (it.kategori_pekerjaan || "LAINNYA").toString();
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(it);
+    });
 
     let kategoriIndex = 1;
     for (const [kategori, items] of Object.entries(groups)) {
@@ -752,6 +658,7 @@ const categoryTotal = rabCategories[categoryName].reduce((sum, item) => {
 
     lastY = (doc.lastAutoTable?.finalY ?? lastY) + 15;
 
+
     // --- STATUS PEKERJAAN (DIPERAPiHKAN) ---
     addFooter(doc.getNumberOfPages());
     doc.addPage();
@@ -844,6 +751,7 @@ const categoryTotal = rabCategories[categoryName].reduce((sum, item) => {
     });
 
     lastY = (doc.lastAutoTable?.finalY ?? lastY) + 15;
+
 
     // --- LAMPIRAN FOTO ---
     const itemsWithPhotos = (submissions || []).filter((item) => item.foto_url);
