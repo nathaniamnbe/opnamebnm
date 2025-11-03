@@ -681,6 +681,8 @@ autoTable(doc, {
       "TOTAL HARGA AKHIR (Rp)",
     ],
   ],
+  
+  body: rows,
   startY: lastY,
   margin: { left: margin, right: margin },
   theme: "grid",
