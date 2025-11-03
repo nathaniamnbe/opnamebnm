@@ -928,14 +928,14 @@ export const generateFinalOpnamePDF = async (
 
     lastY = (doc.lastAutoTable?.finalY ?? lastY) + 15;
 
-    // --- LAMPIRAN FOTO BUKTI (versi dua kolom rapi per kategori) ---
+    // --- LAMPIRAN FOTO BUKTI (fix horizontal layout) ---
     const itemsWithPhotos = (submissions || []).filter((item) => item.foto_url);
     if (itemsWithPhotos.length > 0) {
       addFooter(doc.getNumberOfPages());
       doc.addPage();
       let pageNum = doc.getNumberOfPages();
 
-      // Header minimalis
+      // Header rapi
       doc.setFontSize(12).setFont(undefined, "bold");
       doc.text("LAMPIRAN FOTO BUKTI", pageWidth / 2, margin, {
         align: "center",
@@ -943,11 +943,8 @@ export const generateFinalOpnamePDF = async (
       doc.setLineWidth(0.3);
       doc.line(margin, margin + 2, pageWidth - margin, margin + 2);
 
-      // === PISAH PEKERJAAN TAMBAH & KURANG ===
-      const photoGroups = {
-        "PEKERJAAN TAMBAH": {},
-        "PEKERJAAN KURANG": {},
-      };
+      // Kelompokkan TAMBAH & KURANG
+      const photoGroups = { "PEKERJAAN TAMBAH": {}, "PEKERJAAN KURANG": {} };
       for (const item of itemsWithPhotos) {
         const isKurang = toNumberID(item.total_harga_akhir) < 0;
         const type = isKurang ? "PEKERJAAN KURANG" : "PEKERJAAN TAMBAH";
@@ -956,70 +953,36 @@ export const generateFinalOpnamePDF = async (
         photoGroups[type][kategori].push(item);
       }
 
-      let photoY = margin + 15;
       const pageBottom = pageHeight - 20;
       const columnWidth = (pageWidth - margin * 3) / 2;
-      const leftColumnX = margin;
-      const rightColumnX = margin + columnWidth + margin;
+      const leftX = margin;
+      const rightX = margin + columnWidth + margin;
 
-      // === RENDER FOTO PER JENIS PEKERJAAN (TAMBAH & KURANG) ===
+      let photoY = margin + 20;
+
+      // RENDER
       for (const [type, categories] of Object.entries(photoGroups)) {
-        // Jika halaman tidak cukup, pindah
-        if (photoY > pageBottom - 40) {
-          addFooter(pageNum);
-          doc.addPage();
-          pageNum++;
-          photoY = margin + 10;
-        }
-
         doc.setFontSize(11).setFont(undefined, "bold");
         doc.text(type, margin, photoY);
         photoY += 6;
-        doc.setLineWidth(0.2);
         doc.line(margin, photoY, pageWidth - margin, photoY);
         photoY += 8;
 
         for (const [kategori, photos] of Object.entries(categories)) {
-          if (photoY > pageBottom - 50) {
-            addFooter(pageNum);
-            doc.addPage();
-            pageNum++;
-            photoY = margin + 10;
-          }
-
           doc.setFontSize(10).setFont(undefined, "bold");
-          doc.text(`${kategori.toUpperCase()}`, margin, photoY);
+          doc.text(kategori.toUpperCase(), margin, photoY);
           photoY += 6;
 
-          let columnIndex = 0;
-          let counter = 0;
+          // siapkan variabel layout
+          let currentX = leftX;
+          let maxRowHeight = 0;
 
-          for (const item of photos) {
-            // pindah halaman jika kurang ruang
-            if (photoY > pageBottom - 85) {
-              addFooter(pageNum);
-              doc.addPage();
-              pageNum++;
-              photoY = margin + 10;
-              columnIndex = 0;
-            }
-
+          for (let i = 0; i < photos.length; i++) {
+            const item = photos[i];
             const imgData = await toBase64(item.foto_url);
             if (!imgData) continue;
 
-            const currentX = columnIndex === 0 ? leftColumnX : rightColumnX;
-
-            // Judul foto
-            doc.setFontSize(9).setFont(undefined, "bold");
-            const title = `${++counter}. ${item.jenis_pekerjaan}`;
-            const lines = wrapText(doc, title, columnWidth - 8);
-            let titleY = photoY;
-            lines.forEach((line) => {
-              doc.text(line, currentX, titleY);
-              titleY += 4;
-            });
-
-            // Gambar
+            // ukuran
             const imgProps = doc.getImageProperties(imgData);
             const maxWidth = columnWidth - 10;
             const maxHeight = 65;
@@ -1030,35 +993,62 @@ export const generateFinalOpnamePDF = async (
               imgWidth = (imgProps.width * imgHeight) / imgProps.height;
             }
 
+            // jika tidak cukup ruang di bawah -> page baru
+            if (photoY + imgHeight + 25 > pageBottom) {
+              addFooter(pageNum);
+              doc.addPage();
+              pageNum++;
+              photoY = margin + 15;
+            }
+
+            // render judul
+            doc.setFontSize(9).setFont(undefined, "bold");
+            const title = `${i + 1}. ${item.jenis_pekerjaan}`;
+            const lines = wrapText(doc, title, columnWidth - 8);
+            let textY = photoY;
+            lines.forEach((line) => {
+              doc.text(line, currentX, textY);
+              textY += 4;
+            });
+
+            // render gambar
+            const imgTop = textY + 2;
             doc.setDrawColor(180, 180, 180);
-            doc.rect(currentX, titleY, imgWidth + 4, imgHeight + 4);
+            doc.rect(currentX, imgTop, imgWidth + 4, imgHeight + 4);
             doc.addImage(
               imgData,
               currentX + 2,
-              titleY + 2,
+              imgTop + 2,
               imgWidth,
               imgHeight
             );
 
-            // Atur posisi
-            if (columnIndex === 0) {
-              columnIndex = 1;
+            // update posisi
+            maxRowHeight = Math.max(maxRowHeight, imgHeight + 25);
+
+            // kalau sudah dua kolom → pindah baris
+            if (currentX === leftX) {
+              currentX = rightX;
             } else {
-              columnIndex = 0;
-              photoY = titleY + imgHeight + 18; // jarak antar baris
+              currentX = leftX;
+              photoY += maxRowHeight;
+              maxRowHeight = 0;
             }
           }
 
-          // Jika baris terakhir hanya 1 foto, tambahkan jarak
-          if (columnIndex === 1) photoY += 85;
-          else photoY += 10;
+          // kalau baris terakhir cuma 1 foto → turun sedikit
+          if (currentX === rightX) {
+            photoY += maxRowHeight;
+          }
+
+          photoY += 12; // jarak antar kategori
         }
 
-        // Pisah antar bagian TAMBAH & KURANG ke halaman baru
+        // halaman baru setelah tiap blok TAMBAH/KURANG
         addFooter(pageNum);
         doc.addPage();
         pageNum++;
-        photoY = margin + 10;
+        photoY = margin + 15;
       }
 
       addFooter(pageNum);
