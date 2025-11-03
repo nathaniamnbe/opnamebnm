@@ -633,7 +633,15 @@ export const generateFinalOpnamePDF = async (
     });
 
     // 🔹 Loop dua tingkat: TAMBAH/KURANG → kategori
+    // 🔹 Loop dua tingkat: TAMBAH/KURANG → kategori
     for (const [sectionName, categories] of Object.entries(groups)) {
+      // Jika bagian ini adalah PEKERJAAN KURANG → mulai halaman baru agar rapi
+      if (sectionName === "PEKERJAAN KURANG") {
+        addFooter(doc.getNumberOfPages());
+        doc.addPage();
+        lastY = margin + 10;
+      }
+
       // Header besar: PEKERJAAN TAMBAH / PEKERJAAN KURANG
       if (lastY + 20 > pageHeight - 20) {
         addFooter(doc.getNumberOfPages());
@@ -644,6 +652,9 @@ export const generateFinalOpnamePDF = async (
       doc.setFontSize(12).setFont(undefined, "bold");
       const color =
         sectionName === "PEKERJAAN TAMBAH" ? [34, 139, 34] : [220, 20, 60];
+      doc.setFillColor(...color);
+      doc.rect(0, lastY - 5, pageWidth, 10, "F");
+      doc.setTextColor(255, 255, 255);
       doc.text(sectionName, margin, lastY);
       doc.setTextColor(0, 0, 0);
       lastY += 10;
@@ -672,66 +683,65 @@ export const generateFinalOpnamePDF = async (
           formatRupiah(item.total_harga_akhir),
         ]);
 
-autoTable(doc, {
-  head: [
-    [
-      "NO.",
-      "JENIS PEKERJAAN",
-      "VOL RAB",
-      "SATUAN",
-      "VOLUME AKHIR",
-      "SELISIH",
-      "TOTAL HARGA AKHIR (Rp)",
-    ],
-  ],
-  body: rows,
-  startY: lastY,
-  margin: { left: margin, right: margin },
-  tableWidth: pageWidth - margin * 2,
-  theme: "grid",
+        autoTable(doc, {
+          head: [
+            [
+              "NO.",
+              "JENIS PEKERJAAN",
+              "VOL RAB",
+              "SATUAN",
+              "VOLUME AKHIR",
+              "SELISIH",
+              "TOTAL HARGA AKHIR (Rp)",
+            ],
+          ],
+          body: rows,
+          startY: lastY,
+          margin: { left: margin, right: margin },
+          tableWidth: pageWidth - margin * 2,
+          theme: "grid",
 
-  // beri ruang secukupnya, tapi tetap kompak
-  styles: {
-    fontSize: 8,
-    cellPadding: 3,
-    lineHeight: 1.1,
-    overflow: "linebreak",
-    lineColor: [120, 120, 120],
-    lineWidth: 0.3,
-  },
-  // header TIDAK membungkus
-  headStyles: {
-    fillColor: [205, 234, 242],
-    textColor: [0, 0, 0],
-    halign: "center",
-    valign: "middle",
-    fontSize: 8.5,
-    fontStyle: "bold",
-    minCellHeight: 9,
-    lineHeight: 1.15, // ← beri ruang agar tidak kepotong
-    overflow: "linebreak", // ← paksa wrap, tidak dipotong
-    cellPadding: 2,
-  },
-  columnStyles: {
-    0: { halign: "center", cellWidth: 12, minCellHeight: 9 }, // ⬅️ lebarin dari 10 → 12
-    1: { cellWidth: 66 },
-    2: { halign: "right", cellWidth: 18 },
-    3: { halign: "center", cellWidth: 18 },
-    4: { halign: "right", cellWidth: 22 },
-    5: { halign: "right", cellWidth: 22 },
-    6: { halign: "right", cellWidth: 30, fontStyle: "bold" },
-  },
+          // beri ruang secukupnya, tapi tetap kompak
+          styles: {
+            fontSize: 8,
+            cellPadding: 3,
+            lineHeight: 1.1,
+            overflow: "linebreak",
+            lineColor: [120, 120, 120],
+            lineWidth: 0.3,
+          },
+          // header TIDAK membungkus
+          headStyles: {
+            fillColor: [205, 234, 242],
+            textColor: [0, 0, 0],
+            halign: "center",
+            valign: "middle",
+            fontSize: 8.5,
+            fontStyle: "bold",
+            minCellHeight: 9,
+            lineHeight: 1.15, // ← beri ruang agar tidak kepotong
+            overflow: "linebreak", // ← paksa wrap, tidak dipotong
+            cellPadding: 2,
+          },
+          columnStyles: {
+            0: { halign: "center", cellWidth: 12, minCellHeight: 9 }, // ⬅️ lebarin dari 10 → 12
+            1: { cellWidth: 66 },
+            2: { halign: "right", cellWidth: 18 },
+            3: { halign: "center", cellWidth: 18 },
+            4: { halign: "right", cellWidth: 22 },
+            5: { halign: "right", cellWidth: 22 },
+            6: { halign: "right", cellWidth: 30, fontStyle: "bold" },
+          },
 
-  // kecilkan font khusus sel header kolom 0 dan paksa tetap 1 baris
-  didParseCell(data) {
-    if (data.section === "head" && data.column.index === 0) {
-      data.cell.styles.fontSize = 8; // ⬅️ sedikit lebih kecil
-      data.cell.styles.overflow = "hidden";
-      data.cell.styles.lineHeight = 1;
-    }
-  },
-});
-
+          // kecilkan font khusus sel header kolom 0 dan paksa tetap 1 baris
+          didParseCell(data) {
+            if (data.section === "head" && data.column.index === 0) {
+              data.cell.styles.fontSize = 8; // ⬅️ sedikit lebih kecil
+              data.cell.styles.overflow = "hidden";
+              data.cell.styles.lineHeight = 1;
+            }
+          },
+        });
 
         lastY = (doc.lastAutoTable?.finalY ?? lastY) + 10;
       }
