@@ -365,14 +365,6 @@
         ];
       });
 
-      // Tambah baris SUB TOTAL
-  const categoryTotal = rabCategories[categoryName].reduce((sum, item) => {
-    const vol = toNumberVol(item.volume);
-    const material = vol * toNumberID(item.harga_material);
-    const upah = vol * toNumberID(item.harga_upah);
-    return sum + material + upah;
-  }, 0);
-
 
       categoryTableBody.push([
         "",
@@ -560,7 +552,6 @@
       });
 
       // 🔹 Loop dua tingkat: TAMBAH/KURANG → kategori
-      let sectionIndex = 1;
       for (const [sectionName, categories] of Object.entries(groups)) {
         // Header besar: PEKERJAAN TAMBAH / PEKERJAAN KURANG
         if (lastY + 20 > pageHeight - 20) {
@@ -607,7 +598,17 @@
           ]);
 
           autoTable(doc, {
-            head: [opnameTableColumn],
+            head: [
+              [
+                "No",
+                "Jenis Pekerjaan",
+                "Vol RAB",
+                "Satuan",
+                "Volume Akhir",
+                "Selisih",
+                "Total Harga Akhir",
+              ],
+            ],
             body: rows,
             startY: lastY,
             margin: { left: margin, right: margin },
@@ -640,50 +641,45 @@
 
           lastY = (doc.lastAutoTable?.finalY ?? lastY) + 10;
         }
-        sectionIndex++;
-      }
 
-      // Hitung total per blok
-      const totalPerBlock = Object.values(categories)
-        .flat()
-        .reduce((sum, item) => sum + toNumberID(item.total_harga_akhir), 0);
+        // ✅ Total per BLOK (TAMBAH/KURANG) — HARUS di dalam loop ini
+        const totalPerBlock = Object.values(categories)
+          .flat()
+          .reduce((sum, item) => sum + toNumberID(item.total_harga_akhir), 0);
 
-      // Tabel total per blok
-      autoTable(doc, {
-        body: [
-          ["TOTAL " + sectionName, formatRupiah(totalPerBlock)],
-          ["PPN 11%", formatRupiah(totalPerBlock * 0.11)],
-          [
-            "GRAND TOTAL " + sectionName,
-            formatRupiah(totalPerBlock + totalPerBlock * 0.11),
+        autoTable(doc, {
+          body: [
+            ["TOTAL " + sectionName, formatRupiah(totalPerBlock)],
+            ["PPN 11%", formatRupiah(totalPerBlock * 0.11)],
+            ["GRAND TOTAL " + sectionName, formatRupiah(totalPerBlock * 1.11)],
           ],
-        ],
-        startY: lastY,
-        margin: { left: pageWidth - 90, right: margin },
-        tableWidth: 80,
-        theme: "grid",
-        styles: {
-          fontSize: 8,
-          fontStyle: "bold",
-          halign: "right",
-          cellPadding: 2,
-        },
-        columnStyles: {
-          0: { halign: "left", cellWidth: 30 },
-          1: { halign: "right", cellWidth: 50 },
-        },
-        didParseCell: function (data) {
-          if (data.row.index === 2) {
-            data.cell.styles.fillColor =
-              sectionName === "PEKERJAAN TAMBAH"
-                ? [34, 139, 34]
-                : [220, 20, 60];
-            data.cell.styles.textColor = [255, 255, 255];
-          }
-        },
-      });
+          startY: lastY,
+          margin: { left: pageWidth - 90, right: margin },
+          tableWidth: 80,
+          theme: "grid",
+          styles: {
+            fontSize: 8,
+            fontStyle: "bold",
+            halign: "right",
+            cellPadding: 2,
+          },
+          columnStyles: {
+            0: { halign: "left", cellWidth: 30 },
+            1: { halign: "right", cellWidth: 50 },
+          },
+          didParseCell: function (data) {
+            if (data.row.index === 2) {
+              data.cell.styles.fillColor =
+                sectionName === "PEKERJAAN TAMBAH"
+                  ? [34, 139, 34]
+                  : [220, 20, 60];
+              data.cell.styles.textColor = [255, 255, 255];
+            }
+          },
+        });
 
-      lastY = (doc.lastAutoTable?.finalY ?? lastY) + 15;
+        lastY = (doc.lastAutoTable?.finalY ?? lastY) + 15;
+      }
 
       // GRAND TOTAL untuk Opname
       if (lastY + 40 > pageHeight - 20) {
