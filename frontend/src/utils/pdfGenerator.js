@@ -365,12 +365,16 @@ export const generateFinalOpnamePDF = async (
   startY += 15;
 
   // --- BAGIAN RAB FINAL ---
+  // gaya lebih elegan: teks tebal dengan garis tipis di bawah (tanpa blok merah)
   doc.setFontSize(12).setFont(undefined, "bold");
-  doc.setFillColor(229, 30, 37);
-  doc.rect(0, startY - 5, pageWidth, 10, "F");
-  doc.setTextColor(255, 255, 255);
-  doc.text("RAB FINAL", margin, startY);
   doc.setTextColor(0, 0, 0);
+  doc.text("RAB FINAL", margin, startY);
+
+  // garis halus di bawah teks (warna abu terang)
+  doc.setDrawColor(120, 120, 120);
+  doc.setLineWidth(0.3);
+  doc.line(margin, startY + 2, pageWidth - margin, startY + 2);
+
   startY += 10;
 
   // Kelompokkan data RAB berdasarkan kategori
