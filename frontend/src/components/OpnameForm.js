@@ -114,11 +114,13 @@ const withLingkup = lk ? base + `&lingkup=${encodeURIComponent(lk)}` : null;
             foto_url: alreadySubmitted ? task.foto_url : null,
 
             // nilai form
+            // nilai form
             volume_akhir: alreadySubmitted ? String(volAkhirNum) : "",
-            selisih: String(volAkhirNum - volRab),
+            // bulatkan ke 2 desimal lalu jadikan string "x.xx"
+            selisih: (
+              Math.round((volAkhirNum - volRab + Number.EPSILON) * 100) / 100
+            ).toFixed(2),
             total_harga,
-            isSubmitting: false,
-            isUploading: false,
           };
         });
         setOpnameItems(items);
@@ -180,7 +182,7 @@ const withLingkup = lk ? base + `&lingkup=${encodeURIComponent(lk)}` : null;
           return {
             ...item,
             volume_akhir: value,
-            selisih: selisih.toString(),
+            selisih: selisih.toFixed(2),
             total_harga: total_harga, // Ini bisa jadi negatif jika volume_akhir negatif
           };
         }
