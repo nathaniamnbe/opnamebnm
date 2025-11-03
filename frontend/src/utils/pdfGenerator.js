@@ -15,7 +15,6 @@ const logoUrl =
   "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9e/Alfamart_logo.svg/1280px-Alfamart_logo.svg.png";
 const LOCAL_LOGO_PATH = "/alfa.ico"; // ganti ke "/alfamart.png" kalau pakai PNG di /public
 
-
 // Fungsi bantu untuk format mata uang Rupiah
 const formatRupiah = (n) =>
   new Intl.NumberFormat("id-ID", {
@@ -441,96 +440,101 @@ export const generateFinalOpnamePDF = async (
       formatRupiah(catMaterialTotal + catUpahTotal), // kolom total harga
     ]);
 
-autoTable(doc, {
-  head: [
-    [
-      "NO.",
-      "JENIS PEKERJAAN",
-      "SATUAN",
-      "VOLUME",
-      {
-        content: "HARGA SATUAN (Rp)",
-        colSpan: 2,
-        styles: { halign: "center" },
+    autoTable(doc, {
+      head: [
+        [
+          "NO.",
+          "JENIS PEKERJAAN",
+          "SATUAN",
+          "VOLUME",
+          {
+            content: "HARGA SATUAN (Rp)",
+            colSpan: 2,
+            styles: { halign: "center" },
+          },
+          {
+            content: "TOTAL HARGA (Rp)",
+            colSpan: 3,
+            styles: { halign: "center" },
+          },
+        ],
+        [
+          "",
+          "",
+          "",
+          "",
+          "Material (b)",
+          "Upah (c)",
+          "Material (d=a*b)",
+          "Upah (e=a*c)",
+          "TOTAL HARGA (Rp)",
+        ],
+      ],
+      body: categoryTableBody,
+      startY: lastY,
+      margin: { left: margin, right: margin },
+      theme: "grid",
+
+      // ▸ dasar tipografi & garis
+      styles: {
+        fontSize: 8,
+        cellPadding: 2.5,
+        lineHeight: 1.05,
+        overflow: "linebreak",
+        lineColor: [120, 120, 120], // abu-abu tegas
+        lineWidth: 0.3,
       },
-      { content: "TOTAL HARGA (Rp)", colSpan: 3, styles: { halign: "center" } },
-    ],
-    [
-      "",
-      "",
-      "",
-      "",
-      "Material (b)",
-      "Upah (c)",
-      "Material (d=a*b)",
-      "Upah (e=a*c)",
-      "TOTAL HARGA (Rp)",
-    ],
-  ],
-  body: categoryTableBody,
-  startY: lastY,
-  margin: { left: margin, right: margin },
-  theme: "grid",
 
-  // ▸ dasar tipografi & garis
-  styles: {
-    fontSize: 8,
-    cellPadding: 2.5,
-    lineHeight: 1.05,
-    overflow: "linebreak",
-    lineColor: [120, 120, 120], // abu-abu tegas
-    lineWidth: 0.3,
-  },
+      // ▸ header biru muda, border sedikit lebih tebal
+      headStyles: {
+        fillColor: [205, 234, 242], // biru muda lembut
+        textColor: [0, 0, 0],
+        halign: "center",
+        valign: "middle",
+        fontSize: 8,
+        fontStyle: "bold",
+        lineColor: [100, 100, 100],
+        lineWidth: 0.4,
+        cellPadding: 2,
+        lineHeight: 1.0,
+      },
 
-  // ▸ header biru muda, border sedikit lebih tebal
-  headStyles: {
-    fillColor: [205, 234, 242], // biru muda lembut
-    textColor: [0, 0, 0],
-    halign: "center",
-    valign: "middle",
-    fontSize: 8,
-    fontStyle: "bold",
-    lineColor: [100, 100, 100],
-    lineWidth: 0.4,
-    cellPadding: 2,
-    lineHeight: 1.0,
-  },
+      // ▸ body selaras & rapi
+      bodyStyles: {
+        fontSize: 8,
+        valign: "middle",
+        lineColor: [120, 120, 120],
+        lineWidth: 0.3,
+      },
 
-  // ▸ body selaras & rapi
-  bodyStyles: {
-    fontSize: 8,
-    valign: "middle",
-    lineColor: [120, 120, 120],
-    lineWidth: 0.3,
-  },
+      // ▸ lebar kolom
+      columnStyles: {
+        0: { halign: "center", cellWidth: 8 }, // NO.
+        1: { cellWidth: 40, minCellWidth: 40 }, // JENIS PEKERJAAN (sedikit dipersempit)
+        2: { halign: "center", cellWidth: 18 }, // SATUAN (was 12)
+        3: { halign: "right", cellWidth: 18 }, // VOLUME (was 14)
+        4: { halign: "right", cellWidth: 18 }, // Material (b) (was 20)
+        5: { halign: "right", cellWidth: 18 }, // Upah (c)     (was 20)
+        6: { halign: "right", cellWidth: 19 }, // Material (d=a*b) (was 20)
+        7: { halign: "right", cellWidth: 19 }, // Upah (e=a*c)     (was 20)
+        8: { halign: "right", cellWidth: 22, fontStyle: "bold" }, // TOTAL HARGA (kompensasi)
+      },
 
-  // ▸ lebar kolom
-  columnStyles: {
-    0: { halign: "center", cellWidth: 8 }, // NO.
-    1: { cellWidth: 40, minCellWidth: 40 }, // JENIS PEKERJAAN (sedikit dipersempit)
-    2: { halign: "center", cellWidth: 18 }, // SATUAN (was 12)
-    3: { halign: "right", cellWidth: 18 }, // VOLUME (was 14)
-    4: { halign: "right", cellWidth: 18 }, // Material (b) (was 20)
-    5: { halign: "right", cellWidth: 18 }, // Upah (c)     (was 20)
-    6: { halign: "right", cellWidth: 19 }, // Material (d=a*b) (was 20)
-    7: { halign: "right", cellWidth: 19 }, // Upah (e=a*c)     (was 20)
-    8: { halign: "right", cellWidth: 22, fontStyle: "bold" }, // TOTAL HARGA (kompensasi)
-  },
-
-  // ▸ styling baris SUB TOTAL (abu-abu) + bold angka
-  didParseCell(data) {
-    const isSubtotalRow = data.row.index === data.table.body.length - 1;
-    if (isSubtotalRow) {
-      data.cell.styles.fillColor = [242, 242, 242]; // abu-abu muda
-      data.cell.styles.fontStyle = data.column.index >= 5 ? "bold" : "normal";
-    }
-  },
-  didDrawPage: function (data) {
-    if (data.settings.startY + data.table.height > pageHeight - 20) {
-      addFooter(doc.getNumberOfPages());
-    }
-  },
-});
+      // ▸ styling baris SUB TOTAL (abu-abu) + bold angka
+      didParseCell(data) {
+        const isSubtotalRow = data.row.index === data.table.body.length - 1;
+        if (isSubtotalRow) {
+          data.cell.styles.fillColor = [242, 242, 242]; // abu-abu muda
+          data.cell.styles.fontStyle =
+            data.column.index >= 5 ? "bold" : "normal";
+        }
+      },
+      didDrawPage: function (data) {
+        if (data.settings.startY + data.table.height > pageHeight - 20) {
+          addFooter(doc.getNumberOfPages());
+        }
+      },
+    });
 
     lastY = (doc.lastAutoTable?.finalY ?? lastY) + 10;
   });
@@ -799,34 +803,62 @@ autoTable(doc, {
 
     lastY = (doc.lastAutoTable?.finalY ?? lastY) + 15;
 
-    // --- STATUS PEKERJAAN (selaras gaya RAB/Opname) ---
+    // --- STATUS PEKERJAAN (DIPERAPiHKAN) ---
     addFooter(doc.getNumberOfPages());
     doc.addPage();
     lastY = margin + 10;
 
+    // Header bar konsisten (merah)
     doc.setFontSize(12).setFont(undefined, "bold");
-    doc.setTextColor(0, 0, 0);
+    doc.setFillColor(229, 30, 37);
+    doc.rect(0, lastY - 5, pageWidth, 10, "F");
+    doc.setTextColor(255, 255, 255);
     doc.text("STATUS PEKERJAAN", margin, lastY);
-    doc.setDrawColor(120, 120, 120);
-    doc.setLineWidth(0.3);
-    doc.line(margin, lastY + 2, pageWidth - margin, lastY + 2);
-    lastY += 10;
+    doc.setTextColor(0, 0, 0);
+    lastY += 14;
 
     // Tentukan status berdasarkan selisih Opname vs RAB (keduanya setelah PPN)
-    // Status ringkas (compact) di kanan – selaras gaya box TOTAL/PPN/GRAND TOTAL
     const deltaNominal = totalSetelahPPNOpname - totalSetelahPPNRAB;
     let statusText = "Sesuai RAB (Tidak Ada Perubahan)";
     if (deltaNominal > 0) statusText = "Pekerjaan Tambah";
     if (deltaNominal < 0) statusText = "Pekerjaan Kurang";
 
-    // Kotak ringkas sisi kanan
-    const statusBox = [
-      ["STATUS", statusText],
+    // Atur ukuran kolom untuk lebar hampir penuh halaman
+    const usableWidth = pageWidth - margin * 2;
+    const leftColWidth = usableWidth * 0.62; // label
+    const rightColWidth = usableWidth * 0.38; // nilai
+
+    // SELURUH RINGKASAN DIBUAT DALAM SATU TABEL, LEBAR PENUH & FONT BESAR
+    const statusTableBody = [
+      [
+        {
+          content: `STATUS: ${statusText}`,
+          colSpan: 2,
+          styles: {
+            halign: "left",
+            fontSize: 12,
+            fontStyle: "bold",
+            fillColor: [245, 245, 245],
+            cellPadding: 4,
+          },
+        },
+      ],
       ["RAB Final (incl. PPN)", formatRupiah(totalSetelahPPNRAB)],
       ["Opname Final (incl. PPN)", formatRupiah(totalSetelahPPNOpname)],
       [
         "Selisih",
         `${deltaNominal >= 0 ? "+" : ""}${formatRupiah(deltaNominal)}`,
+      ],
+      [
+        {
+          content: "",
+          colSpan: 2,
+          styles: {
+            fillColor: [255, 255, 255],
+            lineWidth: 0,
+            cellPadding: 2,
+          },
+        },
       ],
       ["TOTAL", formatRupiah(grandTotalOpname)],
       ["PPN 11%", formatRupiah(ppnOpname)],
@@ -834,36 +866,38 @@ autoTable(doc, {
     ];
 
     autoTable(doc, {
-      body: statusBox,
+      body: statusTableBody,
       startY: lastY,
-      margin: { left: pageWidth - 100, right: margin }, // dorong ke kanan
-      tableWidth: 90, // lebar ringkas
+      margin: { left: margin, right: margin }, // kiri (bukan kanan)
+      tableWidth: usableWidth, // penuh halaman (ikut margin)
       theme: "grid",
       styles: {
-        fontSize: 9,
-        fontStyle: "bold",
-        halign: "right",
-        cellPadding: 2,
+        fontSize: 11, // font lebih besar
+        halign: "left",
+        cellPadding: 4, // padding lebih lega
       },
       columnStyles: {
-        0: { halign: "left", cellWidth: 40 },
-        1: { halign: "right", cellWidth: 50 },
+        0: { halign: "left", cellWidth: leftColWidth, fontStyle: "bold" },
+        1: { halign: "right", cellWidth: rightColWidth },
       },
-      didParseCell(data) {
-        // highlight baris GRAND TOTAL (warna biru muda seperti RAB/OPNAME)
-        if (data.row.index === statusBox.length - 1) {
+      didParseCell: function (data) {
+        // Highlight GRAND TOTAL (baris terakhir)
+        if (data.row.index === statusTableBody.length - 1) {
           data.cell.styles.fillColor = [173, 216, 230];
           data.cell.styles.textColor = [0, 0, 0];
+          data.cell.styles.fontStyle = "bold";
         }
-        // tebalkan nilai “Selisih”
+        // Tebalkan nilai Selisih agar menonjol
         if (
-          statusBox[data.row.index]?.[0] === "Selisih" &&
+          statusTableBody[data.row.index] &&
+          statusTableBody[data.row.index][0] === "Selisih" &&
           data.column.index === 1
         ) {
           data.cell.styles.fontStyle = "bold";
         }
       },
     });
+
     lastY = (doc.lastAutoTable?.finalY ?? lastY) + 15;
 
     // --- LAMPIRAN FOTO ---
