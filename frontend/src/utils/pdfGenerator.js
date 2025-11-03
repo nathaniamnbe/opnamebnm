@@ -295,9 +295,7 @@ export const generateFinalOpnamePDF = async (
   startY += logoH + 6;
 
   // garis tipis pemisah
-  doc.setDrawColor(200, 200, 200);
-  doc.setLineWidth(0.2);
-  doc.line(margin, startY, pageWidth - margin, startY);
+
   startY += 6;
 
   // 2) Identitas perusahaan (kiri)
@@ -332,9 +330,11 @@ export const generateFinalOpnamePDF = async (
   doc.text(reportTitle, pageWidth / 2, startY, { align: "center" });
   startY += 12;
 
+  // reset ke normal supaya baris keterangan tidak bold
+  doc.setFont(undefined, "normal");
+
   // garis tipis di bawah judul (biar rapi)
-  doc.setDrawColor(230, 230, 230);
-  doc.line(margin, startY, pageWidth - margin, startY);
+
   startY += 8;
 
   // --- INFO PROYEK ---
