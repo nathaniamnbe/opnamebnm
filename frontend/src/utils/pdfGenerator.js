@@ -501,6 +501,8 @@ autoTable(doc, {
     lineWidth: 0.3,
   },
 
+
+
   // ▸ lebar kolom
   columnStyles: {
     0: { halign: "center", cellWidth: 8 }, // NO
@@ -823,9 +825,9 @@ autoTable(doc, {
     if (deltaNominal < 0) statusText = "Pekerjaan Kurang";
 
     // Atur ukuran kolom untuk lebar hampir penuh halaman
-const usable = pageWidth - margin * 2; // lebar area tulis
-const tableW = Math.min(165, usable); // target 165 mm
-const leftMargin = (pageWidth - tableW) / 2;
+    const usableWidth = pageWidth - margin * 2;
+    const leftColWidth = usableWidth * 0.62; // label
+    const rightColWidth = usableWidth * 0.38; // nilai
 
     // SELURUH RINGKASAN DIBUAT DALAM SATU TABEL, LEBAR PENUH & FONT BESAR
     const statusTableBody = [
