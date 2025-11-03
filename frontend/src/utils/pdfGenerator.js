@@ -584,14 +584,13 @@ autoTable(doc, {
     doc.addPage();
     lastY = margin + 10;
 
-doc.setFontSize(12).setFont(undefined, "bold");
-doc.setTextColor(0, 0, 0);
-doc.text("LAPORAN OPNAME FINAL (APPROVED)", margin, lastY);
-doc.setDrawColor(120, 120, 120);
-doc.setLineWidth(0.3);
-doc.line(margin, lastY + 2, pageWidth - margin, lastY + 2);
-lastY += 10;
-
+    doc.setFontSize(12).setFont(undefined, "bold");
+    doc.setTextColor(0, 0, 0);
+    doc.text("LAPORAN OPNAME FINAL (APPROVED)", margin, lastY);
+    doc.setDrawColor(120, 120, 120);
+    doc.setLineWidth(0.3);
+    doc.line(margin, lastY + 2, pageWidth - margin, lastY + 2);
+    lastY += 10;
 
     const opnameTableColumn = [
       "No",
@@ -653,9 +652,9 @@ lastY += 10;
           lastY = margin + 10;
         }
 
-doc.setFontSize(11).setFont(undefined, "bold");
-doc.text(`${kategoriIndex}. ${kategori.toUpperCase()}`, margin, lastY);
-lastY += 10;
+        doc.setFontSize(11).setFont(undefined, "bold");
+        doc.text(`${kategoriIndex}. ${kategori.toUpperCase()}`, margin, lastY);
+        lastY += 10;
 
         kategoriIndex++;
 
@@ -669,50 +668,50 @@ lastY += 10;
           formatRupiah(item.total_harga_akhir),
         ]);
 
-autoTable(doc, {
-  head: [
-    [
-      "NO.",
-      "JENIS PEKERJAAN",
-      "VOL RAB",
-      "SATUAN",
-      "VOLUME AKHIR",
-      "SELISIH",
-      "TOTAL HARGA AKHIR (Rp)",
-    ],
-  ],
+        autoTable(doc, {
+          head: [
+            [
+              "NO.",
+              "JENIS PEKERJAAN",
+              "VOL RAB",
+              "SATUAN",
+              "VOLUME AKHIR",
+              "SELISIH",
+              "TOTAL HARGA AKHIR (Rp)",
+            ],
+          ],
 
-  body: rows,
-  startY: lastY,
-  margin: { left: margin, right: margin },
-  tableWidth: pageWidth - margin * 2,
-  theme: "grid",
-  styles: {
-    fontSize: 8,
-    cellPadding: 2.5,
-    lineHeight: 1.05,
-    overflow: "linebreak",
-    lineColor: [120, 120, 120],
-    lineWidth: 0.3,
-  },
-  headStyles: {
-    fillColor: [205, 234, 242],
-    textColor: [0, 0, 0],
-    halign: "center",
-    valign: "middle",
-    fontSize: 8,
-    fontStyle: "bold",
-  },
-  columnStyles: {
-    0: { halign: "center", cellWidth: 8 }, // NO.
-    1: { cellWidth: 70, minCellWidth: 60 }, // JENIS PEKERJAAN (lebih lebar)
-    2: { halign: "right", cellWidth: 16 }, // VOL RAB
-    3: { halign: "center", cellWidth: 16 }, // SATUAN
-    4: { halign: "right", cellWidth: 22 }, // VOLUME AKHIR
-    5: { halign: "right", cellWidth: 22 }, // SELISIH
-    6: { halign: "right", cellWidth: 28, fontStyle: "bold" }, // TOTAL
-  },
-});
+          body: rows,
+          startY: lastY,
+          margin: { left: margin, right: margin },
+          tableWidth: pageWidth - margin * 2,
+          theme: "grid",
+          styles: {
+            fontSize: 8,
+            cellPadding: 2.5,
+            lineHeight: 1.05,
+            overflow: "linebreak",
+            lineColor: [120, 120, 120],
+            lineWidth: 0.3,
+          },
+          headStyles: {
+            fillColor: [205, 234, 242],
+            textColor: [0, 0, 0],
+            halign: "center",
+            valign: "middle",
+            fontSize: 8,
+            fontStyle: "bold",
+          },
+          columnStyles: {
+            0: { halign: "center", cellWidth: 8 }, // NO.
+            1: { cellWidth: 70, minCellWidth: 60 }, // JENIS PEKERJAAN (lebih lebar)
+            2: { halign: "right", cellWidth: 16 }, // VOL RAB
+            3: { halign: "center", cellWidth: 16 }, // SATUAN
+            4: { halign: "right", cellWidth: 22 }, // VOLUME AKHIR
+            5: { halign: "right", cellWidth: 22 }, // SELISIH
+            6: { halign: "right", cellWidth: 28, fontStyle: "bold" }, // TOTAL
+          },
+        });
 
         lastY = (doc.lastAutoTable?.finalY ?? lastY) + 10;
       }
@@ -722,29 +721,33 @@ autoTable(doc, {
         .flat()
         .reduce((sum, item) => sum + toNumberID(item.total_harga_akhir), 0);
 
-autoTable(doc, {
-  body: [
-    ["TOTAL " + sectionName, formatRupiah(totalPerBlock)],
-    ["PPN 11%", formatRupiah(totalPerBlock * 0.11)],
-    ["GRAND TOTAL " + sectionName, formatRupiah(totalPerBlock * 1.11)],
-  ],
-  startY: lastY,
-  margin: { left: pageWidth - 90, right: margin },
-  tableWidth: 80,
-  theme: "grid",
-  styles: { fontSize: 8, fontStyle: "bold", halign: "right", cellPadding: 2 },
-  columnStyles: {
-    0: { halign: "left", cellWidth: 30 },
-    1: { halign: "right", cellWidth: 50 },
-  },
-  didParseCell(data) {
-    if (data.row.index === 2) {
-      data.cell.styles.fillColor = [173, 216, 230]; // biru muda seperti RAB
-      data.cell.styles.textColor = [0, 0, 0];
-    }
-  },
-});
-
+      autoTable(doc, {
+        body: [
+          ["TOTAL " + sectionName, formatRupiah(totalPerBlock)],
+          ["PPN 11%", formatRupiah(totalPerBlock * 0.11)],
+          ["GRAND TOTAL " + sectionName, formatRupiah(totalPerBlock * 1.11)],
+        ],
+        startY: lastY,
+        margin: { left: pageWidth - 90, right: margin },
+        tableWidth: 80,
+        theme: "grid",
+        styles: {
+          fontSize: 8,
+          fontStyle: "bold",
+          halign: "right",
+          cellPadding: 2,
+        },
+        columnStyles: {
+          0: { halign: "left", cellWidth: 30 },
+          1: { halign: "right", cellWidth: 50 },
+        },
+        didParseCell(data) {
+          if (data.row.index === 2) {
+            data.cell.styles.fillColor = [173, 216, 230]; // biru muda seperti RAB
+            data.cell.styles.textColor = [0, 0, 0];
+          }
+        },
+      });
 
       lastY = (doc.lastAutoTable?.finalY ?? lastY) + 15;
     }
@@ -796,62 +799,34 @@ autoTable(doc, {
 
     lastY = (doc.lastAutoTable?.finalY ?? lastY) + 15;
 
-    // --- STATUS PEKERJAAN (DIPERAPiHKAN) ---
+    // --- STATUS PEKERJAAN (selaras gaya RAB/Opname) ---
     addFooter(doc.getNumberOfPages());
     doc.addPage();
     lastY = margin + 10;
 
-    // Header bar konsisten (merah)
     doc.setFontSize(12).setFont(undefined, "bold");
-    doc.setFillColor(229, 30, 37);
-    doc.rect(0, lastY - 5, pageWidth, 10, "F");
-    doc.setTextColor(255, 255, 255);
-    doc.text("STATUS PEKERJAAN", margin, lastY);
     doc.setTextColor(0, 0, 0);
-    lastY += 14;
+    doc.text("STATUS PEKERJAAN", margin, lastY);
+    doc.setDrawColor(120, 120, 120);
+    doc.setLineWidth(0.3);
+    doc.line(margin, lastY + 2, pageWidth - margin, lastY + 2);
+    lastY += 10;
 
     // Tentukan status berdasarkan selisih Opname vs RAB (keduanya setelah PPN)
+    // Status ringkas (compact) di kanan – selaras gaya box TOTAL/PPN/GRAND TOTAL
     const deltaNominal = totalSetelahPPNOpname - totalSetelahPPNRAB;
     let statusText = "Sesuai RAB (Tidak Ada Perubahan)";
     if (deltaNominal > 0) statusText = "Pekerjaan Tambah";
     if (deltaNominal < 0) statusText = "Pekerjaan Kurang";
 
-    // Atur ukuran kolom untuk lebar hampir penuh halaman
-    const usableWidth = pageWidth - margin * 2;
-    const leftColWidth = usableWidth * 0.62; // label
-    const rightColWidth = usableWidth * 0.38; // nilai
-
-    // SELURUH RINGKASAN DIBUAT DALAM SATU TABEL, LEBAR PENUH & FONT BESAR
-    const statusTableBody = [
-      [
-        {
-          content: `STATUS: ${statusText}`,
-          colSpan: 2,
-          styles: {
-            halign: "left",
-            fontSize: 12,
-            fontStyle: "bold",
-            fillColor: [245, 245, 245],
-            cellPadding: 4,
-          },
-        },
-      ],
+    // Kotak ringkas sisi kanan
+    const statusBox = [
+      ["STATUS", statusText],
       ["RAB Final (incl. PPN)", formatRupiah(totalSetelahPPNRAB)],
       ["Opname Final (incl. PPN)", formatRupiah(totalSetelahPPNOpname)],
       [
         "Selisih",
         `${deltaNominal >= 0 ? "+" : ""}${formatRupiah(deltaNominal)}`,
-      ],
-      [
-        {
-          content: "",
-          colSpan: 2,
-          styles: {
-            fillColor: [255, 255, 255],
-            lineWidth: 0,
-            cellPadding: 2,
-          },
-        },
       ],
       ["TOTAL", formatRupiah(grandTotalOpname)],
       ["PPN 11%", formatRupiah(ppnOpname)],
@@ -859,38 +834,36 @@ autoTable(doc, {
     ];
 
     autoTable(doc, {
-      body: statusTableBody,
+      body: statusBox,
       startY: lastY,
-      margin: { left: margin, right: margin }, // kiri (bukan kanan)
-      tableWidth: usableWidth, // penuh halaman (ikut margin)
+      margin: { left: pageWidth - 100, right: margin }, // dorong ke kanan
+      tableWidth: 90, // lebar ringkas
       theme: "grid",
       styles: {
-        fontSize: 11, // font lebih besar
-        halign: "left",
-        cellPadding: 4, // padding lebih lega
+        fontSize: 9,
+        fontStyle: "bold",
+        halign: "right",
+        cellPadding: 2,
       },
       columnStyles: {
-        0: { halign: "left", cellWidth: leftColWidth, fontStyle: "bold" },
-        1: { halign: "right", cellWidth: rightColWidth },
+        0: { halign: "left", cellWidth: 40 },
+        1: { halign: "right", cellWidth: 50 },
       },
-      didParseCell: function (data) {
-        // Highlight GRAND TOTAL (baris terakhir)
-        if (data.row.index === statusTableBody.length - 1) {
+      didParseCell(data) {
+        // highlight baris GRAND TOTAL (warna biru muda seperti RAB/OPNAME)
+        if (data.row.index === statusBox.length - 1) {
           data.cell.styles.fillColor = [173, 216, 230];
           data.cell.styles.textColor = [0, 0, 0];
-          data.cell.styles.fontStyle = "bold";
         }
-        // Tebalkan nilai Selisih agar menonjol
+        // tebalkan nilai “Selisih”
         if (
-          statusTableBody[data.row.index] &&
-          statusTableBody[data.row.index][0] === "Selisih" &&
+          statusBox[data.row.index]?.[0] === "Selisih" &&
           data.column.index === 1
         ) {
           data.cell.styles.fontStyle = "bold";
         }
       },
     });
-
     lastY = (doc.lastAutoTable?.finalY ?? lastY) + 15;
 
     // --- LAMPIRAN FOTO ---
