@@ -21,21 +21,28 @@ const Login = () => {
     }
   }, [isAuthenticated, navigate]);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setLoading(true);
+  setError("");
 
+  try {
     const result = await login(username.trim(), password);
 
-    if (result.success) {
+    // Cegah error kalau result-nya undefined atau tidak punya success
+    if (result && (result.success || result.ok === true)) {
       navigate("/"); // arahkan ke halaman utama
     } else {
-      setError(result.message || "Login gagal. Coba lagi.");
+      setError(result?.message || "Login gagal. Coba lagi.");
     }
-
+  } catch (err) {
+    console.error("Error saat login:", err);
+    setError("Terjadi kesalahan koneksi server.");
+  } finally {
     setLoading(false);
-  };
+  }
+};
+
 
   return (
     <div
