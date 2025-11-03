@@ -262,56 +262,112 @@
     const pageHeight = doc.internal.pageSize.getHeight();
     const margin = 14;
 
-    // --- HEADER ---
-    doc.setFillColor(229, 30, 37);
-    doc.rect(0, 0, pageWidth, 30, "F");
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(12).setFont(undefined, "bold");
-    doc.text(companyName, pageWidth / 2, 12, { align: "center" });
-    doc.setFontSize(9);
-    doc.setTextColor(0, 0, 0);
-    let startY = 40;
+    // --- HEADER (ELEGAN & MINIMAL) ---
+    const drawElegantHeader = async () => {
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const margin = 14;
 
-    // --- JUDUL DOKUMEN ---
-    doc.setFontSize(14).setFont(undefined, "bold");
-    doc.text(reportTitle, pageWidth / 2, startY, { align: "center" });
-    startY += 20;
+      // 1) Logo kiri (opsional)
+      let logoW = 28,
+        logoH = 10; // proporsi lebar vs tinggi
+      try {
+        const logoB64 = await toBase64(logoUrl);
+        if (logoB64) {
+          const p = doc.getImageProperties(logoB64);
+          // scale agar tinggi ~12
+          logoH = 12;
+          logoW = (p.width / p.height) * logoH;
+          doc.addImage(logoB64, margin, 14, logoW, logoH);
+        }
+      } catch (e) {
+        // kalau gagal ambil logo: skip
+      }
 
-    // --- INFO PROYEK ---
-    doc.setFontSize(10);
-    doc.text(`NOMOR ULOK : ${selectedUlok || "undefined"}`, margin, startY);
-    startY += 7;
-    // 🔹 Tambahkan Lingkup Pekerjaan dari data submissions
-    doc.text(`LINGKUP PEKERJAAN : ${selectedLingkup || "N/A"}`, margin, startY);
-    startY += 7;
-    doc.text(`ALAMAT : ${selectedStore.nama_toko}`, margin, startY);
-    startY += 7;
-    doc.text(`TANGGAL OPNAME : ${currentDate}`, margin, startY);
-    startY += 7;
-    // Jika ada banyak PIC, gabungkan dengan koma
-    // Jika ada banyak PIC, gabungkan dengan koma
-    const picLine =
-      picList && picList.length > 0
-        ? picList.join(", ")
-        : picKontraktorData.name || picKontraktorData.pic_username || "N/A";
+      // 2) Nama perusahaan di kanan (hitam, tegas)
+      doc.setTextColor(0, 0, 0);
+      doc.setFontSize(12).setFont(undefined, "bold");
+      doc.text(companyName, margin + logoW + 6, 20, {
+        align: "left",
+        baseline: "middle",
+      });
 
-    doc.text(`NAMA PIC : ${picLine}`, margin, startY);
-    startY += 7;
-    doc.text(
-      `NAMA KONTRAKTOR : ${picKontraktorData.kontraktor_username || "N/A"}`,
-      margin,
-      startY
-    );
-    startY += 15;
+      // 3) Garis tipis pemisah
+      doc.setDrawColor(200, 200, 200);
+      doc.setLineWidth(0.4);
+      doc.line(margin, 30, pageWidth - margin, 30);
+
+      // 4) Judul besar di tengah
+      doc.setFontSize(14).setFont(undefined, "bold");
+      doc.text(reportTitle, pageWidth / 2, 42, { align: "center" });
+
+      // 5) Kotak info proyek (abu-abu sangat muda)
+      const infoTop = 52;
+      const infoLeft = margin;
+      const infoWidth = pageWidth - margin * 2;
+      const infoLineH = 6.5;
+
+      doc.setFillColor(248, 248, 248);
+      doc.setDrawColor(230, 230, 230);
+      doc.roundedRect(
+        infoLeft,
+        infoTop,
+        infoWidth,
+        infoLineH * 5 + 8,
+        2,
+        2,
+        "FD"
+      );
+
+      doc.setFontSize(10).setFont(undefined, "normal");
+      const labelX = infoLeft + 6;
+      const valueX = infoLeft + 65;
+      let y = infoTop + 9;
+
+      const put = (label, value) => {
+        doc.setFont(undefined, "bold");
+        doc.text(label, labelX, y);
+        doc.setFont(undefined, "normal");
+        doc.text(String(value || "N/A"), valueX, y);
+        y += infoLineH;
+      };
+
+      put("NOMOR ULOK", selectedUlok || "undefined");
+      put("LINGKUP PEKERJAAN", selectedLingkup || "N/A");
+      put("ALAMAT", selectedStore?.nama_toko || "-");
+      put("TANGGAL OPNAME", currentDate);
+      // gabungkan PIC (list) atau fallback name/email
+      const picLine =
+        picList && picList.length > 0
+          ? picList.join(", ")
+          : picKontraktorData.name || picKontraktorData.pic_username || "N/A";
+      put("NAMA PIC", picLine);
+
+      // baris terakhir kontraktor
+      doc.setFont(undefined, "bold");
+      doc.text("NAMA KONTRAKTOR", labelX, y);
+      doc.setFont(undefined, "normal");
+      doc.text(
+        String(picKontraktorData.kontraktor_username || "N/A"),
+        valueX,
+        y
+      );
+
+      // kembalikan posisi start konten setelah header
+      return infoTop + infoLineH * 5 + 8 + 10;
+    };
+
+    // panggil header dan ambil startY berikutnya
+    let startY = await drawElegantHeader();
 
     // --- BAGIAN RAB FINAL ---
-    doc.setFontSize(12).setFont(undefined, "bold");
-    doc.setFillColor(229, 30, 37);
-    doc.rect(0, startY - 5, pageWidth, 10, "F");
-    doc.setTextColor(255, 255, 255);
-    doc.text("RAB FINAL", margin, startY);
+    doc.setFontSize(11).setFont(undefined, "bold");
+    // garis tipis abu-abu + label hitam
+    doc.setDrawColor(200, 200, 200);
+    doc.setLineWidth(0.6);
+    doc.line(margin, startY - 4, pageWidth - margin, startY - 4);
     doc.setTextColor(0, 0, 0);
-    startY += 10;
+    doc.text("RAB FINAL", margin, startY);
+    startY += 8;
 
     // Kelompokkan data RAB berdasarkan kategori
     const rabCategories = groupDataByCategory(rabData);
@@ -364,7 +420,6 @@
           formatRupiah(totalHarga), // kolom "TOTAL HARGA (Rp)"
         ];
       });
-
 
       categoryTableBody.push([
         "",
@@ -498,7 +553,6 @@
     });
 
     lastY = (doc.lastAutoTable?.finalY ?? lastY) + 15;
-
 
     // --- BAGIAN LAPORAN OPNAME FINAL ---
     if (submissions && submissions.length > 0) {
