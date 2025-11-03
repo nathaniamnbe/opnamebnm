@@ -26,10 +26,25 @@ export const AuthProvider = ({ children }) => {
 
 const login = async (username, password) => {
   try {
-    // Ambil URL backend dari environment variable
-    const apiUrl = process.env.REACT_APP_API_URL;
+    // ✅ Ambil waktu lokal WIB
+    const now = new Date();
+    const wibTime = new Date(
+      now.toLocaleString("en-US", { timeZone: "Asia/Jakarta" })
+    );
+    const hour = wibTime.getHours();
 
-    // Gabungkan URL backend dengan endpoint-nya
+    // ✅ Batasi jam operasional 06:00 - 18:00 WIB
+    if (hour < 6 || hour >= 15) {
+      const currentTime = wibTime.toLocaleTimeString("id-ID", {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+      return {
+        success: false,
+        message: `Sesi Anda telah berakhir.\nLogin hanya dapat dilakukan pada jam operasional 06.00–18.00 WIB.\nSekarang pukul ${currentTime} WIB.`,
+      };
+    }
+
     const response = await fetch(`${API_BASE_URL}/api/login`, {
       method: "POST",
       headers: {
@@ -49,10 +64,10 @@ const login = async (username, password) => {
     return { success: true, user: userData };
   } catch (error) {
     console.error("Login error:", error);
-    // Ubah message error agar lebih informatif
     return { success: false, message: error.message };
   }
 };
+
 
   const logout = () => {
     setUser(null);
