@@ -1,36 +1,84 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState, useEffect, useRef } from "react";
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || "";
 const AuthContext = createContext();
+
+// ⏰ Batas idle (1 jam)
+const INACTIVITY_LIMIT_MS = 60 * 60 * 1000;
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // timer untuk idle logout (disimpan di ref supaya tidak berubah-ubah)
+  const idleTimerRef = useRef(null);
+
+  // — util: mulai/ulang timer idle
+  const startIdleTimer = () => {
+    clearTimeout(idleTimerRef.current);
+    idleTimerRef.current = setTimeout(() => {
+      // waktu habis => logout
+      logout(true);
+    }, INACTIVITY_LIMIT_MS);
+  };
+
+  // — util: handler setiap ada aktivitas user
+  const onUserActivity = () => {
+    // reset timer hanya jika sudah login
+    if (user) startIdleTimer();
+  };
+
   useEffect(() => {
-    // 🔁 Migrasi: pastikan tidak ada sisa auto-login dari localStorage
+    // migrasi: pastikan auto-login lama tidak nyangkut
     try {
       localStorage.removeItem("user");
-    } catch (_) {}
-
-    // ✅ Per-tab session: baca dari sessionStorage
+    } catch {}
+    // per-tab session
     const savedUser = sessionStorage.getItem("user");
     if (savedUser) {
       try {
         setUser(JSON.parse(savedUser));
-      } catch (err) {
-        console.error("Error parsing saved user data:", err);
+      } catch {
         sessionStorage.removeItem("user");
       }
     }
     setLoading(false);
   }, []);
 
+  // Pas user sudah login → pasang listener aktivitas & timer idle
+  useEffect(() => {
+    // daftar event yang dianggap “aktivitas”
+    const events = [
+      "click",
+      "keydown",
+      "mousemove",
+      "scroll",
+      "touchstart",
+      "wheel",
+      "visibilitychange",
+    ];
+
+    if (user) {
+      // mulai timer pertama kali
+      startIdleTimer();
+      // pasang listeners
+      events.forEach((evt) =>
+        window.addEventListener(evt, onUserActivity, { passive: true })
+      );
+    }
+
+    // cleanup saat logout / unmount
+    return () => {
+      clearTimeout(idleTimerRef.current);
+      events.forEach((evt) => window.removeEventListener(evt, onUserActivity));
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]); // hanya bereaksi saat status login berubah
+
   const login = async (username, password) => {
     try {
-      // (opsional) validasi jam operasional tetap ada
       const now = new Date();
       const wibTime = new Date(
         now.toLocaleString("en-US", { timeZone: "Asia/Jakarta" })
@@ -43,7 +91,7 @@ export const AuthProvider = ({ children }) => {
         });
         return {
           success: false,
-          message: `Sesi Anda telah berakhir.\nLogin hanya dapat dilakukan pada jam operasional 06.00–18.00 WIB.\nSekarang pukul ${currentTime} WIB.`,
+          message: `Sesi Anda telah berakhir.\nLogin hanya 06.00–18.00 WIB.\nSekarang pukul ${currentTime} WIB.`,
         };
       }
 
@@ -56,14 +104,13 @@ export const AuthProvider = ({ children }) => {
       if (!res.ok) throw new Error(userData.message || "Login failed");
 
       setUser(userData);
-
-      // ✅ Simpan ke sessionStorage agar hilang saat tab ditutup
       sessionStorage.setItem("user", JSON.stringify(userData));
-
-      // 🔁 Pastikan localStorage tidak dipakai lagi
       try {
         localStorage.removeItem("user");
-      } catch (_) {}
+      } catch {}
+
+      // mulai timer idle segera setelah login
+      startIdleTimer();
 
       return { success: true, user: userData };
     } catch (error) {
@@ -72,15 +119,23 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const logout = () => {
+  // isAuto param dipakai agar bisa kasih pesan berbeda kalau mau
+  const logout = (isAuto = false) => {
     setUser(null);
-    // ✅ Bersihkan dua-duanya
     try {
       sessionStorage.removeItem("user");
-    } catch (_) {}
+    } catch {}
     try {
       localStorage.removeItem("user");
-    } catch (_) {}
+    } catch {}
+    clearTimeout(idleTimerRef.current);
+
+    // (opsional) beri notifikasi sederhana
+    if (isAuto) {
+      // Hindari alert jika tidak diinginkan—boleh diganti toast/Modal
+      // alert("Sesi berakhir karena tidak ada aktivitas selama 1 jam.");
+      console.log("Auto-logout by inactivity.");
+    }
   };
 
   const value = { user, login, logout, loading, isAuthenticated: !!user };
