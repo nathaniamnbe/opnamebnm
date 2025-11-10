@@ -805,11 +805,6 @@ export const generateFinalOpnamePDF = async (
 
     // >>> Tambahkan definisi variabel yang belum ada
     const grandTotalOpname = totalTambah + totalKurang; // bisa positif/negatif
-    const ppnOpname = grandTotalOpname * 0.11; // 11% PPN opname
-
-
-
-
 
     lastY = (doc.lastAutoTable?.finalY ?? lastY) + 15;
 
