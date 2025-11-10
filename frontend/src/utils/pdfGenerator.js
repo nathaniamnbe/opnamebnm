@@ -606,17 +606,16 @@ export const generateFinalOpnamePDF = async (
       "Total Harga Akhir",
     ];
 
-    // 🔹 Pisahkan lebih dulu jadi PEKERJAAN TAMBAH & KURANG
+    // 🔹 Pisahkan lebih dulu jadi PEKERJAAN TAMBAH & KURANG (berdasarkan SELISIH)
     const groupsByType = {
       "PEKERJAAN TAMBAH": [],
       "PEKERJAAN KURANG": [],
     };
 
     (submissions || []).forEach((it) => {
-      const total = Number(
-        String(it.total_harga_akhir || 0).replace(/[^0-9\.\-]/g, "")
-      );
-      const groupType = total >= 0 ? "PEKERJAAN TAMBAH" : "PEKERJAAN KURANG";
+      // selisih bisa berformat "1.000,50" → normalisasi ke number
+      const sel = Number(String(it.selisih ?? 0).replace(/[^0-9.\-]/g, ""));
+      const groupType = sel < 0 ? "PEKERJAAN KURANG" : "PEKERJAAN TAMBAH";
       groupsByType[groupType].push(it);
     });
 
