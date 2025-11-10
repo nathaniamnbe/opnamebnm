@@ -803,9 +803,6 @@ export const generateFinalOpnamePDF = async (
     const deltaPPN = totalTambahPPN + totalKurangPPN;
     const totalSetelahPPNOpname = totalSetelahPPNRAB + deltaPPN; // RAB + Tambah + Kurang
 
-    // >>> Tambahkan definisi variabel yang belum ada
-    const grandTotalOpname = totalTambah + totalKurang; // bisa positif/negatif
-
     lastY = (doc.lastAutoTable?.finalY ?? lastY) + 15;
 
     // --- STATUS PEKERJAAN (DIPERAPiHKAN) ---
