@@ -1296,7 +1296,7 @@ app.get("/api/opname/pending", async (req, res) => {
       vol_rab: row.get("vol_rab") || "",
       satuan: row.get("satuan") || "",
       foto_url: row.get("foto_url") || "",
-      name: displayName || "",
+      name: (row.get("name") || "").toString().trim() || fallbackName, // ✅ tambahkan ini
     }));
 
     return res.status(200).json(result);
