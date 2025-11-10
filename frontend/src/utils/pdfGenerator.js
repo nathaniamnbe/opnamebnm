@@ -813,29 +813,7 @@ export const generateFinalOpnamePDF = async (
       ["GRAND TOTAL", formatRupiah(totalSetelahPPNOpname)],
     ];
 
-    autoTable(doc, {
-      body: totalOpnameTableBody,
-      startY: lastY,
-      margin: { left: pageWidth - 90, right: margin },
-      tableWidth: 80,
-      theme: "grid",
-      styles: {
-        fontSize: 9,
-        fontStyle: "bold",
-        halign: "right",
-        cellPadding: 2,
-      },
-      columnStyles: {
-        0: { halign: "left", cellWidth: 30 },
-        1: { halign: "right", cellWidth: 50 },
-      },
-      didParseCell: function (data) {
-        if (data.row.index === 2) {
-          data.cell.styles.fillColor = [34, 139, 34];
-          data.cell.styles.textColor = [255, 255, 255];
-        }
-      },
-    });
+
 
     lastY = (doc.lastAutoTable?.finalY ?? lastY) + 15;
 
