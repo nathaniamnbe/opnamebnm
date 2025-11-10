@@ -609,7 +609,6 @@ export const generateFinalOpnamePDF = async (
       groupsByType[groupType].push(it);
     });
 
-
     // 🔹 Di dalam masing-masing, kelompokkan lagi berdasarkan kategori
     const groups = {};
     Object.entries(groupsByType).forEach(([type, items]) => {
@@ -647,121 +646,121 @@ export const generateFinalOpnamePDF = async (
       doc.line(margin, lastY + 2, pageWidth - margin, lastY + 2);
       lastY += 10;
 
-let kategoriIndex = 1;
-for (const [kategori, items] of Object.entries(categories)) {
-  // filter dulu
-  const filteredItems = items.filter((item) => toNumberVol(item.selisih) !== 0);
+      let kategoriIndex = 1;
+      for (const [kategori, items] of Object.entries(categories)) {
+        // filter dulu
+        const filteredItems = items.filter(
+          (item) => toNumberVol(item.selisih) !== 0
+        );
 
-  // jika tidak ada data (semua selisih = 0) → lewati kategori ini
-  if (filteredItems.length === 0) {
-    continue;
-  }
+        // jika tidak ada data (semua selisih = 0) → lewati kategori ini
+        if (filteredItems.length === 0) {
+          continue;
+        }
 
-  if (lastY + 20 > pageHeight - 20) {
-    addFooter(doc.getNumberOfPages());
-    doc.addPage();
-    lastY = margin + 10;
-  }
+        if (lastY + 20 > pageHeight - 20) {
+          addFooter(doc.getNumberOfPages());
+          doc.addPage();
+          lastY = margin + 10;
+        }
 
-  // gambar judul kategori
-  doc.setFontSize(11).setFont(undefined, "bold");
-  doc.text(`${kategoriIndex}. ${kategori.toUpperCase()}`, margin, lastY);
-  lastY += 10;
-  kategoriIndex++;
+        // gambar judul kategori
+        doc.setFontSize(11).setFont(undefined, "bold");
+        doc.text(`${kategoriIndex}. ${kategori.toUpperCase()}`, margin, lastY);
+        lastY += 10;
+        kategoriIndex++;
 
-  // siapkan rows dari filteredItems
-  const rows = filteredItems.map((item, idx) => {
-    const sel = toNumberVol(item.selisih);
-    const hMat = toNumberID(item.harga_material);
-    const hUpah = toNumberID(item.harga_upah);
-    const deltaNominal = sel * (hMat + hUpah);
+        // siapkan rows dari filteredItems
+        const rows = filteredItems.map((item, idx) => {
+          const sel = toNumberVol(item.selisih);
+          const hMat = toNumberID(item.harga_material);
+          const hUpah = toNumberID(item.harga_upah);
+          const deltaNominal = sel * (hMat + hUpah);
 
-    return [
-      idx + 1,
-      item.jenis_pekerjaan,
-      item.vol_rab,
-      item.satuan,
-      item.volume_akhir,
-      `${item.selisih} ${item.satuan}`,
-      formatRupiah(deltaNominal),
-    ];
-  });
+          return [
+            idx + 1,
+            item.jenis_pekerjaan,
+            item.vol_rab,
+            item.satuan,
+            item.volume_akhir,
+            `${item.selisih} ${item.satuan}`,
+            formatRupiah(deltaNominal),
+          ];
+        });
 
-  autoTable(doc, {
-    head: [
-      [
-        "NO.",
-        "JENIS PEKERJAAN",
-        "VOL RAB",
-        "SATUAN",
-        "VOLUME AKHIR",
-        "SELISIH",
-        "NILAI SELISIH (Rp)",
-      ],
-    ],
-    body: rows,
-    startY: lastY,
-    margin: { left: margin, right: margin },
-    tableWidth: pageWidth - margin * 2,
-    theme: "grid",
+        autoTable(doc, {
+          head: [
+            [
+              "NO.",
+              "JENIS PEKERJAAN",
+              "VOL RAB",
+              "SATUAN",
+              "VOLUME AKHIR",
+              "SELISIH",
+              "NILAI SELISIH (Rp)",
+            ],
+          ],
+          body: rows,
+          startY: lastY,
+          margin: { left: margin, right: margin },
+          tableWidth: pageWidth - margin * 2,
+          theme: "grid",
 
-    // beri ruang secukupnya, tapi tetap kompak
-    styles: {
-      fontSize: 8,
-      cellPadding: 3,
-      lineHeight: 1.1,
-      overflow: "linebreak",
-      lineColor: [120, 120, 120],
-      lineWidth: 0.3,
-    },
-    // header TIDAK membungkus
-    headStyles: {
-      fillColor: [205, 234, 242],
-      textColor: [0, 0, 0],
-      halign: "center",
-      valign: "middle",
-      fontSize: 8.5,
-      fontStyle: "bold",
-      minCellHeight: 9,
-      lineHeight: 1.15, // ← beri ruang agar tidak kepotong
-      overflow: "linebreak", // ← paksa wrap, tidak dipotong
-      cellPadding: 2,
-    },
-    columnStyles: {
-      0: { halign: "center", cellWidth: 12, minCellHeight: 9 }, // ⬅️ lebarin dari 10 → 12
-      1: { cellWidth: 66 },
-      2: { halign: "right", cellWidth: 18 },
-      3: { halign: "center", cellWidth: 18 },
-      4: { halign: "right", cellWidth: 22 },
-      5: { halign: "right", cellWidth: 22 },
-      6: { halign: "right", cellWidth: 30, fontStyle: "bold" },
-    },
+          // beri ruang secukupnya, tapi tetap kompak
+          styles: {
+            fontSize: 8,
+            cellPadding: 3,
+            lineHeight: 1.1,
+            overflow: "linebreak",
+            lineColor: [120, 120, 120],
+            lineWidth: 0.3,
+          },
+          // header TIDAK membungkus
+          headStyles: {
+            fillColor: [205, 234, 242],
+            textColor: [0, 0, 0],
+            halign: "center",
+            valign: "middle",
+            fontSize: 8.5,
+            fontStyle: "bold",
+            minCellHeight: 9,
+            lineHeight: 1.15, // ← beri ruang agar tidak kepotong
+            overflow: "linebreak", // ← paksa wrap, tidak dipotong
+            cellPadding: 2,
+          },
+          columnStyles: {
+            0: { halign: "center", cellWidth: 12, minCellHeight: 9 }, // ⬅️ lebarin dari 10 → 12
+            1: { cellWidth: 66 },
+            2: { halign: "right", cellWidth: 18 },
+            3: { halign: "center", cellWidth: 18 },
+            4: { halign: "right", cellWidth: 22 },
+            5: { halign: "right", cellWidth: 22 },
+            6: { halign: "right", cellWidth: 30, fontStyle: "bold" },
+          },
 
-    // kecilkan font khusus sel header kolom 0 dan paksa tetap 1 baris
-    didParseCell(data) {
-      if (data.section === "head" && data.column.index === 0) {
-        data.cell.styles.fontSize = 8; // ⬅️ sedikit lebih kecil
-        data.cell.styles.overflow = "hidden";
-        data.cell.styles.lineHeight = 1;
+          // kecilkan font khusus sel header kolom 0 dan paksa tetap 1 baris
+          didParseCell(data) {
+            if (data.section === "head" && data.column.index === 0) {
+              data.cell.styles.fontSize = 8; // ⬅️ sedikit lebih kecil
+              data.cell.styles.overflow = "hidden";
+              data.cell.styles.lineHeight = 1;
+            }
+          },
+        });
+
+        lastY = (doc.lastAutoTable?.finalY ?? lastY) + 10;
       }
-    },
-  });
-
-  lastY = (doc.lastAutoTable?.finalY ?? lastY) + 10;
-}
 
       // ✅ Total per BLOK (TAMBAH/KURANG) — HARUS di dalam loop ini
-const totalPerBlock = Object.values(categories)
-  .flat()
-  .filter((item) => toNumberVol(item.selisih) !== 0)
-  .reduce((sum, item) => {
-    const sel = toNumberVol(item.selisih);
-    const hMat = toNumberID(item.harga_material);
-    const hUpah = toNumberID(item.harga_upah);
-    return sum + sel * (hMat + hUpah);
-  }, 0);
-
-
+      const totalPerBlock = Object.values(categories)
+        .flat()
+        .filter((item) => toNumberVol(item.selisih) !== 0)
+        .reduce((sum, item) => {
+          const sel = toNumberVol(item.selisih);
+          const hMat = toNumberID(item.harga_material);
+          const hUpah = toNumberID(item.harga_upah);
+          return sum + sel * (hMat + hUpah);
+        }, 0);
 
       autoTable(doc, {
         body: [
@@ -801,17 +800,29 @@ const totalPerBlock = Object.values(categories)
       lastY = margin + 10;
     }
 
-let grandTotalOpname = 0;
-submissions.forEach((item) => {
-  const sel = toNumberVol(item.selisih);
-  const hMat = toNumberID(item.harga_material);
-  const hUpah = toNumberID(item.harga_upah);
-  grandTotalOpname += sel * (hMat + hUpah);
-});
+    let totalTambah = 0;
+    let totalKurang = 0;
 
+    submissions.forEach((item) => {
+      const sel = toNumberVol(item.selisih); // bisa ±
+      const unit =
+        toNumberID(item.harga_material) + toNumberID(item.harga_upah);
+      const delta = sel * unit; // nilai rupiah SELISIH
 
-    const ppnOpname = grandTotalOpname * 0.11;
-    const totalSetelahPPNOpname = grandTotalOpname + ppnOpname;
+      if (delta > 0) totalTambah += delta; // Tambah (+)
+      else if (delta < 0) totalKurang += delta; // Kurang (–)
+    });
+
+    // PPN 11% per komponen (Kurang akan bernilai negatif)
+    const ppnTambah = totalTambah * 0.11;
+    const ppnKurang = totalKurang * 0.11;
+
+    const totalTambahPPN = totalTambah + ppnTambah;
+    const totalKurangPPN = totalKurang + ppnKurang;
+
+    // RAB final (sudah ada di variabel totalSetelahPPNRAB)
+    const deltaPPN = totalTambahPPN + totalKurangPPN;
+    const totalSetelahPPNOpname = totalSetelahPPNRAB + deltaPPN; // RAB + Tambah + Kurang
 
     const totalOpnameTableBody = [
       ["TOTAL", formatRupiah(grandTotalOpname)],
@@ -862,17 +873,12 @@ submissions.forEach((item) => {
     lastY += 10;
 
     // Tentukan status berdasarkan selisih Opname vs RAB (keduanya setelah PPN)
+    // status berdasarkan delta PPN (Tambah+Kurang)
     const deltaNominal = totalSetelahPPNOpname - totalSetelahPPNRAB;
     let statusText = "Sesuai RAB (Tidak Ada Perubahan)";
     if (deltaNominal > 0) statusText = "Pekerjaan Tambah";
     if (deltaNominal < 0) statusText = "Pekerjaan Kurang";
 
-    // Atur ukuran kolom untuk lebar hampir penuh halaman
-    const usableWidth = pageWidth - margin * 2;
-    const leftColWidth = usableWidth * 0.62; // label
-    const rightColWidth = usableWidth * 0.38; // nilai
-
-    // SELURUH RINGKASAN DIBUAT DALAM SATU TABEL, LEBAR PENUH & FONT BESAR
     const statusTableBody = [
       [
         {
@@ -888,25 +894,16 @@ submissions.forEach((item) => {
         },
       ],
       ["RAB Final (incl. PPN)", formatRupiah(totalSetelahPPNRAB)],
-      ["Opname Final (incl. PPN)", formatRupiah(totalSetelahPPNOpname)],
+      [
+        "Pekerjaan Tambah (incl. PPN)",
+        `${totalTambahPPN >= 0 ? "" : ""}${formatRupiah(totalTambahPPN)}`,
+      ],
+      ["Pekerjaan Kurang (incl. PPN)", formatRupiah(totalKurangPPN)], // nilai negatif
+      ["Opname Final (incl. PPN)", formatRupiah(totalSetelahPPNOpname)], // = RAB + Tambah + Kurang
       [
         "Selisih",
-        `${deltaNominal >= 0 ? "+" : ""}${formatRupiah(deltaNominal)}`,
+        `${deltaNominal >= 0 ? "+" : ""}${formatRupiah(deltaNominal)}`, // + = Tambah, – = Kurang
       ],
-      [
-        {
-          content: "",
-          colSpan: 2,
-          styles: {
-            fillColor: [255, 255, 255],
-            lineWidth: 0,
-            cellPadding: 2,
-          },
-        },
-      ],
-      ["TOTAL", formatRupiah(grandTotalOpname)],
-      ["PPN 11%", formatRupiah(ppnOpname)],
-      ["GRAND TOTAL", formatRupiah(totalSetelahPPNOpname)],
     ];
 
     autoTable(doc, {
