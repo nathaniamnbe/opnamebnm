@@ -606,24 +606,18 @@ export const generateFinalOpnamePDF = async (
       "Total Harga Akhir",
     ];
 
-
+    // 🔹 Pisahkan lebih dulu jadi PEKERJAAN TAMBAH & KURANG
     const groupsByType = {
       "PEKERJAAN TAMBAH": [],
       "PEKERJAAN KURANG": [],
     };
 
     (submissions || []).forEach((it) => {
-      // selisih bisa berupa "10.33" atau string dengan koma/pemisah: gunakan helper toNumberVol/toNumberID di file ini
-      const s =
-        toNumberVol?.(it.selisih) ??
-        (Number(String(it.selisih).replace(/[^0-9\.\-]/g, "")) || 0);
-
-      if (s > 0) {
-        groupsByType["PEKERJAAN TAMBAH"].push(it);
-      } else if (s < 0) {
-        groupsByType["PEKERJAAN KURANG"].push(it);
-      }
-      // jika s === 0 tidak dimasukkan ke mana pun (netral)
+      const total = Number(
+        String(it.total_harga_akhir || 0).replace(/[^0-9\.\-]/g, "")
+      );
+      const groupType = total >= 0 ? "PEKERJAAN TAMBAH" : "PEKERJAAN KURANG";
+      groupsByType[groupType].push(it);
     });
 
     // 🔹 Di dalam masing-masing, kelompokkan lagi berdasarkan kategori
