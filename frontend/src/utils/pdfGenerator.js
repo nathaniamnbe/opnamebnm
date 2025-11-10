@@ -596,16 +596,6 @@ export const generateFinalOpnamePDF = async (
     doc.line(margin, lastY + 2, pageWidth - margin, lastY + 2);
     lastY += 10;
 
-    const opnameTableColumn = [
-      "No",
-      "Jenis Pekerjaan",
-      "Vol RAB",
-      "Satuan",
-      "Volume Akhir",
-      "Selisih",
-      "Total Harga Akhir",
-    ];
-
     // 🔹 Pisahkan lebih dulu jadi PEKERJAAN TAMBAH & KURANG (berdasarkan SELISIH)
     const groupsByType = {
       "PEKERJAAN TAMBAH": [],
