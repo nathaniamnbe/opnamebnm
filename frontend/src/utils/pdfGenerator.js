@@ -661,22 +661,28 @@ export const generateFinalOpnamePDF = async (
 
         kategoriIndex++;
 
-const rows = items.map((item, idx) => {
-  const sel = toNumberVol(item.selisih); // bisa negatif/positif
-  const hMat = toNumberID(item.harga_material);
-  const hUpah = toNumberID(item.harga_upah);
-  const deltaNominal = sel * (hMat + hUpah); // nilai rupiah dari SELISIH
+        // hanya tampilkan data dengan selisih ≠ 0
+        const filteredItems = items.filter((item) => {
+          const sel = toNumberVol(item.selisih);
+          return sel !== 0;
+        });
 
-  return [
-    idx + 1,
-    item.jenis_pekerjaan,
-    item.vol_rab,
-    item.satuan,
-    item.volume_akhir,
-    `${item.selisih} ${item.satuan}`,
-    formatRupiah(deltaNominal), // ← tampilkan NILAI SELISIH saja
-  ];
-});
+        const rows = filteredItems.map((item, idx) => {
+          const sel = toNumberVol(item.selisih);
+          const hMat = toNumberID(item.harga_material);
+          const hUpah = toNumberID(item.harga_upah);
+          const deltaNominal = sel * (hMat + hUpah);
+
+          return [
+            idx + 1,
+            item.jenis_pekerjaan,
+            item.vol_rab,
+            item.satuan,
+            item.volume_akhir,
+            `${item.selisih} ${item.satuan}`,
+            formatRupiah(deltaNominal),
+          ];
+        });
 
         autoTable(doc, {
           head: [
