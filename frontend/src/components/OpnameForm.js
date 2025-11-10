@@ -163,7 +163,7 @@ const withLingkup = lk ? base + `&lingkup=${encodeURIComponent(lk)}` : null;
     }
   }, [selectedStore, selectedUlok, selectedLingkup, user]);
 
-  const round2 = (n) => Math.round((n + Number.EPSILON) * 100) / 100;
+  
 
   const handleVolumeAkhirChange = (id, value) => {
     setOpnameItems((prevItems) =>

@@ -28,7 +28,7 @@ const toNumberID = (v) => {
   const s = String(v).trim();
   if (!s) return 0;
   // buang semua kecuali digit, koma, titik, minus
-  const cleaned = s.replace(/[^\d,.\-]/g, "");
+  const cleaned = s.replace(/[^\d,.-]/g, "");
   // hilangkan pemisah ribuan ".", ganti desimal "," jadi "."
   const normalized = cleaned.replace(/\./g, "").replace(",", ".");
   const n = Number(normalized);
@@ -49,7 +49,7 @@ const toNumberVol = (v) => {
     s = s.replace(",", ".");
   } // Hanya titik -> sudah desimal, biarkan
 
-  const n = Number(s.replace(/[^\d.\-]/g, ""));
+ const n = Number(s.replace(/[^\d.-]/g, ""));
   return Number.isFinite(n) ? n : 0;
 };
 
@@ -614,10 +614,11 @@ export const generateFinalOpnamePDF = async (
 
     (submissions || []).forEach((it) => {
       // selisih bisa berformat "1.000,50" → normalisasi ke number
-      const sel = Number(String(it.selisih ?? 0).replace(/[^0-9.\-]/g, ""));
+      const sel = Number(String(it.selisih ?? 0).replace(/[^0-9.-]/g, ""));
       const groupType = sel < 0 ? "PEKERJAAN KURANG" : "PEKERJAAN TAMBAH";
       groupsByType[groupType].push(it);
     });
+
 
     // 🔹 Di dalam masing-masing, kelompokkan lagi berdasarkan kategori
     const groups = {};
@@ -649,8 +650,6 @@ export const generateFinalOpnamePDF = async (
       }
 
       doc.setFontSize(12).setFont(undefined, "bold");
-      const color =
-        sectionName === "PEKERJAAN TAMBAH" ? [34, 139, 34] : [220, 20, 60];
       doc.setTextColor(0, 0, 0);
       doc.text(sectionName, margin, lastY);
       doc.setDrawColor(180, 180, 180);
