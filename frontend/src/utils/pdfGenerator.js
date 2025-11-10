@@ -662,27 +662,35 @@ export const generateFinalOpnamePDF = async (
         kategoriIndex++;
 
         // hanya tampilkan data dengan selisih ≠ 0
+        // hanya tampilkan data dengan selisih ≠ 0
         const filteredItems = items.filter((item) => {
           const sel = toNumberVol(item.selisih);
           return sel !== 0;
         });
 
-        const rows = filteredItems.map((item, idx) => {
-          const sel = toNumberVol(item.selisih);
-          const hMat = toNumberID(item.harga_material);
-          const hUpah = toNumberID(item.harga_upah);
-          const deltaNominal = sel * (hMat + hUpah);
+        let rows = [];
 
-          return [
-            idx + 1,
-            item.jenis_pekerjaan,
-            item.vol_rab,
-            item.satuan,
-            item.volume_akhir,
-            `${item.selisih} ${item.satuan}`,
-            formatRupiah(deltaNominal),
-          ];
-        });
+        if (filteredItems.length === 0) {
+          // kalau semua selisih 0 → tampilkan 1 baris "Tidak ada data"
+          rows = [["", "Tidak ada data (selisih = 0)", "", "", "", "", ""]];
+        } else {
+          rows = filteredItems.map((item, idx) => {
+            const sel = toNumberVol(item.selisih);
+            const hMat = toNumberID(item.harga_material);
+            const hUpah = toNumberID(item.harga_upah);
+            const deltaNominal = sel * (hMat + hUpah);
+
+            return [
+              idx + 1,
+              item.jenis_pekerjaan,
+              item.vol_rab,
+              item.satuan,
+              item.volume_akhir,
+              `${item.selisih} ${item.satuan}`,
+              formatRupiah(deltaNominal),
+            ];
+          });
+        }
 
         autoTable(doc, {
           head: [
