@@ -824,6 +824,10 @@ export const generateFinalOpnamePDF = async (
     const deltaPPN = totalTambahPPN + totalKurangPPN;
     const totalSetelahPPNOpname = totalSetelahPPNRAB + deltaPPN; // RAB + Tambah + Kurang
 
+    // >>> Tambahkan definisi variabel yang belum ada
+    const grandTotalOpname = totalTambah + totalKurang; // bisa positif/negatif
+    const ppnOpname = grandTotalOpname * 0.11; // 11% PPN opname
+
     const totalOpnameTableBody = [
       ["TOTAL", formatRupiah(grandTotalOpname)],
       ["PPN 11%", formatRupiah(ppnOpname)],
@@ -906,6 +910,11 @@ export const generateFinalOpnamePDF = async (
       ],
     ];
 
+    // >>> Tambahkan variabel lebar tabel
+    const usableWidth = pageWidth - margin * 2;
+    const leftColWidth = Math.floor(usableWidth * 0.58); // kolom label
+    const rightColWidth = usableWidth - leftColWidth; // kolom nilai
+    
     autoTable(doc, {
       body: statusTableBody,
       startY: lastY,
