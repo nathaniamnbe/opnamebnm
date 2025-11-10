@@ -606,11 +606,7 @@ export const generateFinalOpnamePDF = async (
       "Total Harga Akhir",
     ];
 
-    // 🔹 Pisahkan lebih dulu jadi PEKERJAAN TAMBAH & KURANG
-    // pisahkan berdasarkan SELISIH (baru)
-    // > 0  → PEKERJAAN TAMBAH
-    // < 0  → PEKERJAAN KURANG
-    // = 0  → di-skip (netral). Jika mau dimasukkan ke salah satu grup, tinggal ubah kondisinya.
+
     const groupsByType = {
       "PEKERJAAN TAMBAH": [],
       "PEKERJAAN KURANG": [],
