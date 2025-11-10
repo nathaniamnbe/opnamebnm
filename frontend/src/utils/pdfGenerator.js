@@ -661,15 +661,22 @@ export const generateFinalOpnamePDF = async (
 
         kategoriIndex++;
 
-        const rows = items.map((item, idx) => [
-          idx + 1,
-          item.jenis_pekerjaan,
-          item.vol_rab,
-          item.satuan,
-          item.volume_akhir,
-          `${item.selisih} ${item.satuan}`,
-          formatRupiah(item.total_harga_akhir),
-        ]);
+const rows = items.map((item, idx) => {
+  const sel = toNumberVol(item.selisih); // bisa negatif/positif
+  const hMat = toNumberID(item.harga_material);
+  const hUpah = toNumberID(item.harga_upah);
+  const deltaNominal = sel * (hMat + hUpah); // nilai rupiah dari SELISIH
+
+  return [
+    idx + 1,
+    item.jenis_pekerjaan,
+    item.vol_rab,
+    item.satuan,
+    item.volume_akhir,
+    `${item.selisih} ${item.satuan}`,
+    formatRupiah(deltaNominal), // ← tampilkan NILAI SELISIH saja
+  ];
+});
 
         autoTable(doc, {
           head: [
@@ -680,7 +687,7 @@ export const generateFinalOpnamePDF = async (
               "SATUAN",
               "VOLUME AKHIR",
               "SELISIH",
-              "TOTAL HARGA AKHIR (Rp)",
+              "NILAI SELISIH (Rp)",
             ],
           ],
           body: rows,
@@ -735,9 +742,16 @@ export const generateFinalOpnamePDF = async (
       }
 
       // ✅ Total per BLOK (TAMBAH/KURANG) — HARUS di dalam loop ini
-      const totalPerBlock = Object.values(categories)
-        .flat()
-        .reduce((sum, item) => sum + toNumberID(item.total_harga_akhir), 0);
+const totalPerBlock = Object.values(categories)
+  .flat()
+  .reduce((sum, item) => {
+    const sel = toNumberVol(item.selisih);
+    const hMat = toNumberID(item.harga_material);
+    const hUpah = toNumberID(item.harga_upah);
+    const deltaNominal = sel * (hMat + hUpah);
+    return sum + deltaNominal;
+  }, 0);
+
 
       autoTable(doc, {
         body: [
@@ -777,10 +791,14 @@ export const generateFinalOpnamePDF = async (
       lastY = margin + 10;
     }
 
-    let grandTotalOpname = 0;
-    submissions.forEach((item) => {
-      grandTotalOpname += toNumberID(item.total_harga_akhir);
-    });
+let grandTotalOpname = 0;
+submissions.forEach((item) => {
+  const sel = toNumberVol(item.selisih);
+  const hMat = toNumberID(item.harga_material);
+  const hUpah = toNumberID(item.harga_upah);
+  grandTotalOpname += sel * (hMat + hUpah);
+});
+
 
     const ppnOpname = grandTotalOpname * 0.11;
     const totalSetelahPPNOpname = grandTotalOpname + ppnOpname;
