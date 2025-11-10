@@ -807,11 +807,7 @@ export const generateFinalOpnamePDF = async (
     const grandTotalOpname = totalTambah + totalKurang; // bisa positif/negatif
     const ppnOpname = grandTotalOpname * 0.11; // 11% PPN opname
 
-    const totalOpnameTableBody = [
-      ["TOTAL", formatRupiah(grandTotalOpname)],
-      ["PPN 11%", formatRupiah(ppnOpname)],
-      ["GRAND TOTAL", formatRupiah(totalSetelahPPNOpname)],
-    ];
+
 
 
 
