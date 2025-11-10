@@ -549,35 +549,9 @@ export const generateFinalOpnamePDF = async (
   const ppnRAB = grandTotalRAB * 0.11;
   const totalSetelahPPNRAB = grandTotalRAB + ppnRAB;
 
-  const totalTableBody = [
-    ["TOTAL", formatRupiah(grandTotalRAB)],
-    ["PPN 11%", formatRupiah(ppnRAB)],
-    ["GRAND TOTAL", formatRupiah(totalSetelahPPNRAB)],
-  ];
 
-  autoTable(doc, {
-    body: totalTableBody,
-    startY: lastY,
-    margin: { left: pageWidth - 90, right: margin },
-    tableWidth: 80,
-    theme: "grid",
-    styles: {
-      fontSize: 9,
-      fontStyle: "bold",
-      halign: "right",
-      cellPadding: 2,
-    },
-    columnStyles: {
-      0: { halign: "left", cellWidth: 30 },
-      1: { halign: "right", cellWidth: 50 },
-    },
-    didParseCell: function (data) {
-      if (data.row.index === 2) {
-        data.cell.styles.fillColor = [173, 216, 230];
-        data.cell.styles.textColor = [0, 0, 0];
-      }
-    },
-  });
+
+
 
   lastY = (doc.lastAutoTable?.finalY ?? lastY) + 15;
 
@@ -752,6 +726,7 @@ export const generateFinalOpnamePDF = async (
       }
 
       // ✅ Total per BLOK (TAMBAH/KURANG) — HARUS di dalam loop ini
+      // ✅ Total per BLOK (TAMBAH/KURANG) — HARUS di dalam loop ini
       const totalPerBlock = Object.values(categories)
         .flat()
         .filter((item) => toNumberVol(item.selisih) !== 0)
@@ -762,35 +737,37 @@ export const generateFinalOpnamePDF = async (
           return sum + sel * (hMat + hUpah);
         }, 0);
 
-      autoTable(doc, {
-        body: [
-          ["TOTAL " + sectionName, formatRupiah(totalPerBlock)],
-          ["PPN 11%", formatRupiah(totalPerBlock * 0.11)],
-          ["GRAND TOTAL " + sectionName, formatRupiah(totalPerBlock * 1.11)],
-        ],
-        startY: lastY,
-        margin: { left: pageWidth - 90, right: margin },
-        tableWidth: 80,
-        theme: "grid",
-        styles: {
-          fontSize: 8,
-          fontStyle: "bold",
-          halign: "right",
-          cellPadding: 2,
-        },
-        columnStyles: {
-          0: { halign: "left", cellWidth: 30 },
-          1: { halign: "right", cellWidth: 50 },
-        },
-        didParseCell(data) {
-          if (data.row.index === 2) {
-            data.cell.styles.fillColor = [173, 216, 230]; // biru muda seperti RAB
-            data.cell.styles.textColor = [0, 0, 0];
-          }
-        },
-      });
-
-      lastY = (doc.lastAutoTable?.finalY ?? lastY) + 15;
+      // TAMPILKAN total bawah HANYA untuk PEKERJAAN TAMBAH
+      if (sectionName === "PEKERJAAN TAMBAH") {
+        autoTable(doc, {
+          body: [
+            ["TOTAL " + sectionName, formatRupiah(totalPerBlock)],
+            ["PPN 11%", formatRupiah(totalPerBlock * 0.11)],
+            ["GRAND TOTAL " + sectionName, formatRupiah(totalPerBlock * 1.11)],
+          ],
+          startY: lastY,
+          margin: { left: pageWidth - 90, right: margin },
+          tableWidth: 80,
+          theme: "grid",
+          styles: {
+            fontSize: 8,
+            fontStyle: "bold",
+            halign: "right",
+            cellPadding: 2,
+          },
+          columnStyles: {
+            0: { halign: "left", cellWidth: 30 },
+            1: { halign: "right", cellWidth: 50 },
+          },
+          didParseCell(data) {
+            if (data.row.index === 2) {
+              data.cell.styles.fillColor = [173, 216, 230];
+              data.cell.styles.textColor = [0, 0, 0];
+            }
+          },
+        });
+        lastY = (doc.lastAutoTable?.finalY ?? lastY) + 15;
+      }
     }
 
     // GRAND TOTAL untuk Opname
@@ -914,7 +891,7 @@ export const generateFinalOpnamePDF = async (
     const usableWidth = pageWidth - margin * 2;
     const leftColWidth = Math.floor(usableWidth * 0.58); // kolom label
     const rightColWidth = usableWidth - leftColWidth; // kolom nilai
-    
+
     autoTable(doc, {
       body: statusTableBody,
       startY: lastY,
