@@ -84,7 +84,7 @@ export const AuthProvider = ({ children }) => {
         now.toLocaleString("en-US", { timeZone: "Asia/Jakarta" })
       );
       const hour = wibTime.getHours();
-      if (hour < 6 || hour >= 18) {
+      if (hour < 6 || hour >= 24) {
         const currentTime = wibTime.toLocaleTimeString("id-ID", {
           hour: "2-digit",
           minute: "2-digit",
