@@ -47,19 +47,19 @@ const OpnameForm = ({ onBack, selectedStore }) => {
     if (selectedStore?.kode_toko) {
       setLoading(true);
       // Fetch daftar no_ulok untuk kode_toko ini
-       fetch(`${API_BASE_URL}/api/uloks?kode_toko=${selectedStore.kode_toko}`)
-         .then((res) => res.json())
-         .then((data) => {
-           setUloks(data);
-           if (data.length === 1) {
-             setSelectedUlok(data[0]);
-           }
-           setLoading(false);
-         })
-         .catch((err) => {
-           console.error("Gagal mengambil daftar no_ulok:", err);
-           setLoading(false);
-         });
+      fetch(`${API_BASE_URL}/api/uloks?kode_toko=${selectedStore.kode_toko}`)
+        .then((res) => res.json())
+        .then((data) => {
+          setUloks(data);
+          if (data.length === 1) {
+            setSelectedUlok(data[0]);
+          }
+          setLoading(false);
+        })
+        .catch((err) => {
+          console.error("Gagal mengambil daftar no_ulok:", err);
+          setLoading(false);
+        });
     }
   }, [selectedStore]);
 
@@ -69,14 +69,17 @@ const OpnameForm = ({ onBack, selectedStore }) => {
       setLoading(true);
 
       const base =
-       `${API_BASE_URL}/api/opname?kode_toko=${encodeURIComponent(selectedStore.kode_toko)}` +
-        `&no_ulok=${encodeURIComponent(selectedUlok)}`;
+        `${API_BASE_URL}/api/opname?kode_toko=${encodeURIComponent(
+          selectedStore.kode_toko
+        )}` + `&no_ulok=${encodeURIComponent(selectedUlok)}`;
 
       // normalisasi lingkup jika ada
       const lk = String(selectedLingkup || "")
         .trim()
         .toUpperCase();
-const withLingkup = lk ? base + `&lingkup=${encodeURIComponent(lk)}` : null;
+      const withLingkup = lk
+        ? base + `&lingkup=${encodeURIComponent(lk)}`
+        : null;
 
       const mapItems = (data, lkUsed) => {
         const items = (data || []).map((task, index) => {
@@ -163,32 +166,92 @@ const withLingkup = lk ? base + `&lingkup=${encodeURIComponent(lk)}` : null;
     }
   }, [selectedStore, selectedUlok, selectedLingkup, user]);
 
-  
-
   const handleVolumeAkhirChange = (id, value) => {
     setOpnameItems((prevItems) =>
       prevItems.map((item) => {
-        if (item.id === id && !item.isSubmitted) {
-          // PERBAIKAN: Gunakan volume akhir yang diinput user (bisa negatif)
+        // ⬅️ Untuk baris RAB saja, pekerjaan manual pakai handler khusus
+        if (item.id === id && !item.isSubmitted && !item.isManual) {
           const volAkhir = toNumInput(value);
           const volRab = toNumInput(item.vol_rab);
           const selisih = volAkhir - volRab;
-          const hargaMaterial = Number(item.harga_material) || 0; // sudah numeric dari C
-          const hargaUpah = Number(item.harga_upah) || 0; // sudah numeric dari C
+          const hargaMaterial = Number(item.harga_material) || 0;
+          const hargaUpah = Number(item.harga_upah) || 0;
 
-          // PERBAIKAN: Total harga menggunakan volume akhir (bisa negatif)
           const total_harga = volAkhir * (hargaMaterial + hargaUpah);
 
           return {
             ...item,
             volume_akhir: value,
             selisih: selisih.toFixed(2),
-            total_harga: total_harga, // Ini bisa jadi negatif jika volume_akhir negatif
+            total_harga,
           };
         }
         return item;
       })
     );
+  };
+
+  // ⬇️ Handler khusus untuk mengubah field pekerjaan manual
+  const handleManualFieldChange = (id, field, value) => {
+    setOpnameItems((prevItems) =>
+      prevItems.map((item) => {
+        if (item.id !== id || !item.isManual || item.isSubmitted) return item;
+
+        const updated = { ...item, [field]: value };
+
+        const volRabNum = toNumInput(updated.vol_rab);
+        const volAkhirNum = toNumInput(updated.volume_akhir);
+        const hargaMaterialNum = toNumInput(updated.harga_material);
+        const hargaUpahNum = toNumInput(updated.harga_upah);
+
+        const selisih = volAkhirNum - volRabNum;
+        const total_harga = volAkhirNum * (hargaMaterialNum + hargaUpahNum);
+
+        return {
+          ...updated,
+          selisih:
+            Number.isFinite(selisih) && !Number.isNaN(selisih)
+              ? selisih.toFixed(2)
+              : "",
+          total_harga:
+            Number.isFinite(total_harga) && !Number.isNaN(total_harga)
+              ? total_harga
+              : 0,
+        };
+      })
+    );
+  };
+
+  // ⬇️ Tombol "Tambah Pekerjaan Manual"
+  const handleAddManualItem = () => {
+    setOpnameItems((prev) => {
+      const maxId = prev.reduce(
+        (max, item) => (item.id && item.id > max ? item.id : max),
+        0
+      );
+
+      const newItem = {
+        id: maxId + 1,
+        isManual: true,
+        isManualDraft: true,
+        kategori_pekerjaan: "",
+        lingkup_pekerjaan: selectedLingkup || null,
+        jenis_pekerjaan: "",
+        vol_rab: "",
+        satuan: "",
+        harga_material: 0,
+        harga_upah: 0,
+        volume_akhir: "",
+        selisih: "",
+        total_harga: 0,
+        foto_url: null,
+        catatan: "",
+        isSubmitted: false,
+        approval_status: "Not Submitted",
+      };
+
+      return [...prev, newItem];
+    });
   };
 
   const handleFileUpload = async (itemId, file) => {
@@ -226,6 +289,8 @@ const withLingkup = lk ? base + `&lingkup=${encodeURIComponent(lk)}` : null;
 
   const handleItemSubmit = async (itemId) => {
     const itemToSubmit = opnameItems.find((item) => item.id === itemId);
+    if (!itemToSubmit) return;
+
     if (
       itemToSubmit.volume_akhir === "" ||
       itemToSubmit.volume_akhir === null ||
@@ -235,13 +300,30 @@ const withLingkup = lk ? base + `&lingkup=${encodeURIComponent(lk)}` : null;
       return;
     }
 
+    // 🔹 Validasi ekstra khusus pekerjaan manual
+    if (itemToSubmit.isManual) {
+      const requiredFields = [
+        ["kategori_pekerjaan", "Kategori pekerjaan harus diisi."],
+        ["jenis_pekerjaan", "Jenis pekerjaan harus diisi."],
+        ["vol_rab", "Vol RAB harus diisi."],
+        ["satuan", "Satuan harus diisi."],
+      ];
+
+      for (const [field, message] of requiredFields) {
+        const val = itemToSubmit[field];
+        if (val === "" || val === null || val === undefined) {
+          alert(message);
+          return;
+        }
+      }
+    }
+
     setOpnameItems((prev) =>
       prev.map((item) =>
         item.id === itemId ? { ...item, isSubmitting: true } : item
       )
     );
 
-    // PERBAIKAN: Pastikan data yang dikirim mencerminkan nilai sebenarnya
     const submissionData = {
       kode_toko: selectedStore.kode_toko,
       nama_toko: selectedStore.nama_toko,
@@ -251,12 +333,12 @@ const withLingkup = lk ? base + `&lingkup=${encodeURIComponent(lk)}` : null;
       jenis_pekerjaan: itemToSubmit.jenis_pekerjaan,
       vol_rab: itemToSubmit.vol_rab,
       satuan: itemToSubmit.satuan,
-      volume_akhir: itemToSubmit.volume_akhir, // Bisa negatif
-      selisih: itemToSubmit.selisih, // Bisa negatif
+      volume_akhir: itemToSubmit.volume_akhir,
+      selisih: itemToSubmit.selisih,
       foto_url: itemToSubmit.foto_url,
       harga_material: itemToSubmit.harga_material,
       harga_upah: itemToSubmit.harga_upah,
-      total_harga_akhir: itemToSubmit.total_harga, // Bisa negatif
+      total_harga_akhir: itemToSubmit.total_harga,
       lingkup_pekerjaan: itemToSubmit.lingkup_pekerjaan || selectedLingkup,
       rab_key: itemToSubmit.rab_key || "",
     };
@@ -278,6 +360,8 @@ const withLingkup = lk ? base + `&lingkup=${encodeURIComponent(lk)}` : null;
                 ...item,
                 isSubmitting: false,
                 isSubmitted: true,
+                isManual: item.isManual || itemToSubmit.isManual || false,
+                isManualDraft: false,
                 approval_status: "Pending",
                 submissionTime: result.tanggal_submit,
                 item_id: result.item_id,
@@ -402,6 +486,24 @@ const withLingkup = lk ? base + `&lingkup=${encodeURIComponent(lk)}` : null;
         <h3 style={{ color: "var(--alfamart-red)", marginBottom: "16px" }}>
           Detail Pekerjaan (No. ULOK: {selectedUlok})
         </h3>
+
+        {/* Tombol tambah baris manual */}
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "flex-end",
+            marginBottom: "12px",
+          }}
+        >
+          <button
+            type="button"
+            className="btn btn-outline btn-sm"
+            onClick={handleAddManualItem}
+          >
+            + Tambah Pekerjaan Manual
+          </button>
+        </div>
+
         <div style={{ overflowX: "auto", marginBottom: "20px" }}>
           <table
             style={{
@@ -504,20 +606,140 @@ const withLingkup = lk ? base + `&lingkup=${encodeURIComponent(lk)}` : null;
                     borderBottom: "1px solid #ddd",
                   }}
                 >
-                  <td style={{ padding: "12px" }}>{item.kategori_pekerjaan}</td>
-                  <td style={{ padding: "12px" }}>{item.jenis_pekerjaan}</td>
+                  {/* Kategori */}
+                  <td style={{ padding: "12px" }}>
+                    {item.isManual && !item.isSubmitted ? (
+                      <input
+                        type="text"
+                        className="form-input"
+                        value={item.kategori_pekerjaan}
+                        onChange={(e) =>
+                          handleManualFieldChange(
+                            item.id,
+                            "kategori_pekerjaan",
+                            e.target.value
+                          )
+                        }
+                        placeholder="Kategori"
+                      />
+                    ) : (
+                      item.kategori_pekerjaan
+                    )}
+                  </td>
+
+                  {/* Jenis Pekerjaan */}
+                  <td style={{ padding: "12px" }}>
+                    {item.isManual && !item.isSubmitted ? (
+                      <input
+                        type="text"
+                        className="form-input"
+                        value={item.jenis_pekerjaan}
+                        onChange={(e) =>
+                          handleManualFieldChange(
+                            item.id,
+                            "jenis_pekerjaan",
+                            e.target.value
+                          )
+                        }
+                        placeholder="Jenis pekerjaan"
+                      />
+                    ) : (
+                      item.jenis_pekerjaan
+                    )}
+                  </td>
+
+                  {/* Vol RAB */}
                   <td style={{ padding: "12px", textAlign: "center" }}>
-                    {item.vol_rab}
+                    {item.isManual && !item.isSubmitted ? (
+                      <input
+                        type="number"
+                        className="form-input"
+                        style={{ width: "90px" }}
+                        value={item.vol_rab}
+                        onChange={(e) =>
+                          handleManualFieldChange(
+                            item.id,
+                            "vol_rab",
+                            e.target.value
+                          )
+                        }
+                        placeholder="0"
+                        step="any"
+                      />
+                    ) : (
+                      item.vol_rab
+                    )}
                   </td>
+
+                  {/* Satuan */}
                   <td style={{ padding: "12px", textAlign: "center" }}>
-                    {item.satuan}
+                    {item.isManual && !item.isSubmitted ? (
+                      <input
+                        type="text"
+                        className="form-input"
+                        style={{ width: "80px" }}
+                        value={item.satuan}
+                        onChange={(e) =>
+                          handleManualFieldChange(
+                            item.id,
+                            "satuan",
+                            e.target.value
+                          )
+                        }
+                        placeholder="Sat"
+                      />
+                    ) : (
+                      item.satuan
+                    )}
                   </td>
+
+                  {/* Harga Material */}
                   <td style={{ padding: "12px", textAlign: "right" }}>
-                    {formatRupiah(item.harga_material)}
+                    {item.isManual && !item.isSubmitted ? (
+                      <input
+                        type="number"
+                        className="form-input"
+                        style={{ width: "130px", textAlign: "right" }}
+                        value={item.harga_material}
+                        onChange={(e) =>
+                          handleManualFieldChange(
+                            item.id,
+                            "harga_material",
+                            e.target.value
+                          )
+                        }
+                        placeholder="0"
+                        step="any"
+                      />
+                    ) : (
+                      formatRupiah(item.harga_material)
+                    )}
                   </td>
+
+                  {/* Harga Upah */}
                   <td style={{ padding: "12px", textAlign: "right" }}>
-                    {formatRupiah(item.harga_upah)}
+                    {item.isManual && !item.isSubmitted ? (
+                      <input
+                        type="number"
+                        className="form-input"
+                        style={{ width: "130px", textAlign: "right" }}
+                        value={item.harga_upah}
+                        onChange={(e) =>
+                          handleManualFieldChange(
+                            item.id,
+                            "harga_upah",
+                            e.target.value
+                          )
+                        }
+                        placeholder="0"
+                        step="any"
+                      />
+                    ) : (
+                      formatRupiah(item.harga_upah)
+                    )}
                   </td>
+
+                  {/* Volume Akhir */}
                   <td style={{ padding: "8px", textAlign: "center" }}>
                     <input
                       type="number"
@@ -525,14 +747,20 @@ const withLingkup = lk ? base + `&lingkup=${encodeURIComponent(lk)}` : null;
                       style={{ width: "100px" }}
                       value={item.volume_akhir}
                       onChange={(e) =>
-                        handleVolumeAkhirChange(item.id, e.target.value)
+                        item.isManual && !item.isSubmitted
+                          ? handleManualFieldChange(
+                              item.id,
+                              "volume_akhir",
+                              e.target.value
+                            )
+                          : handleVolumeAkhirChange(item.id, e.target.value)
                       }
                       placeholder="0"
                       disabled={item.isSubmitted}
-                      // PERBAIKAN: Izinkan input angka negatif
                       step="any"
                     />
                   </td>
+
                   <td style={{ padding: "12px", textAlign: "center" }}>
                     {(() => {
                       // Tampilkan selisih HANYA jika item sudah tersimpan
