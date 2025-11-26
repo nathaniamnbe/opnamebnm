@@ -1,7 +1,6 @@
 "use client";
 import { useAuth } from "../context/AuthContext";
 import alfaLogo from "../images/Alfamart-Emblem.png";
-import buildingLogo from "../public/Building-Logo.png";
 
 const Header = () => {
   const { user, logout } = useAuth();
@@ -119,7 +118,7 @@ const Header = () => {
             <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
               <img src={alfaLogo} alt="Alfamart" className="alfamart-logo" />
               <img
-                src={buildingLogo}
+                src="/Building-Logo.png"
                 alt="Building & Maintenance"
                 className="building-logo"
               />
@@ -175,7 +174,7 @@ const Header = () => {
             >
               <img src={alfaLogo} alt="Alfamart" className="alfamart-logo" />
               <img
-                src={buildingLogo}
+                src="/Building-Logo.png"
                 alt="Building & Maintenance"
                 className="building-logo"
                 style={{ height: "38px" }}
