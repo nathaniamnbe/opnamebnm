@@ -709,53 +709,63 @@ app.get("/api/opname", async (req, res) => {
     };
 
     // BENTUK LIST TASK DARI RAB (TIDAK DIDE-DUP)
-    const tasks = rabRows
-      .filter(
-        (row) =>
-          norm(row.get("kode_toko")) === norm(kode_toko) &&
-          norm(row.get("no_ulok")) === norm(no_ulok) &&
-          (!qLing || norm(row.get("lingkup_pekerjaan")) === qLing)
-      )
-      .map((row) => {
-        const jenis_pekerjaan = row.get("jenis_pekerjaan");
-        const lingkup_pekerjaan = row.get("lingkup_pekerjaan") || "";
-        const satuan = row.get("satuan");
-        const harga_material = row.get("harga_material") || 0;
-        const harga_upah = row.get("harga_upah") || 0;
-        const rab_key_raw = row.get("rab_key") || "";
-        const rab_key = rab_key_raw || makeRabKey(row);
+const tasks = rabRows
+  .filter(
+    (row) =>
+      norm(row.get("kode_toko")) === norm(kode_toko) &&
+      norm(row.get("no_ulok")) === norm(no_ulok) &&
+      (!qLing || norm(row.get("lingkup_pekerjaan")) === qLing)
+  )
+  .map((row) => {
+    const jenis_pekerjaan = row.get("jenis_pekerjaan");
+    const lingkup_pekerjaan = row.get("lingkup_pekerjaan") || "";
+    const satuan = row.get("satuan");
+    const harga_material = row.get("harga_material") || 0;
+    const harga_upah = row.get("harga_upah") || 0;
+    const rab_key_raw = row.get("rab_key") || "";
+    const rab_key = rab_key_raw || makeRabKey(row);
 
-        const matched = takeMatch(
-          submittedList,
-          jenis_pekerjaan,
-          lingkup_pekerjaan,
-          satuan,
-          harga_material,
-          harga_upah,
-          rab_key
-        );
+    // --- TAMBAHAN BARU: BACA KOLOM IL ---
+    const valIL = (row.get("IL") || "").toString().trim().toLowerCase();
+    const is_il = valIL === "ya";
+    // ------------------------------------
 
-        return {
-          kategori_pekerjaan: row.get("kategori_pekerjaan"),
-          lingkup_pekerjaan,
-          jenis_pekerjaan,
-          vol_rab: row.get("vol_rab"),
-          satuan,
-          harga_material,
-          harga_upah,
-          rab_key,
-          item_id: matched?.item_id || null,
-          volume_akhir: matched?.vol_akhir || "",
-          selisih: matched?.selisih || "",
-          isSubmitted: !!matched,
-          approval_status: matched?.approval_status || "Not Submitted",
-          submissionTime: matched?.tanggal_submit || null,
-          foto_url: matched?.foto_url || null,
-          catatan: matched?.catatan || "", // ⬅️ penting
-        };
-      });
+    const matched = takeMatch(
+      submittedList,
+      jenis_pekerjaan,
+      lingkup_pekerjaan,
+      satuan,
+      harga_material,
+      harga_upah,
+      rab_key
+    );
 
-    return res.status(200).json(tasks);
+    return {
+      kategori_pekerjaan: row.get("kategori_pekerjaan"),
+      lingkup_pekerjaan,
+      jenis_pekerjaan,
+      vol_rab: row.get("vol_rab"),
+      satuan,
+      harga_material,
+      harga_upah,
+      rab_key,
+
+      // --- KIRYM STATUS IL KE FRONTEND ---
+      is_il: is_il,
+      // -----------------------------------
+
+      item_id: matched?.item_id || null,
+      volume_akhir: matched?.vol_akhir || "",
+      selisih: matched?.selisih || "",
+      isSubmitted: !!matched,
+      approval_status: matched?.approval_status || "Not Submitted",
+      submissionTime: matched?.tanggal_submit || null,
+      foto_url: matched?.foto_url || null,
+      catatan: matched?.catatan || "",
+    };
+  });
+
+return res.status(200).json(tasks);
   } catch (error) {
     console.error("Error di /api/opname:", error);
     return res.status(500).json({ message: "Terjadi kesalahan pada server." });

@@ -97,7 +97,7 @@ const withLingkup = lk ? base + `&lingkup=${encodeURIComponent(lk)}` : null;
             ...task,
             id: index + 1,
             rab_key: task.rab_key || "",
-
+            is_il: task.is_il,
             // simpan lingkup agar bisa ikut dikirim saat submit
             lingkup_pekerjaan: task.lingkup_pekerjaan || lkUsed || null,
 
@@ -495,11 +495,19 @@ const withLingkup = lk ? base + `&lingkup=${encodeURIComponent(lk)}` : null;
                       const ST = String(
                         item.approval_status || ""
                       ).toUpperCase();
-                      return ST === "REJECTED"
-                        ? "#ffe5e5"
-                        : item.isSubmitted
-                        ? "#f0fff0"
-                        : "transparent";
+
+                      // 1. Prioritas Tertinggi: REJECTED (Merah)
+                      if (ST === "REJECTED") return "#ffe5e5";
+
+                      // 2. Prioritas Kedua: INTRUKSI LAPANGAN (Kuning)
+                      // Jika data IL="ya", beri warna kuning (meskipun sudah submitted/pending)
+                      if (item.is_il) return "#fff9c4"; // Kuning muda agar tulisan tetap terbaca
+
+                      // 3. Prioritas Ketiga: SUDAH SUBMIT (Hijau Muda)
+                      if (item.isSubmitted) return "#f0fff0";
+
+                      // 4. Default
+                      return "transparent";
                     })(),
                     borderBottom: "1px solid #ddd",
                   }}
