@@ -705,16 +705,18 @@ const withLingkup = lk ? base + `&lingkup=${encodeURIComponent(lk)}` : null;
           </table>
         </div>
         {/* --- BUTTON INTRUKSI LAPANGAN (BARU) --- */}
+        {/* --- BUTTON INTRUKSI LAPANGAN --- */}
         <div style={{ marginTop: "20px", marginBottom: "0px" }}>
           <a
             href="https://instruksi-lapangan.vercel.app/"
             target="_blank"
             rel="noopener noreferrer"
-            className="btn btn-warning"
+            className="btn"
             style={{
               width: "100%",
+              backgroundColor: "#FFC107", // ✅ Ini membuat background jadi KUNING
               fontWeight: "bold",
-              color: "#000",
+              color: "#000", // Teks hitam agar kontras dengan kuning
               textDecoration: "none",
               display: "block",
               textAlign: "center",
