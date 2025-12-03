@@ -815,6 +815,7 @@ app.get("/api/lingkups", async (req, res) => {
 // --- ENDPOINT SUBMIT OPNAME (FULL, TANPA MENGURANGI FIELD LAMA) ---
 // --- ENDPOINT SUBMIT OPNAME (LOGIKA PERBAIKAN: UPDATE JIKA ADA, ADD JIKA BARU) ---
 // --- ENDPOINT SUBMIT OPNAME (LOGIKA PERBAIKAN: UPDATE JIKA ADA, ADD JIKA BARU) ---
+// --- ENDPOINT SUBMIT OPNAME (UPDATE JIKA ADA, ADD JIKA BARU) ---
 app.post("/api/opname/item/submit", async (req, res) => {
   try {
     const itemData = req.body;
@@ -841,19 +842,22 @@ app.post("/api/opname/item/submit", async (req, res) => {
       return res.status(500).json({ message: "Sheet 'opname_final' tidak ditemukan." });
     }
     
-    // Load nama PIC untuk disimpan juga
+    // Load nama PIC
     const picName = await getPicNameByUsername(itemData.pic_username);
 
-    // 3. Pastikan Header Lengkap (TAMBAHKAN "IL" DISINI)
+    // 3. Pastikan Header Lengkap (Pastikan "nama_toko" ada di sini)
     await finalSheet.loadHeaderRow();
     const headers = new Set(finalSheet.headerValues || []);
     [
-      "submission_id", "kode_toko", "nama_toko", "no_ulok", "pic_username",
+      "submission_id", 
+      "kode_toko", 
+      "nama_toko", // <--- PENTING: Kolom nama_toko harus didaftarkan di header
+      "no_ulok", 
+      "pic_username",
       "tanggal_submit", "kategori_pekerjaan", "jenis_pekerjaan", "vol_rab",
       "satuan", "volume_akhir", "selisih", "harga_material", "harga_upah",
       "total_harga_akhir", "approval_status", "item_id", "foto_url",
-      "lingkup_pekerjaan", "rab_key", "catatan", "name", 
-      "IL" // <--- Pastikan kolom IL ada di header
+      "lingkup_pekerjaan", "rab_key", "catatan", "name", "IL"
     ].forEach((h) => headers.add(h));
     await finalSheet.setHeaderRow([...headers]);
 
@@ -889,18 +893,21 @@ app.post("/api/opname/item/submit", async (req, res) => {
       );
     }
 
-    // Data Baru yang akan disimpan
+    // Data Timestamp & ID
     const timestamp = new Date().toLocaleString("id-ID", { timeZone: "Asia/Jakarta" });
     const submission_id = `SUB-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
-    
     const item_id = existingRow 
         ? existingRow.get("item_id") 
         : `${itemData.kode_toko}-${itemData.no_ulok}-${(itemData.jenis_pekerjaan || "").toString().replace(/[^a-zA-Z0-9]/g, "-")}-${Date.now()}`;
 
+    // DATA ROW (Termasuk nama_toko)
     const rowValues = {
       submission_id: submission_id,
       kode_toko: itemData.kode_toko || "",
-      nama_toko: itemData.nama_toko || "",
+      
+      // ✅ PASTIKAN INI TERISI:
+      nama_toko: itemData.nama_toko || "", 
+      
       no_ulok: itemData.no_ulok || "",
       pic_username: itemData.pic_username || "",
       tanggal_submit: timestamp,
@@ -921,9 +928,6 @@ app.post("/api/opname/item/submit", async (req, res) => {
       lingkup_pekerjaan: itemData.lingkup_pekerjaan || "",
       rab_key: itemData.rab_key || "",
       name: picName || "",
-
-      // === LOGIKA PENYIMPANAN IL ===
-      // Jika is_il bernilai true/truthy, simpan "ya", jika tidak simpan ""
       IL: itemData.is_il ? "ya" : ""
     };
 
@@ -934,7 +938,7 @@ app.post("/api/opname/item/submit", async (req, res) => {
       
       return res.status(200).json({
         success: true,
-        message: `Pekerjaan "${itemData.jenis_pekerjaan}" berhasil diperbarui (Revisi).`,
+        message: `Pekerjaan diperbarui (Revisi).`,
         item_id,
         submission_id,
         tanggal_submit: timestamp,
@@ -946,7 +950,7 @@ app.post("/api/opname/item/submit", async (req, res) => {
       
       return res.status(201).json({
         success: true,
-        message: `Pekerjaan "${itemData.jenis_pekerjaan}" berhasil disimpan.`,
+        message: `Pekerjaan berhasil disimpan.`,
         item_id,
         submission_id,
         tanggal_submit: timestamp,
