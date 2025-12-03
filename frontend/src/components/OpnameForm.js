@@ -704,7 +704,28 @@ const withLingkup = lk ? base + `&lingkup=${encodeURIComponent(lk)}` : null;
             </tbody>
           </table>
         </div>
-
+        {/* --- BUTTON INTRUKSI LAPANGAN (BARU) --- */}
+        <div style={{ marginTop: "20px", marginBottom: "0px" }}>
+          <a
+            href="https://instruksi-lapangan.vercel.app/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn btn-warning"
+            style={{
+              width: "100%",
+              fontWeight: "bold",
+              color: "#000",
+              textDecoration: "none",
+              display: "block",
+              textAlign: "center",
+              padding: "12px",
+              borderRadius: "8px",
+              boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+            }}
+          >
+            INTRUKSI LAPANGAN
+          </a>
+        </div>
         {/* PERBAIKAN: Tambahkan ringkasan total di bawah tabel */}
         <div
           style={{
