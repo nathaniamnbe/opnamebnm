@@ -572,15 +572,66 @@ export const generateFinalOpnamePDF = async (
   });
 
   // GRAND TOTAL untuk RAB
+  // --- SETELAH LOOP KATEGORI RAB SELESAI ---
+  lastY = (doc.lastAutoTable?.finalY ?? lastY) + 5;
+
+  // Cek halaman cukup atau tidak untuk tabel summary
   if (lastY + 40 > pageHeight - 20) {
     addFooter(doc.getNumberOfPages());
     doc.addPage();
     lastY = margin + 10;
   }
 
-  const ppnRAB = grandTotalRAB * 0.11;
-  const totalSetelahPPNRAB = grandTotalRAB + ppnRAB;
+  // --- LOGIKA HITUNGAN BARU (DENGAN PEMBULATAN) ---
+  // 1. Total Real
+  const totalRealRAB = grandTotalRAB;
 
+  // 2. Pembulatan (Ke bawah / Floor ke puluhan ribu terdekat)
+  // Contoh: 21.364.000 -> 21.360.000
+  // Rumus: floor(nilai / 10000) * 10000
+  const totalPembulatanRAB = Math.floor(totalRealRAB / 10000) * 10000;
+
+  // 3. PPN 11% (Dihitung dari nilai Pembulatan)
+  const ppnRAB = totalPembulatanRAB * 0.11;
+
+  // 4. Grand Total (Pembulatan + PPN)
+  const totalSetelahPPNRAB = totalPembulatanRAB + ppnRAB;
+
+  // --- TABEL RINGKASAN RAB ---
+  autoTable(doc, {
+    body: [
+      ["TOTAL", formatRupiah(totalRealRAB)],
+      ["PEMBULATAN", formatRupiah(totalPembulatanRAB)],
+      ["PPN 11%", formatRupiah(ppnRAB)],
+      ["GRAND TOTAL", formatRupiah(totalSetelahPPNRAB)],
+    ],
+    startY: lastY,
+    // Posisikan di sebelah kanan halaman
+    margin: { left: pageWidth - 95, right: margin },
+    tableWidth: 85,
+    theme: "grid",
+    styles: {
+      fontSize: 9,
+      halign: "right", // Teks rata kanan
+      cellPadding: 3,
+      lineColor: [150, 150, 150],
+      lineWidth: 0.1,
+    },
+    columnStyles: {
+      0: { fontStyle: "bold", cellWidth: 35, halign: "left" }, // Label rata kiri
+      1: { cellWidth: 50, halign: "right" }, // Angka rata kanan
+    },
+    didParseCell: (data) => {
+      // Baris GRAND TOTAL (index 3) diwarnai
+      if (data.row.index === 3) {
+        data.cell.styles.fillColor = [255, 245, 157]; // Kuning (sesuai tema IL) atau Biru Muda
+        data.cell.styles.fontStyle = "bold";
+        data.cell.styles.textColor = [0, 0, 0];
+      }
+    },
+  });
+
+  // Update posisi Y terakhir
   lastY = (doc.lastAutoTable?.finalY ?? lastY) + 15;
 
   // --- BAGIAN LAPORAN OPNAME FINAL ---
