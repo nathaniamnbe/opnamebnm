@@ -874,7 +874,7 @@ export const generateFinalOpnamePDF = async (
         didParseCell(data) {
           // Baris GRAND TOTAL (index 3) diwarnai
           if (data.row.index === 3) {
-            data.cell.styles.fillColor = [144, 238, 144]; 
+            data.cell.styles.fillColor = [144, 238, 144];
             data.cell.styles.textColor = [0, 0, 0];
             data.cell.styles.fontStyle = "bold";
           }
@@ -940,6 +940,8 @@ export const generateFinalOpnamePDF = async (
     if (deltaNominal > 0) statusText = "Pekerjaan Tambah";
     if (deltaNominal < 0) statusText = "Pekerjaan Kurang";
 
+    // ... (kode sebelumnya: perhitungan deltaNominal dan statusText) ...
+
     const statusTableBody = [
       [
         {
@@ -954,17 +956,26 @@ export const generateFinalOpnamePDF = async (
           },
         },
       ],
+      // 1. RAB Final
       ["RAB Final (incl. PPN)", formatRupiah(totalSetelahPPNRAB)],
+
+      // 2. Pekerjaan Tambah
       [
         "Pekerjaan Tambah (incl. PPN)",
         `${totalTambahPPN >= 0 ? "" : ""}${formatRupiah(totalTambahPPN)}`,
       ],
-      ["Pekerjaan Kurang (incl. PPN)", formatRupiah(totalKurangPPN)], // nilai negatif
-      ["Opname Final (incl. PPN)", formatRupiah(totalSetelahPPNOpname)], // = RAB + Tambah + Kurang
+
+      // 3. Pekerjaan Kurang
+      ["Pekerjaan Kurang (incl. PPN)", formatRupiah(totalKurangPPN)],
+
+      // 4. Selisih (Posisi Baru: Di atas Opname Final)
       [
-        "Selisih",
-        `${deltaNominal >= 0 ? "+" : ""}${formatRupiah(deltaNominal)}`, // + = Tambah, – = Kurang
+        "Selisih Pekerjaan Tambah dan Kurang",
+        `${deltaNominal >= 0 ? "+" : ""}${formatRupiah(deltaNominal)}`,
       ],
+
+      // 5. Opname Final (Posisi Baru: Paling Bawah)
+      ["Opname Final (incl. PPN)", formatRupiah(totalSetelahPPNOpname)],
     ];
 
     // >>> Tambahkan variabel lebar tabel
@@ -975,29 +986,31 @@ export const generateFinalOpnamePDF = async (
     autoTable(doc, {
       body: statusTableBody,
       startY: lastY,
-      margin: { left: margin, right: margin }, // kiri (bukan kanan)
-      tableWidth: usableWidth, // penuh halaman (ikut margin)
+      margin: { left: margin, right: margin },
+      tableWidth: usableWidth,
       theme: "grid",
       styles: {
-        fontSize: 11, // font lebih besar
+        fontSize: 11,
         halign: "left",
-        cellPadding: 4, // padding lebih lega
+        cellPadding: 4,
       },
       columnStyles: {
         0: { halign: "left", cellWidth: leftColWidth, fontStyle: "bold" },
         1: { halign: "right", cellWidth: rightColWidth },
       },
       didParseCell: function (data) {
-        // Highlight GRAND TOTAL (baris terakhir)
+        // Highlight Baris Terakhir (OPNAME FINAL) dengan warna HIJAU
         if (data.row.index === statusTableBody.length - 1) {
           data.cell.styles.fillColor = [144, 238, 144];
           data.cell.styles.textColor = [0, 0, 0];
           data.cell.styles.fontStyle = "bold";
         }
-        // Tebalkan nilai Selisih agar menonjol
+
+        // Opsional: Tebalkan juga nilai Selisih (baris sebelum terakhir)
         if (
           statusTableBody[data.row.index] &&
-          statusTableBody[data.row.index][0] === "Selisih" &&
+          statusTableBody[data.row.index][0] ===
+            "Selisih Pekerjaan Tambah dan Kurang" &&
           data.column.index === 1
         ) {
           data.cell.styles.fontStyle = "bold";
