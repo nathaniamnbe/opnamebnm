@@ -1106,11 +1106,10 @@ app.get("/api/opname/final", async (req, res) => {
       pic_name: row.get("name") || "",
       kontraktor_username: row.get("kontraktor_username") || "",
       kontraktor_name: row.get("kontraktor") || "",
+      is_il: (row.get("IL") || "").toString().trim().toLowerCase() === "ya",
       display_kontraktor:
-      
         (row.get("kontraktor_username") || "").toString().trim() ||
         (row.get("kontraktor") || "").toString().trim(),
-
     }));
     
 
@@ -1167,6 +1166,7 @@ app.get("/api/rab", async (req, res) => {
       kontraktor_username:
         row.get("kontraktor") || row.get("kontraktor_username") || "",
       lingkup_pekerjaan: row.get("lingkup_pekerjaan") || "",
+      is_il: (row.get("IL") || "").toString().trim().toLowerCase() === "ya",
     }));
 
     res.status(200).json(result);

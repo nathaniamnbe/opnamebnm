@@ -440,101 +440,108 @@ export const generateFinalOpnamePDF = async (
       formatRupiah(catMaterialTotal + catUpahTotal), // kolom total harga
     ]);
 
-    autoTable(doc, {
-      head: [
-        [
-          "NO.",
-          "JENIS PEKERJAAN",
-          "SATUAN",
-          "VOLUME",
-          {
-            content: "HARGA SATUAN (Rp)",
-            colSpan: 2,
-            styles: { halign: "center" },
-          },
-          {
-            content: "TOTAL HARGA (Rp)",
-            colSpan: 3,
-            styles: { halign: "center" },
-          },
-        ],
-        [
-          "",
-          "",
-          "",
-          "",
-          "Material (b)",
-          "Upah (c)",
-          "Material (d=a*b)",
-          "Upah (e=a*c)",
-          "TOTAL HARGA (Rp)",
-        ],
-      ],
-      body: categoryTableBody,
-      startY: lastY,
-      margin: { left: margin, right: margin },
-      theme: "grid",
-
-      // ▸ dasar tipografi & garis
-      styles: {
-        fontSize: 8,
-        cellPadding: 2.5,
-        lineHeight: 1.05,
-        overflow: "linebreak",
-        lineColor: [120, 120, 120], // abu-abu tegas
-        lineWidth: 0.3,
+autoTable(doc, {
+  head: [
+    [
+      "NO.",
+      "JENIS PEKERJAAN",
+      "SATUAN",
+      "VOLUME",
+      {
+        content: "HARGA SATUAN (Rp)",
+        colSpan: 2,
+        styles: { halign: "center" },
       },
-
-      // ▸ header biru muda, border sedikit lebih tebal
-      headStyles: {
-        fillColor: [205, 234, 242], // biru muda lembut
-        textColor: [0, 0, 0],
-        halign: "center",
-        valign: "middle",
-        fontSize: 8,
-        fontStyle: "bold",
-        lineColor: [100, 100, 100],
-        lineWidth: 0.4,
-        cellPadding: 2,
-        lineHeight: 1.0,
+      {
+        content: "TOTAL HARGA (Rp)",
+        colSpan: 3,
+        styles: { halign: "center" },
       },
+    ],
+    [
+      "",
+      "",
+      "",
+      "",
+      "Material (b)",
+      "Upah (c)",
+      "Material (d=a*b)",
+      "Upah (e=a*c)",
+      "TOTAL HARGA (Rp)",
+    ],
+  ],
+  body: categoryTableBody,
+  startY: lastY,
+  margin: { left: margin, right: margin },
+  theme: "grid",
 
-      // ▸ body selaras & rapi
-      bodyStyles: {
-        fontSize: 8,
-        valign: "middle",
-        lineColor: [120, 120, 120],
-        lineWidth: 0.3,
-      },
+  // ... styles, headStyles, bodyStyles, columnStyles (BIARKAN TETAP ADA) ...
+  styles: {
+    fontSize: 8,
+    cellPadding: 2.5,
+    lineHeight: 1.05,
+    overflow: "linebreak",
+    lineColor: [120, 120, 120],
+    lineWidth: 0.3,
+  },
+  headStyles: {
+    fillColor: [205, 234, 242],
+    textColor: [0, 0, 0],
+    halign: "center",
+    valign: "middle",
+    fontSize: 8,
+    fontStyle: "bold",
+    lineColor: [100, 100, 100],
+    lineWidth: 0.4,
+    cellPadding: 2,
+    lineHeight: 1.0,
+  },
+  bodyStyles: {
+    fontSize: 8,
+    valign: "middle",
+    lineColor: [120, 120, 120],
+    lineWidth: 0.3,
+  },
+  columnStyles: {
+    0: { halign: "center", cellWidth: 8 },
+    1: { cellWidth: 40, minCellWidth: 40 },
+    2: { halign: "center", cellWidth: 18 },
+    3: { halign: "right", cellWidth: 18 },
+    4: { halign: "right", cellWidth: 18 },
+    5: { halign: "right", cellWidth: 18 },
+    6: { halign: "right", cellWidth: 19 },
+    7: { halign: "right", cellWidth: 19 },
+    8: { halign: "right", cellWidth: 22, fontStyle: "bold" },
+  },
 
-      // ▸ lebar kolom
-      columnStyles: {
-        0: { halign: "center", cellWidth: 8 }, // NO.
-        1: { cellWidth: 40, minCellWidth: 40 }, // JENIS PEKERJAAN (sedikit dipersempit)
-        2: { halign: "center", cellWidth: 18 }, // SATUAN (was 12)
-        3: { halign: "right", cellWidth: 18 }, // VOLUME (was 14)
-        4: { halign: "right", cellWidth: 18 }, // Material (b) (was 20)
-        5: { halign: "right", cellWidth: 18 }, // Upah (c)     (was 20)
-        6: { halign: "right", cellWidth: 19 }, // Material (d=a*b) (was 20)
-        7: { halign: "right", cellWidth: 19 }, // Upah (e=a*c)     (was 20)
-        8: { halign: "right", cellWidth: 22, fontStyle: "bold" }, // TOTAL HARGA (kompensasi)
-      },
-
-      // ▸ styling baris SUB TOTAL (abu-abu) + bold angka
-      didParseCell(data) {
-        const isSubtotalRow = data.row.index === data.table.body.length - 1;
-        if (isSubtotalRow) {
-          data.cell.styles.fillColor = [242, 242, 242]; // abu-abu muda
-          data.cell.styles.fontStyle =
-            data.column.index >= 5 ? "bold" : "normal";
+  // ✅ BAGIAN BARU: LOGIKA WARNA KUNING UNTUK RAB
+  didParseCell: (data) => {
+    // 1. Cek baris "IL" (Instruksi Lapangan)
+    if (data.section === "body") {
+      const originalData = rabCategories[categoryName];
+      // Pastikan index valid dan bukan baris subtotal
+      if (data.row.index < originalData.length) {
+        const item = originalData[data.row.index];
+        if (item.is_il) {
+          data.cell.styles.fillColor = [255, 245, 157]; // Kuning
         }
-      },
-      didDrawPage: function (data) {
-        if (data.settings.startY + data.table.height > pageHeight - 20) {
-          addFooter(doc.getNumberOfPages());
-        }
-      },
-    });
+      }
+    }
+
+    // 2. Cek baris Subtotal (Logika Lama)
+    const isSubtotalRow = data.row.index === data.table.body.length - 1;
+    if (isSubtotalRow) {
+      data.cell.styles.fillColor = [242, 242, 242]; // Abu-abu
+      data.cell.styles.fontStyle = data.column.index >= 5 ? "bold" : "normal";
+    }
+  },
+  // ... didDrawPage (BIARKAN TETAP ADA) ...
+  didDrawPage: function (data) {
+    if (data.settings.startY + data.table.height > pageHeight - 20) {
+      addFooter(doc.getNumberOfPages());
+    }
+  },
+});
 
     lastY = (doc.lastAutoTable?.finalY ?? lastY) + 10;
   });
@@ -662,65 +669,76 @@ export const generateFinalOpnamePDF = async (
           ];
         });
 
-        autoTable(doc, {
-          head: [
-            [
-              "NO.",
-              "JENIS PEKERJAAN",
-              "VOL RAB",
-              "SATUAN",
-              "VOLUME AKHIR",
-              "SELISIH",
-              "NILAI SELISIH (Rp)",
-            ],
-          ],
-          body: rows,
-          startY: lastY,
-          margin: { left: margin, right: margin },
-          tableWidth: pageWidth - margin * 2,
-          theme: "grid",
+autoTable(doc, {
+  head: [
+    [
+      "NO.",
+      "JENIS PEKERJAAN",
+      "VOL RAB",
+      "SATUAN",
+      "VOLUME AKHIR",
+      "SELISIH",
+      "NILAI SELISIH (Rp)",
+    ],
+  ],
+  body: rows,
+  startY: lastY,
+  margin: { left: margin, right: margin },
+  tableWidth: pageWidth - margin * 2,
+  theme: "grid",
 
-          // beri ruang secukupnya, tapi tetap kompak
-          styles: {
-            fontSize: 8,
-            cellPadding: 3,
-            lineHeight: 1.1,
-            overflow: "linebreak",
-            lineColor: [120, 120, 120],
-            lineWidth: 0.3,
-          },
-          // header TIDAK membungkus
-          headStyles: {
-            fillColor: [205, 234, 242],
-            textColor: [0, 0, 0],
-            halign: "center",
-            valign: "middle",
-            fontSize: 8.5,
-            fontStyle: "bold",
-            minCellHeight: 9,
-            lineHeight: 1.15, // ← beri ruang agar tidak kepotong
-            overflow: "linebreak", // ← paksa wrap, tidak dipotong
-            cellPadding: 2,
-          },
-          columnStyles: {
-            0: { halign: "center", cellWidth: 12, minCellHeight: 9 }, // ⬅️ lebarin dari 10 → 12
-            1: { cellWidth: 66 },
-            2: { halign: "right", cellWidth: 18 },
-            3: { halign: "center", cellWidth: 18 },
-            4: { halign: "right", cellWidth: 22 },
-            5: { halign: "right", cellWidth: 22 },
-            6: { halign: "right", cellWidth: 30, fontStyle: "bold" },
-          },
+  // ... styles lainnya (BIARKAN TETAP ADA) ...
+  styles: {
+    fontSize: 8,
+    cellPadding: 3,
+    lineHeight: 1.1,
+    overflow: "linebreak",
+    lineColor: [120, 120, 120],
+    lineWidth: 0.3,
+  },
+  headStyles: {
+    fillColor: [205, 234, 242],
+    textColor: [0, 0, 0],
+    halign: "center",
+    valign: "middle",
+    fontSize: 8.5,
+    fontStyle: "bold",
+    minCellHeight: 9,
+    lineHeight: 1.15,
+    overflow: "linebreak",
+    cellPadding: 2,
+  },
+  columnStyles: {
+    0: { halign: "center", cellWidth: 12, minCellHeight: 9 },
+    1: { cellWidth: 66 },
+    2: { halign: "right", cellWidth: 18 },
+    3: { halign: "center", cellWidth: 18 },
+    4: { halign: "right", cellWidth: 22 },
+    5: { halign: "right", cellWidth: 22 },
+    6: { halign: "right", cellWidth: 30, fontStyle: "bold" },
+  },
 
-          // kecilkan font khusus sel header kolom 0 dan paksa tetap 1 baris
-          didParseCell(data) {
-            if (data.section === "head" && data.column.index === 0) {
-              data.cell.styles.fontSize = 8; // ⬅️ sedikit lebih kecil
-              data.cell.styles.overflow = "hidden";
-              data.cell.styles.lineHeight = 1;
-            }
-          },
-        });
+  // ✅ BAGIAN BARU: LOGIKA WARNA KUNING UNTUK OPNAME
+  didParseCell: (data) => {
+    // 1. Cek baris "IL"
+    if (data.section === "body") {
+      // 'rows' dibuat dari 'filteredItems', jadi index-nya sinkron
+      if (data.row.index < filteredItems.length) {
+        const item = filteredItems[data.row.index];
+        if (item.is_il) {
+          data.cell.styles.fillColor = [255, 245, 157]; // Kuning
+        }
+      }
+    }
+
+    // 2. Logika Header Kolom 0 (Logika Lama)
+    if (data.section === "head" && data.column.index === 0) {
+      data.cell.styles.fontSize = 8;
+      data.cell.styles.overflow = "hidden";
+      data.cell.styles.lineHeight = 1;
+    }
+  },
+});
 
         lastY = (doc.lastAutoTable?.finalY ?? lastY) + 10;
       }
