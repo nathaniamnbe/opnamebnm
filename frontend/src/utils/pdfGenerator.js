@@ -624,7 +624,7 @@ export const generateFinalOpnamePDF = async (
     didParseCell: (data) => {
       // Baris GRAND TOTAL (index 3) diwarnai
       if (data.row.index === 3) {
-        data.cell.styles.fillColor = [255, 245, 157]; // Kuning (sesuai tema IL) atau Biru Muda
+        data.cell.styles.fillColor = [144, 238, 144]; 
         data.cell.styles.fontStyle = "bold";
         data.cell.styles.textColor = [0, 0, 0];
       }
@@ -874,8 +874,7 @@ export const generateFinalOpnamePDF = async (
         didParseCell(data) {
           // Baris GRAND TOTAL (index 3) diwarnai
           if (data.row.index === 3) {
-            data.cell.styles.fillColor = [255, 245, 157]; // Kuning (Konsisten dengan tema IL)
-            // Atau gunakan biru muda jika ingin beda: [173, 216, 230]
+            data.cell.styles.fillColor = [144, 238, 144]; 
             data.cell.styles.textColor = [0, 0, 0];
             data.cell.styles.fontStyle = "bold";
           }
@@ -991,7 +990,7 @@ export const generateFinalOpnamePDF = async (
       didParseCell: function (data) {
         // Highlight GRAND TOTAL (baris terakhir)
         if (data.row.index === statusTableBody.length - 1) {
-          data.cell.styles.fillColor = [173, 216, 230];
+          data.cell.styles.fillColor = [144, 238, 144];
           data.cell.styles.textColor = [0, 0, 0];
           data.cell.styles.fontStyle = "bold";
         }
