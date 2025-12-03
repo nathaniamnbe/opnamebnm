@@ -814,6 +814,7 @@ app.get("/api/lingkups", async (req, res) => {
 // --- ENDPOINT SUBMIT OPNAME YANG SUDAH DIPERBAIKI ---
 // --- ENDPOINT SUBMIT OPNAME (FULL, TANPA MENGURANGI FIELD LAMA) ---
 // --- ENDPOINT SUBMIT OPNAME (LOGIKA PERBAIKAN: UPDATE JIKA ADA, ADD JIKA BARU) ---
+// --- ENDPOINT SUBMIT OPNAME (LOGIKA PERBAIKAN: UPDATE JIKA ADA, ADD JIKA BARU) ---
 app.post("/api/opname/item/submit", async (req, res) => {
   try {
     const itemData = req.body;
@@ -843,7 +844,7 @@ app.post("/api/opname/item/submit", async (req, res) => {
     // Load nama PIC untuk disimpan juga
     const picName = await getPicNameByUsername(itemData.pic_username);
 
-    // 3. Pastikan Header Lengkap
+    // 3. Pastikan Header Lengkap (TAMBAHKAN "IL" DISINI)
     await finalSheet.loadHeaderRow();
     const headers = new Set(finalSheet.headerValues || []);
     [
@@ -851,7 +852,8 @@ app.post("/api/opname/item/submit", async (req, res) => {
       "tanggal_submit", "kategori_pekerjaan", "jenis_pekerjaan", "vol_rab",
       "satuan", "volume_akhir", "selisih", "harga_material", "harga_upah",
       "total_harga_akhir", "approval_status", "item_id", "foto_url",
-      "lingkup_pekerjaan", "rab_key", "catatan", "name"
+      "lingkup_pekerjaan", "rab_key", "catatan", "name", 
+      "IL" // <--- Pastikan kolom IL ada di header
     ].forEach((h) => headers.add(h));
     await finalSheet.setHeaderRow([...headers]);
 
@@ -864,7 +866,7 @@ app.post("/api/opname/item/submit", async (req, res) => {
       return Number.isFinite(n) ? n : 0;
     };
 
-    // 4. CARI BARIS LAMA (KUNCI: rab_key + kode_toko + no_ulok)
+    // 4. CARI BARIS LAMA
     let existingRow = null;
 
     if (itemData.rab_key) {
@@ -876,7 +878,7 @@ app.post("/api/opname/item/submit", async (req, res) => {
       );
     }
 
-    // Fallback search (jika data lama belum punya rab_key)
+    // Fallback search
     if (!existingRow) {
       existingRow = rows.find(
         (row) =>
@@ -891,18 +893,17 @@ app.post("/api/opname/item/submit", async (req, res) => {
     const timestamp = new Date().toLocaleString("id-ID", { timeZone: "Asia/Jakarta" });
     const submission_id = `SUB-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
     
-    // Jika update, ID item tetap sama. Jika baru, generate ID item baru.
     const item_id = existingRow 
         ? existingRow.get("item_id") 
         : `${itemData.kode_toko}-${itemData.no_ulok}-${(itemData.jenis_pekerjaan || "").toString().replace(/[^a-zA-Z0-9]/g, "-")}-${Date.now()}`;
 
     const rowValues = {
-      submission_id: submission_id, // ID Submisi baru (tanda ada revisi)
+      submission_id: submission_id,
       kode_toko: itemData.kode_toko || "",
       nama_toko: itemData.nama_toko || "",
       no_ulok: itemData.no_ulok || "",
       pic_username: itemData.pic_username || "",
-      tanggal_submit: timestamp, // Update waktu
+      tanggal_submit: timestamp,
       kategori_pekerjaan: itemData.kategori_pekerjaan || "",
       jenis_pekerjaan: itemData.jenis_pekerjaan || "",
       vol_rab: itemData.vol_rab ?? "",
@@ -913,7 +914,6 @@ app.post("/api/opname/item/submit", async (req, res) => {
       harga_upah: itemData.harga_upah ?? 0,
       total_harga_akhir: itemData.total_harga_akhir ?? 0,
       
-      // === KUNCI UTAMA: STATUS SELALU JADI PENDING SETELAH SIMPAN ===
       approval_status: "Pending", 
       
       item_id: item_id,
@@ -921,12 +921,14 @@ app.post("/api/opname/item/submit", async (req, res) => {
       lingkup_pekerjaan: itemData.lingkup_pekerjaan || "",
       rab_key: itemData.rab_key || "",
       name: picName || "",
+
+      // === LOGIKA PENYIMPANAN IL ===
+      // Jika is_il bernilai true/truthy, simpan "ya", jika tidak simpan ""
+      IL: itemData.is_il ? "ya" : ""
     };
 
-    // 5. EKSEKUSI SIMPAN (UPDATE vs INSERT)
+    // 5. EKSEKUSI SIMPAN
     if (existingRow) {
-      // === UPDATE DATA LAMA ===
-      // Timpa baris yang statusnya "REJECTED" dengan data baru "PENDING"
       existingRow.assign(rowValues);
       await existingRow.save();
       
@@ -940,7 +942,6 @@ app.post("/api/opname/item/submit", async (req, res) => {
       });
 
     } else {
-      // === BUAT DATA BARU ===
       const newRow = await finalSheet.addRow(rowValues);
       
       return res.status(201).json({
@@ -961,7 +962,6 @@ app.post("/api/opname/item/submit", async (req, res) => {
     });
   }
 });
-
 // --- Endpoint untuk Kontraktor ---
 app.get("/api/toko_kontraktor", async (req, res) => {
   try {

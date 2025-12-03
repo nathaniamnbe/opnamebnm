@@ -259,6 +259,7 @@ const withLingkup = lk ? base + `&lingkup=${encodeURIComponent(lk)}` : null;
       total_harga_akhir: itemToSubmit.total_harga, // Bisa negatif
       lingkup_pekerjaan: itemToSubmit.lingkup_pekerjaan || selectedLingkup,
       rab_key: itemToSubmit.rab_key || "",
+      is_il: itemToSubmit.is_il,
     };
 
     console.log("Data yang akan dikirim:", submissionData); // Debug log
