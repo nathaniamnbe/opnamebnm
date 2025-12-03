@@ -803,16 +803,17 @@ app.get("/api/lingkups", async (req, res) => {
 
 // --- ENDPOINT SUBMIT OPNAME YANG SUDAH DIPERBAIKI ---
 // --- ENDPOINT SUBMIT OPNAME (FULL, TANPA MENGURANGI FIELD LAMA) ---
+// --- ENDPOINT SUBMIT OPNAME (LOGIKA PERBAIKAN: UPDATE JIKA ADA, ADD JIKA BARU) ---
 app.post("/api/opname/item/submit", async (req, res) => {
   try {
     const itemData = req.body;
 
-    // Pastikan rab_key ada (kalau belum dikirim FE karena RAB kosong, generate di sini)
+    // 1. Generate rab_key jika belum ada
     if (!itemData.rab_key || String(itemData.rab_key).trim() === "") {
       itemData.rab_key = makeRabKey(itemData);
     }
 
-    // Validasi minimum (tetap sama + pic_username wajib)
+    // 2. Validasi Input
     if (
       !itemData ||
       !itemData.kode_toko ||
@@ -826,101 +827,72 @@ app.post("/api/opname/item/submit", async (req, res) => {
     await doc.loadInfo();
     const finalSheet = doc.sheetsByTitle["opname_final"];
     if (!finalSheet) {
-      return res
-        .status(500)
-        .json({ message: "Sheet 'opname_final' tidak ditemukan." });
+      return res.status(500).json({ message: "Sheet 'opname_final' tidak ditemukan." });
     }
+    
+    // Load nama PIC untuk disimpan juga
     const picName = await getPicNameByUsername(itemData.pic_username);
-    // Pastikan semua header tersedia (TIDAK menghapus yang lama; hanya menambahkan jika belum ada)
+
+    // 3. Pastikan Header Lengkap
     await finalSheet.loadHeaderRow();
     const headers = new Set(finalSheet.headerValues || []);
     [
-      "submission_id",
-      "kode_toko",
-      "nama_toko",
-      "no_ulok",
-      "pic_username",
-      "tanggal_submit",
-      "kategori_pekerjaan",
-      "jenis_pekerjaan",
-      "vol_rab",
-      "satuan",
-      "volume_akhir",
-      "selisih",
-      "harga_material",
-      "harga_upah",
-      "total_harga_akhir",
-      "approval_status",
-      "item_id",
-      "foto_url", // tambahan: simpan link foto
-      "lingkup_pekerjaan", // tambahan: simpan ME/SIPIL bila ada
-      "rab_key",
+      "submission_id", "kode_toko", "nama_toko", "no_ulok", "pic_username",
+      "tanggal_submit", "kategori_pekerjaan", "jenis_pekerjaan", "vol_rab",
+      "satuan", "volume_akhir", "selisih", "harga_material", "harga_upah",
+      "total_harga_akhir", "approval_status", "item_id", "foto_url",
+      "lingkup_pekerjaan", "rab_key", "catatan", "name"
     ].forEach((h) => headers.add(h));
-    headers.add("catatan");
-    headers.add("name");
     await finalSheet.setHeaderRow([...headers]);
 
     const rows = await finalSheet.getRows();
 
-    // Helper konversi angka aman (hilangkan Rp/pemisah ribuan)
+    // Helper konversi angka
     const toNum = (v) => {
       if (v === null || v === undefined) return 0;
       const n = Number(String(v).replace(/[^0-9.\-]/g, ""));
       return Number.isFinite(n) ? n : 0;
     };
 
-    // Cek duplikasi: hanya dianggap duplikat jika SEMUA field identik.
-    // Ini agar "jenis pekerjaan sama" tetap bisa disimpan berulang jika volume/harga/lingkup/satuan berbeda.
+    // 4. CARI BARIS LAMA (KUNCI: rab_key + kode_toko + no_ulok)
     let existingRow = null;
+
     if (itemData.rab_key) {
       existingRow = rows.find(
         (row) =>
-          (row.get("rab_key") || "") === (itemData.rab_key || "") &&
-          row.get("kode_toko") === (itemData.kode_toko || "") &&
-          row.get("no_ulok") === (itemData.no_ulok || "") &&
-          row.get("pic_username") === (itemData.pic_username || "") &&
-          toNum(row.get("volume_akhir")) === toNum(itemData.volume_akhir)
+          (row.get("rab_key") || "") === itemData.rab_key &&
+          (row.get("kode_toko") || "") === itemData.kode_toko &&
+          (row.get("no_ulok") || "") === itemData.no_ulok
       );
     }
+
+    // Fallback search (jika data lama belum punya rab_key)
     if (!existingRow) {
       existingRow = rows.find(
         (row) =>
-          row.get("kode_toko") === (itemData.kode_toko || "") &&
-          row.get("no_ulok") === (itemData.no_ulok || "") &&
-          row.get("jenis_pekerjaan") === (itemData.jenis_pekerjaan || "") &&
-          row.get("pic_username") === (itemData.pic_username || "") &&
-          (row.get("lingkup_pekerjaan") || "") ===
-            (itemData.lingkup_pekerjaan || "") &&
-          String(row.get("satuan") || "") === String(itemData.satuan || "") &&
-          toNum(row.get("vol_rab")) === toNum(itemData.vol_rab) &&
-          toNum(row.get("harga_material")) === toNum(itemData.harga_material) &&
-          toNum(row.get("harga_upah")) === toNum(itemData.harga_upah) &&
-          toNum(row.get("volume_akhir")) === toNum(itemData.volume_akhir)
+          row.get("kode_toko") === itemData.kode_toko &&
+          row.get("no_ulok") === itemData.no_ulok &&
+          row.get("jenis_pekerjaan") === itemData.jenis_pekerjaan &&
+          toNum(row.get("vol_rab")) === toNum(itemData.vol_rab)
       );
     }
 
-    // ID & timestamp
-    const timestamp = new Date().toLocaleString("id-ID", {
-      timeZone: "Asia/Jakarta",
-    });
-    const item_id =
-      `${itemData.kode_toko}-${itemData.no_ulok}-` +
-      `${(itemData.jenis_pekerjaan || "")
-        .toString()
-        .replace(/[^a-zA-Z0-9]/g, "-")}-` +
-      `${Date.now()}`;
-    const submission_id = `SUB-${Date.now()}-${Math.random()
-      .toString(36)
-      .slice(2, 10)}`;
+    // Data Baru yang akan disimpan
+    const timestamp = new Date().toLocaleString("id-ID", { timeZone: "Asia/Jakarta" });
+    const submission_id = `SUB-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+    
+    // Jika update, ID item tetap sama. Jika baru, generate ID item baru.
+    const item_id = existingRow 
+        ? existingRow.get("item_id") 
+        : `${itemData.kode_toko}-${itemData.no_ulok}-${(itemData.jenis_pekerjaan || "").toString().replace(/[^a-zA-Z0-9]/g, "-")}-${Date.now()}`;
 
-    // Susun row baru (semua kolom lama dipertahankan, kolom baru ditambahkan)
-    const rowToAdd = {
-      submission_id,
+    const rowValues = {
+      submission_id: submission_id, // ID Submisi baru (tanda ada revisi)
       kode_toko: itemData.kode_toko || "",
       nama_toko: itemData.nama_toko || "",
       no_ulok: itemData.no_ulok || "",
       pic_username: itemData.pic_username || "",
-      tanggal_submit: timestamp,
+      tanggal_submit: timestamp, // Update waktu
       kategori_pekerjaan: itemData.kategori_pekerjaan || "",
       jenis_pekerjaan: itemData.jenis_pekerjaan || "",
       vol_rab: itemData.vol_rab ?? "",
@@ -930,26 +902,47 @@ app.post("/api/opname/item/submit", async (req, res) => {
       harga_material: itemData.harga_material ?? 0,
       harga_upah: itemData.harga_upah ?? 0,
       total_harga_akhir: itemData.total_harga_akhir ?? 0,
-      approval_status: itemData.approval_status || "Pending", // default aman
-      item_id,
-
-      // tambahan
+      
+      // === KUNCI UTAMA: STATUS SELALU JADI PENDING SETELAH SIMPAN ===
+      approval_status: "Pending", 
+      
+      item_id: item_id,
       foto_url: itemData.foto_url || "",
       lingkup_pekerjaan: itemData.lingkup_pekerjaan || "",
       rab_key: itemData.rab_key || "",
       name: picName || "",
     };
 
-    const newRow = await finalSheet.addRow(rowToAdd);
+    // 5. EKSEKUSI SIMPAN (UPDATE vs INSERT)
+    if (existingRow) {
+      // === UPDATE DATA LAMA ===
+      // Timpa baris yang statusnya "REJECTED" dengan data baru "PENDING"
+      existingRow.assign(rowValues);
+      await existingRow.save();
+      
+      return res.status(200).json({
+        success: true,
+        message: `Pekerjaan "${itemData.jenis_pekerjaan}" berhasil diperbarui (Revisi).`,
+        item_id,
+        submission_id,
+        tanggal_submit: timestamp,
+        row_number: existingRow.rowNumber,
+      });
 
-    return res.status(201).json({
-      success: true,
-      message: `Pekerjaan "${itemData.jenis_pekerjaan}" berhasil disimpan.`,
-      item_id,
-      submission_id,
-      tanggal_submit: timestamp,
-      row_number: newRow.rowNumber,
-    });
+    } else {
+      // === BUAT DATA BARU ===
+      const newRow = await finalSheet.addRow(rowValues);
+      
+      return res.status(201).json({
+        success: true,
+        message: `Pekerjaan "${itemData.jenis_pekerjaan}" berhasil disimpan.`,
+        item_id,
+        submission_id,
+        tanggal_submit: timestamp,
+        row_number: newRow.rowNumber,
+      });
+    }
+
   } catch (error) {
     console.error("Error di /api/opname/item/submit:", error);
     return res.status(500).json({
