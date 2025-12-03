@@ -1131,6 +1131,8 @@ app.get("/api/opname/final", async (req, res) => {
       tanggal_submit: row.get("tanggal_submit"),
       no_ulok: row.get("no_ulok"),
       pic_name: row.get("name") || "",
+      nama_toko: row.get("nama_toko") || "",
+      alamat: row.get("alamat") || "",
       kontraktor_username: row.get("kontraktor_username") || "",
       kontraktor_name: row.get("kontraktor") || "",
       is_il: (row.get("IL") || "").toString().trim().toLowerCase() === "ya",
