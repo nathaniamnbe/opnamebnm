@@ -813,10 +813,14 @@ export const generateFinalOpnamePDF = async (
         });
 
         lastY = (doc.lastAutoTable?.finalY ?? lastY) + 10;
-      }
+      } // <--- Tutup kurung kurawal loop kategori (for const [kategori, items])
 
-      // ✅ Total per BLOK (TAMBAH/KURANG) — sama untuk keduanya
-      const totalPerBlock = Object.values(categories)
+      // ============================================================
+      // ✅ PERBAIKAN: TABEL SUMMARY PER BLOK (TAMBAH / KURANG)
+      // ============================================================
+
+      // 1. Hitung Total Real
+      const totalRealBlock = Object.values(categories)
         .flat()
         .filter((item) => toNumberVol(item.selisih) !== 0)
         .reduce((sum, item) => {
@@ -826,14 +830,30 @@ export const generateFinalOpnamePDF = async (
           return sum + sel * (hMat + hUpah);
         }, 0);
 
-      // Selalu tampilkan box total dengan gaya biru muda, dan judul sesuai blok
+      // 2. Hitung Pembulatan (Puluhan Ribu)
+      // Logika:
+      // Jika Positif (TAMBAH): 21.364.000 -> 21.360.000 (Floor)
+      // Jika Negatif (KURANG): -21.364.000 -> -21.360.000 (Ceil, mendekati 0)
+      const totalPembulatanBlock =
+        totalRealBlock >= 0
+          ? Math.floor(totalRealBlock / 10000) * 10000
+          : Math.ceil(totalRealBlock / 10000) * 10000;
+
+      // 3. Hitung PPN 11% dari nilai Pembulatan
+      const ppnBlock = totalPembulatanBlock * 0.11;
+
+      // 4. Hitung Grand Total
+      const grandTotalBlock = totalPembulatanBlock + ppnBlock;
+
+      // Tampilkan Tabel Summary
       autoTable(doc, {
         body: [
-          ["TOTAL " + sectionName.toUpperCase(), formatRupiah(totalPerBlock)],
-          ["PPN 11%", formatRupiah(totalPerBlock * 0.11)],
+          ["TOTAL " + sectionName.toUpperCase(), formatRupiah(totalRealBlock)],
+          ["PEMBULATAN", formatRupiah(totalPembulatanBlock)],
+          ["PPN 11%", formatRupiah(ppnBlock)],
           [
             "GRAND TOTAL " + sectionName.toUpperCase(),
-            formatRupiah(totalPerBlock * 1.11),
+            formatRupiah(grandTotalBlock),
           ],
         ],
         startY: lastY,
@@ -842,19 +862,22 @@ export const generateFinalOpnamePDF = async (
         theme: "grid",
         styles: {
           fontSize: 8,
-          fontStyle: "bold",
           halign: "right",
           cellPadding: 2,
+          lineColor: [150, 150, 150],
+          lineWidth: 0.1,
         },
         columnStyles: {
-          0: { halign: "left", cellWidth: 30 },
-          1: { halign: "right", cellWidth: 50 },
+          0: { halign: "left", cellWidth: 35, fontStyle: "bold" },
+          1: { halign: "right", cellWidth: 45 },
         },
         didParseCell(data) {
-          // baris GRAND TOTAL diwarnai biru muda (sama seperti TAMBAH)
-          if (data.row.index === 2) {
-            data.cell.styles.fillColor = [173, 216, 230];
+          // Baris GRAND TOTAL (index 3) diwarnai
+          if (data.row.index === 3) {
+            data.cell.styles.fillColor = [255, 245, 157]; // Kuning (Konsisten dengan tema IL)
+            // Atau gunakan biru muda jika ingin beda: [173, 216, 230]
             data.cell.styles.textColor = [0, 0, 0];
+            data.cell.styles.fontStyle = "bold";
           }
         },
       });
