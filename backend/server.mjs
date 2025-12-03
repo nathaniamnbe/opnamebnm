@@ -538,27 +538,35 @@ app.get("/api/toko", async (req, res) => {
       }
     }
 
-    const storesMap = new Map();
-    assignedRows.forEach((row) => {
-      const kode_toko = row.get("kode_toko");
-      if (!storesMap.has(kode_toko)) {
-        storesMap.set(kode_toko, {
-          kode_toko,
-          nama_toko: row.get("nama_toko"),
-          no_uloks: new Set(),
-          link_pdf: row.get("link_pdf") || "",
-        });
-      }
-      const s = storesMap.get(kode_toko);
-      if (row.get("no_ulok")) s.no_uloks.add(row.get("no_ulok"));
-    });
+const storesMap = new Map();
+assignedRows.forEach((row) => {
+  const kode_toko = row.get("kode_toko");
+  if (!storesMap.has(kode_toko)) {
+    storesMap.set(kode_toko, {
+      kode_toko,
+      nama_toko: row.get("nama_toko"),
 
-    const stores = Array.from(storesMap.values()).map((s) => ({
-      kode_toko: s.kode_toko,
-      nama_toko: s.nama_toko,
-      link_pdf: s.link_pdf,
-      no_uloks: Array.from(s.no_uloks),
-    }));
+      // ✅ TAMBAHKAN INI: Ambil alamat dari sheet data_rab
+      alamat: row.get("alamat") || "",
+
+      no_uloks: new Set(),
+      link_pdf: row.get("link_pdf") || "",
+    });
+  }
+  const s = storesMap.get(kode_toko);
+  if (row.get("no_ulok")) s.no_uloks.add(row.get("no_ulok"));
+});
+
+const stores = Array.from(storesMap.values()).map((s) => ({
+  kode_toko: s.kode_toko,
+  nama_toko: s.nama_toko,
+
+  // ✅ TAMBAHKAN INI JUGA:
+  alamat: s.alamat,
+
+  link_pdf: s.link_pdf,
+  no_uloks: Array.from(s.no_uloks),
+}));
 
     return res.status(200).json(stores);
   } catch (error) {
@@ -849,15 +857,30 @@ app.post("/api/opname/item/submit", async (req, res) => {
     await finalSheet.loadHeaderRow();
     const headers = new Set(finalSheet.headerValues || []);
     [
-      "submission_id", 
-      "kode_toko", 
+      "submission_id",
+      "kode_toko",
       "nama_toko", // <--- PENTING: Kolom nama_toko harus didaftarkan di header
-      "no_ulok", 
+      "no_ulok",
+      "alamat",
       "pic_username",
-      "tanggal_submit", "kategori_pekerjaan", "jenis_pekerjaan", "vol_rab",
-      "satuan", "volume_akhir", "selisih", "harga_material", "harga_upah",
-      "total_harga_akhir", "approval_status", "item_id", "foto_url",
-      "lingkup_pekerjaan", "rab_key", "catatan", "name", "IL"
+      "tanggal_submit",
+      "kategori_pekerjaan",
+      "jenis_pekerjaan",
+      "vol_rab",
+      "satuan",
+      "volume_akhir",
+      "selisih",
+      "harga_material",
+      "harga_upah",
+      "total_harga_akhir",
+      "approval_status",
+      "item_id",
+      "foto_url",
+      "lingkup_pekerjaan",
+      "rab_key",
+      "catatan",
+      "name",
+      "IL",
     ].forEach((h) => headers.add(h));
     await finalSheet.setHeaderRow([...headers]);
 
@@ -904,10 +927,10 @@ app.post("/api/opname/item/submit", async (req, res) => {
     const rowValues = {
       submission_id: submission_id,
       kode_toko: itemData.kode_toko || "",
-      
+
       // ✅ PASTIKAN INI TERISI:
-      nama_toko: itemData.nama_toko || "", 
-      
+      nama_toko: itemData.nama_toko || "",
+
       no_ulok: itemData.no_ulok || "",
       pic_username: itemData.pic_username || "",
       tanggal_submit: timestamp,
@@ -920,15 +943,15 @@ app.post("/api/opname/item/submit", async (req, res) => {
       harga_material: itemData.harga_material ?? 0,
       harga_upah: itemData.harga_upah ?? 0,
       total_harga_akhir: itemData.total_harga_akhir ?? 0,
-      
-      approval_status: "Pending", 
-      
+      alamat: itemData.alamat || "",
+      approval_status: "Pending",
+
       item_id: item_id,
       foto_url: itemData.foto_url || "",
       lingkup_pekerjaan: itemData.lingkup_pekerjaan || "",
       rab_key: itemData.rab_key || "",
       name: picName || "",
-      IL: itemData.is_il ? "ya" : ""
+      IL: itemData.is_il ? "ya" : "",
     };
 
     // 5. EKSEKUSI SIMPAN

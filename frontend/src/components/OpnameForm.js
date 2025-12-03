@@ -245,6 +245,7 @@ const withLingkup = lk ? base + `&lingkup=${encodeURIComponent(lk)}` : null;
     const submissionData = {
       kode_toko: selectedStore.kode_toko,
       nama_toko: selectedStore.nama_toko,
+      alamat: selectedStore.alamat || "",
       pic_username: user.username,
       no_ulok: selectedUlok,
       kategori_pekerjaan: itemToSubmit.kategori_pekerjaan,
