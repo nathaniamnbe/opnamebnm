@@ -538,35 +538,40 @@ app.get("/api/toko", async (req, res) => {
       }
     }
 
-const storesMap = new Map();
-assignedRows.forEach((row) => {
-  const kode_toko = row.get("kode_toko");
-  if (!storesMap.has(kode_toko)) {
-    storesMap.set(kode_toko, {
-      kode_toko,
-      nama_toko: row.get("nama_toko"),
+    // ... (kode sebelumnya tetap sama) ...
 
-      // ✅ TAMBAHKAN INI: Ambil alamat dari sheet data_rab
-      alamat: row.get("alamat") || "",
+    // ---- REVISI: Kelompokkan berdasarkan KOMBINASI (Kode Toko + Nama Toko) ----
+    const storesMap = new Map();
 
-      no_uloks: new Set(),
-      link_pdf: row.get("link_pdf") || "",
+    assignedRows.forEach((row) => {
+      const kode_toko = (row.get("kode_toko") || "").toString().trim();
+      const nama_toko = (row.get("nama_toko") || "").toString().trim();
+
+      // KUNCI UNIK: Gabungan Kode dan Nama
+      // Ini memastikan toko beda dengan kode cabang yang sama tetap muncul terpisah
+      const compositeKey = `${kode_toko}__${nama_toko}`;
+
+      if (!storesMap.has(compositeKey)) {
+        storesMap.set(compositeKey, {
+          kode_toko,
+          nama_toko,
+          alamat: row.get("alamat") || "",
+          no_uloks: new Set(),
+          link_pdf: row.get("link_pdf") || "",
+        });
+      }
+
+      const s = storesMap.get(compositeKey);
+      if (row.get("no_ulok")) s.no_uloks.add(row.get("no_ulok"));
     });
-  }
-  const s = storesMap.get(kode_toko);
-  if (row.get("no_ulok")) s.no_uloks.add(row.get("no_ulok"));
-});
 
-const stores = Array.from(storesMap.values()).map((s) => ({
-  kode_toko: s.kode_toko,
-  nama_toko: s.nama_toko,
-
-  // ✅ TAMBAHKAN INI JUGA:
-  alamat: s.alamat,
-
-  link_pdf: s.link_pdf,
-  no_uloks: Array.from(s.no_uloks),
-}));
+    const stores = Array.from(storesMap.values()).map((s) => ({
+      kode_toko: s.kode_toko,
+      nama_toko: s.nama_toko,
+      alamat: s.alamat,
+      link_pdf: s.link_pdf,
+      no_uloks: Array.from(s.no_uloks),
+    }));
 
     return res.status(200).json(stores);
   } catch (error) {
@@ -1042,6 +1047,9 @@ app.get("/api/toko_kontraktor", async (req, res) => {
     }
 
     // ---- kelompokkan per kode_toko, gabungkan semua no_ulok ----
+    // ... (kode filter assignedRows sebelumnya tetap sama) ...
+
+    // ---- REVISI: Kelompokkan berdasarkan KOMBINASI (Kode Toko + Nama Toko) ----
     const storesMap = new Map();
 
     for (const row of assignedRows) {
@@ -1049,18 +1057,23 @@ app.get("/api/toko_kontraktor", async (req, res) => {
       const nama_toko = (row.get("nama_toko") || "").toString().trim();
       const no_ulok = (row.get("no_ulok") || "").toString().trim();
       const link_pdf = (row.get("link_pdf") || "").toString().trim();
+
       if (!kode_toko) continue;
 
-      if (!storesMap.has(kode_toko)) {
-        storesMap.set(kode_toko, {
+      // KUNCI UNIK: Gabungan Kode dan Nama
+      const compositeKey = `${kode_toko}__${nama_toko}`;
+
+      if (!storesMap.has(compositeKey)) {
+        storesMap.set(compositeKey, {
           kode_toko,
           nama_toko,
           link_pdf,
           no_uloks: new Set(),
         });
       }
+
       if (no_ulok) {
-        storesMap.get(kode_toko).no_uloks.add(no_ulok);
+        storesMap.get(compositeKey).no_uloks.add(no_ulok);
       }
     }
 
@@ -1068,7 +1081,7 @@ app.get("/api/toko_kontraktor", async (req, res) => {
       kode_toko: s.kode_toko,
       nama_toko: s.nama_toko,
       link_pdf: s.link_pdf,
-      no_uloks: Array.from(s.no_uloks), // FE pakai ini untuk pilihan ULOK di langkah berikutnya
+      no_uloks: Array.from(s.no_uloks),
     }));
 
     return res.status(200).json(result);

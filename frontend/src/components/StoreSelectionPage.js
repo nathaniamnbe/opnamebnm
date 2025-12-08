@@ -54,7 +54,9 @@ const StoreSelectionPage = ({ onSelectStore, onBack, type }) => {
 
     // Jika kontraktor, ambil juga jumlah notifikasi pending untuk badge
     if (user.role === "kontraktor" && type === "approval") {
-      fetch(`${API_BASE_URL}/api/opname/pending/counts?username=${user.username}`)
+      fetch(
+        `${API_BASE_URL}/api/opname/pending/counts?username=${user.username}`
+      )
         .then((res) => res.json())
         .then((counts) => setNotificationCounts(counts || {}))
         .catch((err) => console.error("Error fetching counts:", err));
@@ -62,9 +64,12 @@ const StoreSelectionPage = ({ onSelectStore, onBack, type }) => {
   }, [type, user]);
 
   // Logika untuk memfilter daftar toko berdasarkan input di kolom pencarian
+  // Logika filter: Cari berdasarkan Kode Toko ATAU Nama Toko
   const filteredStores = Array.isArray(stores)
-    ? stores.filter((store) =>
-        store.kode_toko.toLowerCase().includes(searchTerm.toLowerCase())
+    ? stores.filter(
+        (store) =>
+          store.kode_toko.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          store.nama_toko.toLowerCase().includes(searchTerm.toLowerCase())
       )
     : [];
 
@@ -122,13 +127,15 @@ const StoreSelectionPage = ({ onSelectStore, onBack, type }) => {
           }}
         >
           {/* Gunakan `filteredStores` untuk me-render tombol */}
+          {/* Gunakan `filteredStores` untuk me-render tombol */}
           {filteredStores.map((toko) => (
             <button
-              key={toko.kode_toko}
+              key={`${toko.kode_toko}-${toko.nama_toko}`} // Kunci unik gabungan
               onClick={() => onSelectStore(toko)}
               className="btn btn-secondary"
               style={{
-                height: "100px",
+                height: "auto", // Biar tinggi menyesuaikan isi
+                minHeight: "120px",
                 flexDirection: "column",
                 fontSize: "18px",
                 gap: "8px",
@@ -136,13 +143,27 @@ const StoreSelectionPage = ({ onSelectStore, onBack, type }) => {
                 backgroundColor: "var(--alfamart-yellow)",
                 color: "var(--gray-800)",
                 position: "relative",
+                padding: "16px", // Tambah padding agar rapi
               }}
             >
               <span style={{ fontSize: "28px" }}>🏪</span>
-              <div>
-                <strong>{toko.kode_toko}</strong>
+
+              {/* UBAH POSISI: Nama Toko di atas dan lebih besar */}
+              <div
+                style={{
+                  fontSize: "18px",
+                  fontWeight: "bold",
+                  lineHeight: "1.2",
+                }}
+              >
+                {toko.nama_toko}
               </div>
-              <div style={{ fontSize: "14px" }}>{toko.nama_toko}</div>
+
+              {/* Kode Toko (Cabang) di bawah dan lebih kecil */}
+              <div style={{ fontSize: "14px", color: "#555" }}>
+                Kode/Cabang: <strong>{toko.kode_toko}</strong>
+              </div>
+
               {user.role === "kontraktor" &&
                 type === "approval" &&
                 notificationCounts[toko.kode_toko] > 0 && (
