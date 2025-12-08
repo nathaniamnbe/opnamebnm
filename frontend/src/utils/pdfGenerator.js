@@ -401,7 +401,9 @@ export const generateFinalOpnamePDF = async (
   startY += 10;
 
   // Kelompokkan data RAB berdasarkan kategori
-  const rabCategories = groupDataByCategory(rabData);
+  const rabCategories = groupDataByCategory(
+    rabData.filter((item) => !item.is_il)
+  );
 
   // Iterasi setiap kategori untuk membuat tabel RAB
   let lastY = startY;
