@@ -852,9 +852,11 @@ app.post("/api/opname/item/submit", async (req, res) => {
     await doc.loadInfo();
     const finalSheet = doc.sheetsByTitle["opname_final"];
     if (!finalSheet) {
-      return res.status(500).json({ message: "Sheet 'opname_final' tidak ditemukan." });
+      return res
+        .status(500)
+        .json({ message: "Sheet 'opname_final' tidak ditemukan." });
     }
-    
+
     // Load nama PIC
     const picName = await getPicNameByUsername(itemData.pic_username);
 
@@ -910,23 +912,40 @@ app.post("/api/opname/item/submit", async (req, res) => {
       );
     }
 
-    // Fallback search
+    // Fallback search (CARI BARIS LAMA)
+    // Logika: Hanya update jika SEMUA data master (Nama, Volume RAB, Harga) SAMA PERSIS.
+    // Jika ada beda harga/volume sedikit saja -> Buat BARIS BARU.
     if (!existingRow) {
       existingRow = rows.find(
         (row) =>
-          row.get("kode_toko") === itemData.kode_toko &&
-          row.get("no_ulok") === itemData.no_ulok &&
-          row.get("jenis_pekerjaan") === itemData.jenis_pekerjaan &&
-          toNum(row.get("vol_rab")) === toNum(itemData.vol_rab)
+          // 1. Cek Identitas Toko & Item
+          (row.get("kode_toko") || "") === itemData.kode_toko &&
+          (row.get("no_ulok") || "") === itemData.no_ulok &&
+          (row.get("jenis_pekerjaan") || "") === itemData.jenis_pekerjaan &&
+          // 2. Cek Volume RAB (Master)
+          toNum(row.get("vol_rab")) === toNum(itemData.vol_rab) &&
+          // 3. ✅ PENGECEKAN KETAT HARGA (Kunci Masalah Anda)
+          // Data di sheet hanya akan dianggap "sama" jika harganya kembar.
+          // Jika upah 1.000.000 vs 12.500.000 -> dianggap BEDA -> Bikin Baris Baru
+          toNum(row.get("harga_material")) === toNum(itemData.harga_material) &&
+          toNum(row.get("harga_upah")) === toNum(itemData.harga_upah)
       );
     }
 
     // Data Timestamp & ID
-    const timestamp = new Date().toLocaleString("id-ID", { timeZone: "Asia/Jakarta" });
-    const submission_id = `SUB-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
-    const item_id = existingRow 
-        ? existingRow.get("item_id") 
-        : `${itemData.kode_toko}-${itemData.no_ulok}-${(itemData.jenis_pekerjaan || "").toString().replace(/[^a-zA-Z0-9]/g, "-")}-${Date.now()}`;
+    const timestamp = new Date().toLocaleString("id-ID", {
+      timeZone: "Asia/Jakarta",
+    });
+    const submission_id = `SUB-${Date.now()}-${Math.random()
+      .toString(36)
+      .slice(2, 10)}`;
+    const item_id = existingRow
+      ? existingRow.get("item_id")
+      : `${itemData.kode_toko}-${itemData.no_ulok}-${(
+          itemData.jenis_pekerjaan || ""
+        )
+          .toString()
+          .replace(/[^a-zA-Z0-9]/g, "-")}-${Date.now()}`;
 
     // DATA ROW (Termasuk nama_toko)
     const rowValues = {
@@ -963,7 +982,7 @@ app.post("/api/opname/item/submit", async (req, res) => {
     if (existingRow) {
       existingRow.assign(rowValues);
       await existingRow.save();
-      
+
       return res.status(200).json({
         success: true,
         message: `Pekerjaan diperbarui (Revisi).`,
@@ -972,10 +991,9 @@ app.post("/api/opname/item/submit", async (req, res) => {
         tanggal_submit: timestamp,
         row_number: existingRow.rowNumber,
       });
-
     } else {
       const newRow = await finalSheet.addRow(rowValues);
-      
+
       return res.status(201).json({
         success: true,
         message: `Pekerjaan berhasil disimpan.`,
@@ -985,7 +1003,6 @@ app.post("/api/opname/item/submit", async (req, res) => {
         row_number: newRow.rowNumber,
       });
     }
-
   } catch (error) {
     console.error("Error di /api/opname/item/submit:", error);
     return res.status(500).json({

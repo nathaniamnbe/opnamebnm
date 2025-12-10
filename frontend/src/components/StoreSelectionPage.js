@@ -161,7 +161,7 @@ const StoreSelectionPage = ({ onSelectStore, onBack, type }) => {
 
               {/* Kode Toko (Cabang) di bawah dan lebih kecil */}
               <div style={{ fontSize: "14px", color: "#555" }}>
-                Kode/Cabang: <strong>{toko.kode_toko}</strong>
+                Cabang: <strong>{toko.kode_toko}</strong>
               </div>
 
               {user.role === "kontraktor" &&
