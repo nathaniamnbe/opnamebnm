@@ -177,7 +177,7 @@ const withLingkup = lk ? base + `&lingkup=${encodeURIComponent(lk)}` : null;
           const hargaUpah = Number(item.harga_upah) || 0; // sudah numeric dari C
 
           // PERBAIKAN: Total harga menggunakan volume akhir (bisa negatif)
-          const total_harga = volAkhir * (hargaMaterial + hargaUpah);
+          const total_harga = selisih * (hargaMaterial + hargaUpah);
 
           return {
             ...item,
