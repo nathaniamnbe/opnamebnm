@@ -718,7 +718,7 @@ const withLingkup = lk ? base + `&lingkup=${encodeURIComponent(lk)}` : null;
         {/* --- BUTTON INTRUKSI LAPANGAN --- */}
         <div style={{ marginTop: "20px", marginBottom: "0px" }}>
           <a
-            href="https://instruksi-lapangan.vercel.app/il/index.html"
+            href={`https://instruksi-lapangan.vercel.app/?auth=true&role=${encodeURIComponent(sessionStorage.getItem('userRole'))}&email=${encodeURIComponent(sessionStorage.getItem('loggedInUserEmail'))}&cabang=${encodeURIComponent(sessionStorage.getItem('loggedInUserCabang'))}`}
             target="_blank"
             rel="noopener noreferrer"
             className="btn"
