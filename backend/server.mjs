@@ -305,7 +305,6 @@ app.post("/api/login", async (req, res) => {
         const userData = {
           id: userRow.get("id"),
           username: userRow.get("username"),
-          password: userRow.get("password"),
           name: userRow.get("name"),
           role: userRow.get("role"),
           ...(userRow.get("role") === "pic" && {

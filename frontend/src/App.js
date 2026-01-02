@@ -47,18 +47,6 @@ function AppContent() {
   );
 }
 
-const urlParams = new URLSearchParams(window.location.search);
-if (urlParams.get('auth') === 'true') {
-    const role = urlParams.get('role');
-    const email = urlParams.get('email');
-    const cabang = urlParams.get('cabang');
-    sessionStorage.setItem('authenticated', 'true');
-    sessionStorage.setItem('userRole', role);
-    sessionStorage.setItem('loggedInUserEmail', email);
-    sessionStorage.setItem('loggedInUserCabang', cabang);
-    window.history.replaceState({}, document.title, "/");
-}
-
 function App() {
   return (
     <AuthProvider>
