@@ -1,6 +1,182 @@
 /* Import Font Inter sesuai referensi style.css */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
+:root {
+  /* Pastikan variabel warna ini tersedia */
+  --login-primary: #005a9e;
+  --login-bg: #f4f7f6;
+  --login-card-bg: #ffffff;
+  --login-text: #2d3748;
+  --login-label: #4a5568;
+  --login-border: #cbd5e0;
+  --login-border-focus: #4299e1;
+}
+
+.login-wrapper {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--login-bg);
+  font-family: 'Inter', sans-serif;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 400px;
+  padding: 2.5rem;
+  background-color: var(--login-card-bg);
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  margin: 20px;
+  position: relative;
+}
+
+/* Header Style */
+.login-header {
+  margin-bottom: 2rem;
+  clear: both;
+}
+
+.login-header h1 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--login-text);
+  margin: 0;
+}
+
+.login-header h3 {
+  margin-top: 10px;
+  font-weight: 600;
+  font-size: 1.2rem;
+  color: var(--login-text);
+}
+
+/* Tombol Kembali (Back Link) */
+.btn-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  color: var(--login-label);
+  font-weight: 500;
+  font-size: 0.95rem;
+  margin-bottom: 2rem;
+  transition: all 0.2s ease;
+  align-self: flex-start;
+  float: left;
+  width: 100%;
+  text-align: left;
+}
+
+.btn-back-link:hover {
+  color: var(--login-primary);
+  transform: translateX(-5px);
+}
+
+/* Form Groups */
+.form-group-custom {
+  margin-bottom: 1.5rem;
+  text-align: left;
+}
+
+.form-group-custom label {
+  display: block;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  color: var(--login-label);
+  font-size: 1rem;
+}
+
+/* Input Styles */
+.input-custom {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--login-border);
+  border-radius: 8px;
+  font-size: 1rem;
+  box-sizing: border-box;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  color: var(--login-text);
+  background-color: #fff;
+}
+
+.input-custom:focus {
+  outline: none;
+  border-color: var(--login-border-focus);
+  box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.5);
+}
+
+/* Password Wrapper & Toggle */
+.password-wrapper {
+  position: relative;
+}
+
+.password-wrapper input {
+  padding-right: 40px; /* Space untuk icon mata */
+}
+
+.toggle-password-btn {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  color: var(--login-label);
+  background: none;
+  border: none;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.toggle-password-btn:hover {
+  color: var(--login-text);
+}
+
+/* Submit Button */
+.btn-submit-custom {
+  width: 100%;
+  padding: 0.85rem;
+  border: none;
+  border-radius: 8px;
+  background-color: var(--login-primary);
+  color: white;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.1s;
+  margin-top: 0.5rem;
+}
+
+.btn-submit-custom:hover:not(:disabled) {
+  background-color: #004a80;
+}
+
+.btn-submit-custom:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.btn-submit-custom:disabled {
+  background-color: #cbd5e0;
+  cursor: not-allowed;
+}
+
+/* Error Message */
+.alert-error {
+  color: #e53e3e;
+  background-color: #fff5f5;
+  border: 1px solid #feb2b2;
+  padding: 0.75rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-align: left;
+}
+
 /* --- General Body & Reset --- */
 body {
   font-family: 'Inter', sans-serif;
