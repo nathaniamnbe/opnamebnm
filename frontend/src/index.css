@@ -157,6 +157,15 @@ th {
     padding: 1.5rem;
     height: auto;
   }
+
+  .header-logo {
+    width: 140px;
+    height: auto;
+    position: absolute;
+    left: 25px;
+    top: 50%;
+    transform: translateY(-50%);
+  }
   
   header h1 {
     font-size: 1.5rem;
