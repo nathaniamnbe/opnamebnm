@@ -77,12 +77,14 @@ const ApprovalPage = ({ onBack, selectedStore }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedStore, selectedUlok, selectedLingkup]);
 
-  // --- Approve satu item ---
   const handleApprove = async (itemId) => {
     setMessage("");
     const original = [...pendingItems];
-    setPendingItems((prev) => prev.filter((it) => it.item_id !== itemId));
+    const itemData = pendingItems.find((it) => it.item_id === itemId);
 
+    setPendingItems((prev) => prev.filter((it) => it.item_id !== itemId));
+    
+    // --- Fetch Pertama: opname_final (Approve Status) ---
     try {
       const response = await fetch(`${API_BASE_URL}/api/opname/approve`, {
         method: "PATCH",
@@ -91,11 +93,33 @@ const ApprovalPage = ({ onBack, selectedStore }) => {
           item_id: itemId,
           kontraktor_username:
             user?.email || user?.username || user?.name || "",
-          catatan: notes[itemId] || "", // ⬅️ kirim catatan
+          catatan: notes[itemId] || "",
         }),
       });
       const result = await response.json();
       if (!response.ok) throw new Error(result.message || "Gagal approve");
+      
+    } catch (error) {
+      setMessage(`Error: ${error.message}`);
+      setPendingItems(original);
+      return;
+    }
+
+    // --- Fetch Kedua: process_summary_opname (Update Summary) ---
+    try {
+      const response = await fetch(`https://sparta-backend-5hdj.onrender.com/api/process_summary_opname`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          no_ulok: selectedUlok,     
+          lingkup_pekerjaan: selectedLingkup,  
+          jenis_pekerjaan: itemData?.jenis_pekerjaan || ""
+        }),
+      });
+      
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.message || "Gagal process summary");
+
       setMessage("Berhasil di-approve!");
       setTimeout(() => setMessage(""), 2500);
       setNotes((prev) => {
@@ -104,8 +128,7 @@ const ApprovalPage = ({ onBack, selectedStore }) => {
         return next;
       });
     } catch (error) {
-      setMessage(`Error: ${error.message}`);
-      setPendingItems(original); // rollback
+      setMessage(`Warning Summary: ${error.message}`);
     }
   };
 
