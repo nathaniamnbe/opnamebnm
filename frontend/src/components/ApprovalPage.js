@@ -186,7 +186,7 @@ const ApprovalPage = ({ onBack, selectedStore }) => {
               gap: "16px",
             }}
           >
-            <button onClick={onBack} className="btn btn-outline">
+            <button onClick={onBack} className="btn btn-back">
               ← Kembali
             </button>
             <h2 style={{ color: "var(--alfamart-red)" }}>Pilih No. ULOK</h2>
@@ -263,7 +263,7 @@ const ApprovalPage = ({ onBack, selectedStore }) => {
             flexWrap: "wrap",
           }}
         >
-          <button onClick={onBack} className="btn btn-outline">
+          <button onClick={onBack} className="btn btn-back">
             ← Kembali
           </button>
           <h2 style={{ color: "var(--alfamart-red)" }}>
