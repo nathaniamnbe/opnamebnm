@@ -101,8 +101,19 @@ button, .btn {
 }
 
 button:hover, .btn:hover {
-  color: #ffffff;
   background-color: #004494;
+  transform: translateY(-1px);
+}
+
+.btn-back {
+  background-color: #dc2626; /* Merah (Alfamart Red) */
+  color: white;
+  border: 1px solid #dc2626;
+}
+
+.btn-back:hover {
+  background-color: #ff4d4d; /* Merah yang lebih cerah/muda */
+  border-color: #ff4d4d;
   transform: translateY(-1px);
 }
 

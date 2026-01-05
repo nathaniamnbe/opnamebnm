@@ -327,7 +327,7 @@ const withLingkup = lk ? base + `&lingkup=${encodeURIComponent(lk)}` : null;
             <button
               type="button"
               onClick={onBack}
-              className="btn btn-outline"
+              className="btn btn-back" 
               style={{ padding: "8px 16px" }}
             >
               Kembali
@@ -393,7 +393,7 @@ const withLingkup = lk ? base + `&lingkup=${encodeURIComponent(lk)}` : null;
           <button
             type="button"
             onClick={onBack}
-            className="btn btn-outline"
+            className="btn btn-back" 
             style={{ padding: "8px 16px" }}
           >
             Kembali
