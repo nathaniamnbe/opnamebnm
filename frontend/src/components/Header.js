@@ -8,7 +8,7 @@ const Header = () => {
   return (
     <>
       <style jsx>{`
-        /* ... (Animation keyframes tetap sama, tidak perlu diubah) ... */
+        /* ... (Animation keyframes tetap sama) ... */
         @keyframes logoSlideIn {
           0% { opacity: 0; transform: translateX(-100px) rotate(-20deg); }
           60% { opacity: 1; transform: translateX(10px) rotate(5deg); }
@@ -32,8 +32,11 @@ const Header = () => {
           50% { filter: drop-shadow(0 0 8px rgba(220, 38, 38, 0.6)); }
         }
 
-        .alfamart-logo {
-          height: 40px;
+        /* PERBAIKAN DI SINI: Mengubah .alfamart-logo menjadi .header-logo */
+        .header-logo {
+          height: 40px; /* Ukuran diperkecil agar pas di header */
+          width: auto;  /* Menjaga aspek rasio gambar */
+          object-fit: contain;
           animation: logoSlideIn 1.2s ease-out forwards;
           opacity: 0;
           transform: translateX(-100px);
@@ -60,10 +63,9 @@ const Header = () => {
           color: "var(--white)",
           padding: "12px 0",
           boxShadow: "var(--shadow)",
-          width: "100%", /* Pastikan header full width */
+          width: "100%",
         }}
       >
-        {/* REVISI: Mengganti className="container" menjadi div biasa dengan width 100% dan padding */}
         <div style={{ width: "100%", padding: "0 40px" }}>
           
           {/* Desktop Layout */}
@@ -78,7 +80,13 @@ const Header = () => {
           >
             {/* Bagian Kiri: Logo */}
             <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-              <img src={alfaLogo} alt="Alfamart" className="header-logo" style={{position: 'static', transform: 'none'}} />
+              {/* ClassName header-logo sekarang akan membaca style di atas */}
+              <img 
+                src={alfaLogo} 
+                alt="Alfamart" 
+                className="header-logo" 
+                style={{position: 'static', transform: 'none'}} 
+              />
               <img
                 src="/Building-Logo.png"
                 alt="Building & Maintenance"
@@ -89,13 +97,13 @@ const Header = () => {
               </h1>
             </div>
 
-            {/* Bagian Kanan: User & Logout (Otomatis ke pojok kanan karena justify-between) */}
+            {/* Bagian Kanan: User & Logout */}
             {user && (
               <div
                 style={{
                   display: "flex",
                   alignItems: "center",
-                  gap: "24px", /* Jarak antar user info dan tombol logout */
+                  gap: "24px",
                 }}
               >
                 <div style={{ textAlign: "right" }}>
@@ -115,7 +123,7 @@ const Header = () => {
                     padding: "8px 20px",
                     fontSize: "14px",
                     minWidth: "auto",
-                    marginTop: "0" /* Reset margin top default button */
+                    marginTop: "0"
                   }}
                 >
                   Logout
@@ -124,7 +132,7 @@ const Header = () => {
             )}
           </div>
 
-          {/* Mobile Layout (Tetap dipertahankan) */}
+          {/* Mobile Layout */}
           <div className="mobile-header" style={{ display: "none" }}>
             <div
               style={{
@@ -135,7 +143,13 @@ const Header = () => {
                 marginBottom: "12px",
               }}
             >
-              <img src={alfaLogo} alt="Alfamart" className="header-logo" style={{position: 'static', width: '100px'}} />
+              {/* Perbaikan ukuran mobile: Hapus width 100px jika ingin mengikuti CSS class, atau sesuaikan inline style */}
+              <img 
+                src={alfaLogo} 
+                alt="Alfamart" 
+                className="header-logo" 
+                style={{position: 'static', height: '40px', width: 'auto'}} 
+              />
               <img
                 src="/Building-Logo.png"
                 alt="Building & Maintenance"
@@ -143,7 +157,6 @@ const Header = () => {
                 style={{ height: "38px" }}
               />
             </div>
-             {/* ... User Info Mobile ... */}
             {user && (
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <div>
