@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { generateFinalOpnamePDF } from "../utils/pdfGenerator";
-import LingkupSelection from "./LingkupSelection";
+import LingkupSelection from "./LingkupSelection"; // ← step baru
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || "";
 
@@ -13,6 +13,8 @@ const FinalOpnameView = ({ onBack, selectedStore }) => {
 
   const [uloks, setUloks] = useState([]);
   const [selectedUlok, setSelectedUlok] = useState(null);
+
+  // NEW: lingkup
   const [selectedLingkup, setSelectedLingkup] = useState(null);
 
   // 1) Ambil daftar ULOK
@@ -66,30 +68,6 @@ const FinalOpnameView = ({ onBack, selectedStore }) => {
     }
   };
 
-  // STYLE KHUSUS UNTUK TOMBOL KEMBALI MERAH
-  // Kita definisikan di sini agar bisa dipakai di return manapun
-  const redButtonStyle = (
-    <style jsx>{`
-      .btn-back-red {
-        background-color: white;
-        border: 1px solid #dc2626; /* Merah Alfamart */
-        color: #dc2626;
-        padding: 8px 16px;
-        font-weight: 600;
-        transition: all 0.2s;
-        border-radius: 8px;
-        cursor: pointer;
-        font-size: 1rem;
-      }
-      .btn-back-red:hover {
-        background-color: #dc2626;
-        color: white;
-        transform: translateY(-1px);
-        box-shadow: 0 4px 6px rgba(220, 38, 38, 0.2);
-      }
-    `}</style>
-  );
-
   // ============== RENDER ==============
 
   if (loading) {
@@ -107,7 +85,6 @@ const FinalOpnameView = ({ onBack, selectedStore }) => {
   if (uloks.length > 0 && !selectedUlok) {
     return (
       <div className="container" style={{ paddingTop: "20px" }}>
-        {redButtonStyle}
         <div className="card">
           <div
             style={{
@@ -118,11 +95,11 @@ const FinalOpnameView = ({ onBack, selectedStore }) => {
               flexWrap: "wrap",
             }}
           >
-            {/* BUTTON DIGANTI CLASS-NYA */}
             <button
-              type="button"
+              type="back"
               onClick={onBack}
-              className="btn-back-red"
+              className="btn btn-outline"
+              style={{ padding: "8px 16px" }}
             >
               ← Kembali
             </button>
@@ -133,7 +110,7 @@ const FinalOpnameView = ({ onBack, selectedStore }) => {
             value={selectedUlok || ""}
             onChange={(e) => {
               setSelectedUlok(e.target.value);
-              setSelectedLingkup(null);
+              setSelectedLingkup(null); // reset lingkup bila ganti ULOK
             }}
           >
             <option value="">Pilih No. ULOK</option>
@@ -165,7 +142,6 @@ const FinalOpnameView = ({ onBack, selectedStore }) => {
   // Step: tampilan FINAL
   return (
     <div className="container" style={{ paddingTop: "20px" }}>
-      {redButtonStyle}
       <div className="card">
         <div
           style={{
@@ -178,10 +154,10 @@ const FinalOpnameView = ({ onBack, selectedStore }) => {
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-            {/* BUTTON DIGANTI CLASS-NYA */}
             <button
               onClick={onBack}
-              className="btn-back-red"
+              className="btn btn-outline"
+              style={{ padding: "8px 16px" }}
             >
               ← Kembali
             </button>
@@ -217,8 +193,9 @@ const FinalOpnameView = ({ onBack, selectedStore }) => {
                     Status
                   </th>
                   <th style={{ padding: "12px" }}>Tanggal Submit</th>
-                  <th style={{ padding: "12px" }}>PIC</th>
-                  <th style={{ padding: "12px" }}>Kontraktor</th>
+                  <th style={{ padding: "12px" }}>PIC</th> {/* 🔹 tambahan */}
+                  <th style={{ padding: "12px" }}>Kontraktor</th>{" "}
+                  {/* 🔹 tambahan */}
                 </tr>
               </thead>
               <tbody>
@@ -245,6 +222,8 @@ const FinalOpnameView = ({ onBack, selectedStore }) => {
                       </span>
                     </td>
                     <td style={{ padding: "12px" }}>{item.tanggal_submit}</td>
+
+                    {/* 🔹 tambahan kolom */}
                     <td style={{ padding: "12px" }}>{item.pic_name || "-"}</td>
                     <td style={{ padding: "12px" }}>
                       {item.kontraktor_username ||

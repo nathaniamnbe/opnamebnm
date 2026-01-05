@@ -106,13 +106,13 @@ button:hover, .btn:hover {
 }
 
 /* Tombol Reset / Secondary / KEMBALI */
-button[type="reset"], .btn-secondary, .btn-back {
+button[type="back"], .btn-secondary, .btn-back {
   background-color: #e2e8f0;
   color: #4a5568;
 }
 
 /* REVISI: Tombol kembali saat hover menjadi MERAH */
-button[type="reset"]:hover, .btn-secondary:hover, .btn-back:hover {
+button[type="back"]:hover, .btn-secondary:hover, .btn-back:hover {
   background-color: #dc2626; /* Merah Alfamart */
   color: white;
 }
