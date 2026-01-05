@@ -1,13 +1,191 @@
+/* Import Font Inter sesuai referensi style.css */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+/* --- General Body & Reset --- */
 body {
+  font-family: 'Inter', sans-serif;
+  background-color: #f4f7f6; /* Warna background lebih lembut */
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  padding: 0;
+  color: #2d3748; /* Text gelap untuk keterbacaan */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+/* --- Header Styles --- */
+header {
+  background-color: #ffffff;
+  color: #1a202c;
+  text-align: center;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  min-height: 80px;
+}
+
+/* Anda mungkin perlu menambahkan className="header-logo" pada gambar logo di komponen Header.js */
+.header-logo {
+  width: 140px;
+  height: auto;
+  position: absolute;
+  left: 25px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+header h1 {
+  margin: 0;
+  font-size: 1.75rem;
+  font-weight: 600;
+  letter-spacing: -0.5px;
+}
+
+/* --- Main Container Styles --- */
+.container {
+  max-width: 1200px;
+  margin: 2.5rem auto;
+  background-color: #ffffff;
+  padding: 2.5rem;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08); /* Shadow modern */
+  border-radius: 12px;
+}
+
+/* --- Form Styles --- */
+.form-container {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-container label, label {
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  margin-top: 1.25rem;
+  color: #4a5568;
+  font-size: 0.9rem;
+  display: block;
+}
+
+input[type="text"],
+input[type="number"],
+input[type="password"],
+input[type="email"],
+select,
+.form-control {
+  padding: 0.8rem 1rem;
+  border: 1px solid #cbd5e0;
+  border-radius: 8px;
+  transition: border-color 0.3s, box-shadow 0.3s;
+  font-size: 1rem;
+  background-color: #fdfdff;
+  width: 100%;
+  box-sizing: border-box; /* Agar padding tidak merusak lebar */
+}
+
+input:focus,
+select:focus {
+  border-color: #005a9e; /* Alfamart Blue focus */
+  box-shadow: 0 0 0 3px rgba(0, 90, 158, 0.2);
+  outline: none;
+}
+
+/* --- Button Styles --- */
+button, .btn {
+  cursor: pointer;
+  padding: 0.8rem 1.5rem;
+  border-radius: 8px;
+  border: none;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: all 0.2s;
+  background-color: #0056b3; /* Warna Biru Utama */
+  color: white;
+  margin-top: 10px;
+}
+
+button:hover, .btn:hover {
+  background-color: #004494;
+  transform: translateY(-1px);
+}
+
+/* Tombol Reset / Secondary */
+button[type="reset"], .btn-secondary {
+  background-color: #e2e8f0;
+  color: #4a5568;
+}
+
+button[type="reset"]:hover, .btn-secondary:hover {
+  background-color: #cbd5e0;
+}
+
+.button-group {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+/* --- Table Styles (Untuk Opname/RAB) --- */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1.5rem;
+}
+
+th, td {
+  padding: 12px 15px;
+  border-bottom: 1px solid #e2e8f0;
+  text-align: left;
+}
+
+th {
+  background-color: #f7fafc;
+  color: #4a5568;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  letter-spacing: 0.05em;
+}
+
+/* --- Utilities --- */
+.text-right { text-align: right; }
+.text-center { text-align: center; }
+.font-bold { font-weight: bold; }
+
+/* --- Responsive Styles --- */
+@media (max-width: 768px) {
+  .container {
+    margin: 1rem;
+    padding: 1.5rem;
+    width: auto;
+  }
+
+  header {
+    flex-direction: column;
+    padding: 1.5rem;
+    height: auto;
+  }
+
+  .header-logo {
+    position: static;
+    transform: none;
+    margin: 0 auto 1rem auto;
+    display: block;
+  }
+  
+  header h1 {
+    font-size: 1.5rem;
+    text-align: center;
+  }
+
+  .button-group {
+    flex-direction: column;
+  }
+  
+  table {
+    display: block;
+    overflow-x: auto;
+  }
 }
