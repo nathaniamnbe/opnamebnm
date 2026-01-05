@@ -59,7 +59,7 @@ const Login = () => {
             style={{ height: "50px", marginBottom: "1rem" }}
           />
           <h1>Building & Maintenance</h1>
-          <h3>Login SAT</h3>
+          <h3>Opname</h3>
         </div>
 
         {/* Pesan Error */}
