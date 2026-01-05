@@ -81,9 +81,7 @@ const ApprovalPage = ({ onBack, selectedStore }) => {
     setMessage("");
     const original = [...pendingItems];
     const itemData = pendingItems.find((it) => it.item_id === itemId);
-
     setPendingItems((prev) => prev.filter((it) => it.item_id !== itemId));
-    
     // --- Fetch Pertama: opname_final (Approve Status) ---
     try {
       const response = await fetch(`${API_BASE_URL}/api/opname/approve`, {
@@ -104,7 +102,7 @@ const ApprovalPage = ({ onBack, selectedStore }) => {
       setPendingItems(original);
       return;
     }
-
+    await new Promise((resolve) => setTimeout(resolve, 5000));
     // --- Fetch Kedua: process_summary_opname (Update Summary) ---
     try {
       const response = await fetch(`https://sparta-backend-5hdj.onrender.com/api/process_summary_opname`, {
