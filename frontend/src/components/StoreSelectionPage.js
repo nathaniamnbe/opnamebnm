@@ -98,7 +98,7 @@ const StoreSelectionPage = ({ onSelectStore, onBack, type }) => {
         >
           <button
             onClick={onBack}
-            className="btn btn-outline"
+            className="btn btn-back"
             style={{ padding: "8px 16px" }}
           >
             ← Kembali
