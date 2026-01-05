@@ -116,7 +116,7 @@ const Header = () => {
             className="desktop-header"
           >
             <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-              <img src={alfaLogo} alt="Alfamart" className="alfamart-logo" />
+              <img src={alfaLogo} alt="Alfamart" className="header-logo" />
               <img
                 src="/Building-Logo.png"
                 alt="Building & Maintenance"
@@ -172,7 +172,7 @@ const Header = () => {
                 marginBottom: "12px",
               }}
             >
-              <img src={alfaLogo} alt="Alfamart" className="alfamart-logo" />
+              <img src={alfaLogo} alt="Alfamart" className="header-logo" />
               <img
                 src="/Building-Logo.png"
                 alt="Building & Maintenance"
