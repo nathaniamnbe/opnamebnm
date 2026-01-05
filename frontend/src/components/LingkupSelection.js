@@ -97,10 +97,10 @@ const LingkupSelection = ({
         <p>
           Lingkup terdeteksi: <b>{opsi[0]}</b>
         </p>
-        <button className="btn btn-primary" onClick={() => onSelect(opsi[0])}>
+        <button className="btn" onClick={() => onSelect(opsi[0])}>
           Lanjut
         </button>
-        <button className="btn" onClick={onCancel} style={{ marginLeft: 8 }}>
+        <button className="btn btn-primary" onClick={onCancel} style={{ marginLeft: 8 }}>
           Kembali
         </button>
       </div>
