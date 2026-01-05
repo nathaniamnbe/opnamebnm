@@ -8,66 +8,28 @@ const Header = () => {
   return (
     <>
       <style jsx>{`
+        /* ... (Animation keyframes tetap sama, tidak perlu diubah) ... */
         @keyframes logoSlideIn {
-          0% {
-            opacity: 0;
-            transform: translateX(-100px) rotate(-20deg);
-          }
-          60% {
-            opacity: 1;
-            transform: translateX(10px) rotate(5deg);
-          }
-          80% {
-            transform: translateX(-5px) rotate(-2deg);
-          }
-          100% {
-            opacity: 1;
-            transform: translateX(0) rotate(0deg);
-          }
+          0% { opacity: 0; transform: translateX(-100px) rotate(-20deg); }
+          60% { opacity: 1; transform: translateX(10px) rotate(5deg); }
+          80% { transform: translateX(-5px) rotate(-2deg); }
+          100% { opacity: 1; transform: translateX(0) rotate(0deg); }
         }
-
         @keyframes logoPopOut {
-          0% {
-            opacity: 0;
-            transform: scale(0) rotate(-180deg);
-          }
-          60% {
-            opacity: 1;
-            transform: scale(1.2) rotate(10deg);
-          }
-          80% {
-            transform: scale(0.9) rotate(-5deg);
-          }
-          100% {
-            opacity: 1;
-            transform: scale(1) rotate(0deg);
-          }
+          0% { opacity: 0; transform: scale(0) rotate(-180deg); }
+          60% { opacity: 1; transform: scale(1.2) rotate(10deg); }
+          80% { transform: scale(0.9) rotate(-5deg); }
+          100% { opacity: 1; transform: scale(1) rotate(0deg); }
         }
-
         @keyframes floatingIdle {
-          0%,
-          100% {
-            transform: translateY(0px) rotate(0deg);
-          }
-          25% {
-            transform: translateY(-8px) rotate(2deg);
-          }
-          50% {
-            transform: translateY(-4px) rotate(-2deg);
-          }
-          75% {
-            transform: translateY(-6px) rotate(1deg);
-          }
+          0%, 100% { transform: translateY(0px) rotate(0deg); }
+          25% { transform: translateY(-8px) rotate(2deg); }
+          50% { transform: translateY(-4px) rotate(-2deg); }
+          75% { transform: translateY(-6px) rotate(1deg); }
         }
-
         @keyframes pulseGlow {
-          0%,
-          100% {
-            filter: drop-shadow(0 0 2px rgba(220, 38, 38, 0.3));
-          }
-          50% {
-            filter: drop-shadow(0 0 8px rgba(220, 38, 38, 0.6));
-          }
+          0%, 100% { filter: drop-shadow(0 0 2px rgba(220, 38, 38, 0.3)); }
+          50% { filter: drop-shadow(0 0 8px rgba(220, 38, 38, 0.6)); }
         }
 
         .alfamart-logo {
@@ -87,12 +49,8 @@ const Header = () => {
         }
 
         @media (max-width: 768px) {
-          .desktop-header {
-            display: none !important;
-          }
-          .mobile-header {
-            display: block !important;
-          }
+          .desktop-header { display: none !important; }
+          .mobile-header { display: block !important; }
         }
       `}</style>
 
@@ -102,21 +60,25 @@ const Header = () => {
           color: "var(--white)",
           padding: "12px 0",
           boxShadow: "var(--shadow)",
+          width: "100%", /* Pastikan header full width */
         }}
       >
-        <div className="container">
+        {/* REVISI: Mengganti className="container" menjadi div biasa dengan width 100% dan padding */}
+        <div style={{ width: "100%", padding: "0 40px" }}>
+          
           {/* Desktop Layout */}
           <div
             style={{
               display: "flex",
               justifyContent: "space-between",
               alignItems: "center",
-              gap: "16px",
+              width: "100%",
             }}
             className="desktop-header"
           >
+            {/* Bagian Kiri: Logo */}
             <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-              <img src={alfaLogo} alt="Alfamart" className="header-logo" />
+              <img src={alfaLogo} alt="Alfamart" className="header-logo" style={{position: 'static', transform: 'none'}} />
               <img
                 src="/Building-Logo.png"
                 alt="Building & Maintenance"
@@ -127,12 +89,13 @@ const Header = () => {
               </h1>
             </div>
 
+            {/* Bagian Kanan: User & Logout (Otomatis ke pojok kanan karena justify-between) */}
             {user && (
               <div
                 style={{
                   display: "flex",
                   alignItems: "center",
-                  gap: "16px",
+                  gap: "24px", /* Jarak antar user info dan tombol logout */
                 }}
               >
                 <div style={{ textAlign: "right" }}>
@@ -149,9 +112,10 @@ const Header = () => {
                   style={{
                     borderColor: "var(--white)",
                     color: "var(--white)",
-                    padding: "6px 12px",
-                    fontSize: "12px",
+                    padding: "8px 20px",
+                    fontSize: "14px",
                     minWidth: "auto",
+                    marginTop: "0" /* Reset margin top default button */
                   }}
                 >
                   Logout
@@ -160,9 +124,8 @@ const Header = () => {
             )}
           </div>
 
-          {/* Mobile Layout */}
+          {/* Mobile Layout (Tetap dipertahankan) */}
           <div className="mobile-header" style={{ display: "none" }}>
-            {/* Top Row: Logo + Title */}
             <div
               style={{
                 display: "flex",
@@ -172,53 +135,22 @@ const Header = () => {
                 marginBottom: "12px",
               }}
             >
-              <img src={alfaLogo} alt="Alfamart" className="header-logo" />
+              <img src={alfaLogo} alt="Alfamart" className="header-logo" style={{position: 'static', width: '100px'}} />
               <img
                 src="/Building-Logo.png"
                 alt="Building & Maintenance"
                 className="building-logo"
                 style={{ height: "38px" }}
               />
-              <h1 style={{ fontSize: "18px", fontWeight: "bold", margin: 0 }}>
-                Sistem Opname
-              </h1>
             </div>
-
-            {/* Bottom Row: User Info + Logout */}
+             {/* ... User Info Mobile ... */}
             {user && (
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  gap: "12px",
-                }}
-              >
-                <div style={{ flex: 1 }}>
-                  <div
-                    style={{
-                      fontWeight: "600",
-                      fontSize: "14px",
-                      marginBottom: "2px",
-                    }}
-                  >
-                    {user.name}
-                  </div>
-                  <div style={{ fontSize: "11px", opacity: "0.9" }}>
-                    {user.role === "pic" ? user.store : user.company}
-                  </div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div>
+                  <div style={{ fontWeight: "600", fontSize: "14px" }}>{user.name}</div>
+                  <div style={{ fontSize: "11px", opacity: "0.9" }}>{user.role === "pic" ? user.store : user.company}</div>
                 </div>
-                <button
-                  onClick={logout}
-                  className="btn btn-outline"
-                  style={{
-                    borderColor: "var(--white)",
-                    color: "var(--white)",
-                    padding: "6px 12px",
-                    fontSize: "11px",
-                    minWidth: "60px",
-                  }}
-                >
+                <button onClick={logout} className="btn btn-outline" style={{ borderColor: "white", color: "white", padding: "6px 12px", fontSize: "12px" }}>
                   Logout
                 </button>
               </div>

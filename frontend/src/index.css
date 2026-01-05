@@ -4,20 +4,21 @@
 /* --- General Body & Reset --- */
 body {
   font-family: 'Inter', sans-serif;
-  background-color: #f4f7f6; /* Warna background lebih lembut */
+  background-color: #f4f7f6;
   margin: 0;
   padding: 0;
-  color: #2d3748; /* Text gelap untuk keterbacaan */
+  color: #2d3748;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
 /* --- Header Styles --- */
 header {
-  background-color: #ffffff;
+  /* HAPUS background-color putih di sini agar mengikuti style inline di Header.js (Merah) */
+  /* background-color: #ffffff; */ 
   color: #1a202c;
   text-align: center;
-  padding: 1rem 1.5rem;
+  /* padding: 1rem 1.5rem; Hapus padding global, atur di komponen */
   border-bottom: 1px solid #e2e8f0;
   display: flex;
   align-items: center;
@@ -27,31 +28,24 @@ header {
   min-height: 80px;
 }
 
-/* Anda mungkin perlu menambahkan className="header-logo" pada gambar logo di komponen Header.js */
-.header-logo {
-  width: 140px;
-  height: auto;
-  position: absolute;
-  left: 25px;
-  top: 50%;
-  transform: translateY(-50%);
-}
-
-header h1 {
-  margin: 0;
-  font-size: 1.75rem;
-  font-weight: 600;
-  letter-spacing: -0.5px;
-}
-
 /* --- Main Container Styles --- */
+/* REVISI: Container sekarang transparan, hanya untuk layout lebar */
 .container {
   max-width: 1200px;
   margin: 2.5rem auto;
+  padding: 0 1.5rem; /* Padding horizontal saja */
+  /* Background dan shadow dihapus dari sini */
+}
+
+/* --- Card Styles (Background Tengah) --- */
+/* Class baru untuk background putih di tengah */
+.card {
   background-color: #ffffff;
   padding: 2.5rem;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08); /* Shadow modern */
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
   border-radius: 12px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 /* --- Form Styles --- */
@@ -82,13 +76,13 @@ select,
   font-size: 1rem;
   background-color: #fdfdff;
   width: 100%;
-  box-sizing: border-box; /* Agar padding tidak merusak lebar */
+  box-sizing: border-box;
 }
 
 input:focus,
 select:focus {
-  border-color: #005a9e; /* Alfamart Blue focus */
-  box-shadow: 0 0 0 3px rgba(0, 90, 158, 0.2);
+  border-color: #dc2626; /* Ubah fokus jadi Merah Alfamart juga agar senada */
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.2);
   outline: none;
 }
 
@@ -101,7 +95,7 @@ button, .btn {
   font-weight: 600;
   font-size: 1rem;
   transition: all 0.2s;
-  background-color: #0056b3; /* Warna Biru Utama */
+  background-color: #0056b3;
   color: white;
   margin-top: 10px;
 }
@@ -111,14 +105,16 @@ button:hover, .btn:hover {
   transform: translateY(-1px);
 }
 
-/* Tombol Reset / Secondary */
-button[type="reset"], .btn-secondary {
+/* Tombol Reset / Secondary / KEMBALI */
+button[type="reset"], .btn-secondary, .btn-back {
   background-color: #e2e8f0;
   color: #4a5568;
 }
 
-button[type="reset"]:hover, .btn-secondary:hover {
-  background-color: #cbd5e0;
+/* REVISI: Tombol kembali saat hover menjadi MERAH */
+button[type="reset"]:hover, .btn-secondary:hover, .btn-back:hover {
+  background-color: #dc2626; /* Merah Alfamart */
+  color: white;
 }
 
 .button-group {
@@ -127,7 +123,7 @@ button[type="reset"]:hover, .btn-secondary:hover {
   margin-top: 2rem;
 }
 
-/* --- Table Styles (Untuk Opname/RAB) --- */
+/* --- Table Styles --- */
 table {
   width: 100%;
   border-collapse: collapse;
@@ -149,30 +145,17 @@ th {
   letter-spacing: 0.05em;
 }
 
-/* --- Utilities --- */
-.text-right { text-align: right; }
-.text-center { text-align: center; }
-.font-bold { font-weight: bold; }
-
 /* --- Responsive Styles --- */
 @media (max-width: 768px) {
   .container {
-    margin: 1rem;
-    padding: 1.5rem;
-    width: auto;
+    margin: 1rem auto;
+    padding: 1rem;
   }
 
   header {
     flex-direction: column;
     padding: 1.5rem;
     height: auto;
-  }
-
-  .header-logo {
-    position: static;
-    transform: none;
-    margin: 0 auto 1rem auto;
-    display: block;
   }
   
   header h1 {

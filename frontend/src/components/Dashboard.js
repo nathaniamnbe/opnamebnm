@@ -1,4 +1,4 @@
-// src/components/Dashboard.js - Versi Final tanpa Header Duplikat
+// src/components/Dashboard.js
 
 "use client";
 
@@ -10,12 +10,10 @@ import FinalOpnameView from "./FinalOpnameView";
 import ApprovalPage from "./ApprovalPage";
 
 const Dashboard = () => {
-  // Hook useAuth hanya mengambil 'user', karena logout diasumsikan ada di header utamass
   const { user } = useAuth();
   const [activeView, setActiveView] = useState("dashboard");
   const [selectedStore, setSelectedStore] = useState(null);
 
-  // Tampilkan loading jika data user belum siap
   if (!user) {
     return (
       <div style={{ textAlign: "center", marginTop: "50px" }}>
@@ -29,10 +27,9 @@ const Dashboard = () => {
     setActiveView(nextView);
   };
 
-  // Fungsi untuk merender konten berdasarkan 'activeView'
   const renderContent = () => {
     switch (activeView) {
-      // --- Rute untuk Peran PIC ---
+      // --- Rute PIC ---
       case "store-selection-pic":
         return (
           <StoreSelectionPage
@@ -69,7 +66,7 @@ const Dashboard = () => {
           />
         );
 
-      // --- Rute untuk Peran Kontraktor ---
+      // --- Rute Kontraktor ---
       case "store-selection-kontraktor":
         return (
           <StoreSelectionPage
@@ -108,24 +105,19 @@ const Dashboard = () => {
           />
         );
 
-      // Halaman utama Dashboard
+      // --- Halaman Utama Dashboard ---
       default:
         return (
           <div
             className="container"
             style={{ paddingTop: "40px", maxWidth: "900px" }}
           >
+            {/* REVISI: Pastikan menggunakan class 'card' agar background putihnya benar */}
             <div className="card">
               <h2 style={{ color: "var(--alfamart-red)", textAlign: "center" }}>
                 Selamat Datang, {user.kontraktor_username || user.name}!
               </h2>
-              <p
-                style={{
-                  textAlign: "center",
-                  color: "#666",
-                  marginBottom: "32px",
-                }}
-              ></p>
+              <p style={{ textAlign: "center", color: "#666", marginBottom: "32px" }}></p>
 
               <div
                 style={{
@@ -134,20 +126,13 @@ const Dashboard = () => {
                   gap: "20px",
                 }}
               >
-                {/* Tombol untuk PIC */}
+                {/* Tombol PIC */}
                 {user.role === "pic" && (
                   <>
                     <button
                       onClick={() => setActiveView("store-selection-pic")}
                       className="btn btn-primary"
-                      style={{
-                        height: "120px",
-                        display: "flex",
-                        flexDirection: "column",
-                        justifyContent: "center",
-                        alignItems: "center",
-                        gap: "8px",
-                      }}
+                      style={{ height: "120px", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", gap: "8px" }}
                     >
                       <span style={{ fontSize: "32px" }}>📝</span>
                       Input Opname Harian
@@ -155,14 +140,7 @@ const Dashboard = () => {
                     <button
                       onClick={() => setActiveView("final-opname-selection")}
                       className="btn btn-success"
-                      style={{
-                        height: "120px",
-                        display: "flex",
-                        flexDirection: "column",
-                        justifyContent: "center",
-                        alignItems: "center",
-                        gap: "8px",
-                      }}
+                      style={{ height: "120px", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", gap: "8px" }}
                     >
                       <span style={{ fontSize: "32px" }}>📄</span>
                       Lihat Opname Final
@@ -170,39 +148,21 @@ const Dashboard = () => {
                   </>
                 )}
 
-                {/* Tombol untuk Kontraktor */}
+                {/* Tombol Kontraktor */}
                 {user.role === "kontraktor" && (
                   <>
                     <button
-                      onClick={() =>
-                        setActiveView("store-selection-kontraktor")
-                      }
+                      onClick={() => setActiveView("store-selection-kontraktor")}
                       className="btn btn-info"
-                      style={{
-                        height: "120px",
-                        display: "flex",
-                        flexDirection: "column",
-                        justifyContent: "center",
-                        alignItems: "center",
-                        gap: "8px",
-                      }}
+                      style={{ height: "120px", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", gap: "8px" }}
                     >
                       <span style={{ fontSize: "32px" }}>🔔</span>
                       Persetujuan Opname
                     </button>
                     <button
-                      onClick={() =>
-                        setActiveView("history-selection-kontraktor")
-                      }
+                      onClick={() => setActiveView("history-selection-kontraktor")}
                       className="btn btn-secondary"
-                      style={{
-                        height: "120px",
-                        display: "flex",
-                        flexDirection: "column",
-                        justifyContent: "center",
-                        alignItems: "center",
-                        gap: "8px",
-                      }}
+                      style={{ height: "120px", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", gap: "8px" }}
                     >
                       <span style={{ fontSize: "32px" }}>📜</span>
                       Histori Opname
@@ -216,7 +176,6 @@ const Dashboard = () => {
     }
   };
 
-  // Komponen ini HANYA merender konten, tidak lagi menyertakan <header>
   return renderContent();
 };
 
