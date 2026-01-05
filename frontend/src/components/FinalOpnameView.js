@@ -96,9 +96,9 @@ const FinalOpnameView = ({ onBack, selectedStore }) => {
             }}
           >
             <button
-              type="back"
+              type="button"
               onClick={onBack}
-              className="btn btn-outline"
+              className="btn btn-back" 
               style={{ padding: "8px 16px" }}
             >
               ← Kembali
@@ -156,7 +156,7 @@ const FinalOpnameView = ({ onBack, selectedStore }) => {
           <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
             <button
               onClick={onBack}
-              className="btn btn-outline"
+              className="btn btn-back"
               style={{ padding: "8px 16px" }}
             >
               ← Kembali
