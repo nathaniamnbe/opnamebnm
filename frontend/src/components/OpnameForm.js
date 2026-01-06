@@ -13,24 +13,22 @@ const formatRupiah = (number) => {
     style: "currency",
     currency: "IDR",
     minimumFractionDigits: 0,
-    maximumFractionDigits: 0, // penting agar tidak "Rp 18,5"
+    maximumFractionDigits: 0,
   }).format(numericValue);
 };
 
-// "18.500.000,00" / "Rp 1.368.400,00" -> 18500000
 const toNumID = (v) => {
   if (v === null || v === undefined) return 0;
   const s = String(v).trim();
-  const cleaned = s.replace(/[^\d,.-]/g, ""); // buang "Rp" & spasi
+  const cleaned = s.replace(/[^\d,.-]/g, "");
   const normalized = cleaned.replace(/\./g, "").replace(",", ".");
   const n = Number(normalized);
   return Number.isFinite(n) ? n : 0;
 };
 
-// Input user (mis. "1.00", "0.5") -> TIDAK hapus titik desimal
 const toNumInput = (v) => {
   if (v === null || v === undefined) return 0;
-  const s = String(v).trim().replace(",", "."); // koma dianggap titik
+  const s = String(v).trim().replace(",", ".");
   const n = Number(s);
   return Number.isFinite(n) ? n : 0;
 };
@@ -43,40 +41,47 @@ const OpnameForm = ({ onBack, selectedStore }) => {
   const [selectedUlok, setSelectedUlok] = useState(null);
   const [selectedLingkup, setSelectedLingkup] = useState(null);
 
+  // --- PENAMBAHAN BARU: State untuk Opname Final ---
+  const [canFinalize, setCanFinalize] = useState(false); // Apakah tombol bisa diklik?
+  const [isFinalized, setIsFinalized] = useState(false); // Apakah sudah pernah difinalisasi?
+  const [isLocking, setIsLocking] = useState(false); // Loading state saat klik tombol final
+  // --------------------------------------------------
+
   useEffect(() => {
     if (selectedStore?.kode_toko) {
       setLoading(true);
-      // Fetch daftar no_ulok untuk kode_toko ini
-       fetch(`${API_BASE_URL}/api/uloks?kode_toko=${selectedStore.kode_toko}`)
-         .then((res) => res.json())
-         .then((data) => {
-           setUloks(data);
-           if (data.length === 1) {
-             setSelectedUlok(data[0]);
-           }
-           setLoading(false);
-         })
-         .catch((err) => {
-           console.error("Gagal mengambil daftar no_ulok:", err);
-           setLoading(false);
-         });
+      fetch(`${API_BASE_URL}/api/uloks?kode_toko=${selectedStore.kode_toko}`)
+        .then((res) => res.json())
+        .then((data) => {
+          setUloks(data);
+          if (data.length === 1) {
+            setSelectedUlok(data[0]);
+          }
+          setLoading(false);
+        })
+        .catch((err) => {
+          console.error("Gagal mengambil daftar no_ulok:", err);
+          setLoading(false);
+        });
     }
   }, [selectedStore]);
 
-  // Ambil daftar item opname (jalan meskipun selectedLingkup belum dipilih)
+  // Ambil daftar item opname
   useEffect(() => {
     if (selectedStore?.kode_toko && selectedUlok) {
       setLoading(true);
 
       const base =
-       `${API_BASE_URL}/api/opname?kode_toko=${encodeURIComponent(selectedStore.kode_toko)}` +
-        `&no_ulok=${encodeURIComponent(selectedUlok)}`;
+        `${API_BASE_URL}/api/opname?kode_toko=${encodeURIComponent(
+          selectedStore.kode_toko
+        )}` + `&no_ulok=${encodeURIComponent(selectedUlok)}`;
 
-      // normalisasi lingkup jika ada
       const lk = String(selectedLingkup || "")
         .trim()
         .toUpperCase();
-const withLingkup = lk ? base + `&lingkup=${encodeURIComponent(lk)}` : null;
+      const withLingkup = lk
+        ? base + `&lingkup=${encodeURIComponent(lk)}`
+        : null;
 
       const mapItems = (data, lkUsed) => {
         const items = (data || []).map((task, index) => {
@@ -98,25 +103,16 @@ const withLingkup = lk ? base + `&lingkup=${encodeURIComponent(lk)}` : null;
             id: index + 1,
             rab_key: task.rab_key || "",
             is_il: task.is_il,
-            // simpan lingkup agar bisa ikut dikirim saat submit
             lingkup_pekerjaan: task.lingkup_pekerjaan || lkUsed || null,
-
-            // angka-angka sudah dibersihkan
             harga_material: hargaMaterial,
             harga_upah: hargaUpah,
-
-            // kunci baris yang sudah tersubmit
             isSubmitted: alreadySubmitted,
             approval_status:
               task.approval_status ||
               (alreadySubmitted ? "Pending" : undefined),
             submissionTime: task.tanggal_submit || task.submissionTime || null,
             foto_url: alreadySubmitted ? task.foto_url : null,
-
-            // nilai form
-            // nilai form
             volume_akhir: alreadySubmitted ? String(volAkhirNum) : "",
-            // bulatkan ke 2 desimal lalu jadikan string "x.xx"
             selisih: (
               Math.round((volAkhirNum - volRab + Number.EPSILON) * 100) / 100
             ).toFixed(2),
@@ -126,9 +122,6 @@ const withLingkup = lk ? base + `&lingkup=${encodeURIComponent(lk)}` : null;
         setOpnameItems(items);
       };
 
-      // strategi fetch:
-      // 1) jika ada lingkup → pakai itu
-      // 2) kalau kosong → coba tanpa filter → ME → SIPIL
       (async () => {
         try {
           if (withLingkup) {
@@ -152,7 +145,7 @@ const withLingkup = lk ? base + `&lingkup=${encodeURIComponent(lk)}` : null;
               mapItems(d, "ME");
             }
           } else {
-            mapItems(d, null); // server sudah balikin data tanpa filter
+            mapItems(d, null);
           }
         } catch (err) {
           console.error("Gagal mengambil detail pekerjaan:", err);
@@ -163,27 +156,99 @@ const withLingkup = lk ? base + `&lingkup=${encodeURIComponent(lk)}` : null;
     }
   }, [selectedStore, selectedUlok, selectedLingkup, user]);
 
-  
+  // --- PENAMBAHAN BARU: useEffect untuk Cek Status Opname (Button Final) ---
+  useEffect(() => {
+    // Jalankan hanya jika ULOK dan LINGKUP sudah terpilih/tersedia
+    if (selectedUlok && selectedLingkup) {
+      const checkStatus = async () => {
+        try {
+          const res = await fetch(
+            `${API_BASE_URL}/api/check_status_item_opname?no_ulok=${selectedUlok}&lingkup_pekerjaan=${selectedLingkup}`
+          );
+          const data = await res.json();
+
+          // Logika: Jika status "approved", tombol bisa diklik
+          if (data.status === "approved") {
+            // Cek apakah response mengandung tanggal_opname_final
+            // Jika sudah ada tanggalnya, berarti SUDAH difinalisasi sebelumnya -> disable tombol
+            if (data.tanggal_opname_final) {
+              setIsFinalized(true);
+              setCanFinalize(false);
+            } else {
+              setIsFinalized(false);
+              setCanFinalize(true);
+            }
+          } else {
+            // Jika masih pending atau status lain
+            setCanFinalize(false);
+            setIsFinalized(false);
+          }
+        } catch (error) {
+          console.error("Error checking opname status:", error);
+          setCanFinalize(false);
+        }
+      };
+
+      checkStatus();
+    } else {
+      setCanFinalize(false);
+    }
+  }, [selectedUlok, selectedLingkup, opnameItems]); // Dependency opnameItems agar re-check jika ada item baru disubmit
+  // -----------------------------------------------------------------------
+
+  // --- PENAMBAHAN BARU: Handler Klik Opname Final ---
+  const handleOpnameFinal = async () => {
+    if (!window.confirm("Apakah Anda yakin ingin melakukan Opname Final? Tindakan ini tidak dapat dibatalkan.")) {
+      return;
+    }
+
+    setIsLocking(true);
+    const payload = {
+      status: "locked",
+      ulok: selectedUlok,
+      lingkup_pekerjaan: selectedLingkup,
+    };
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/opname_locked`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        alert("Opname berhasil difinalisasi!");
+        setIsFinalized(true); // Kunci tombol secara lokal
+        setCanFinalize(false);
+      } else {
+        alert(`Gagal finalisasi: ${result.message}`);
+      }
+    } catch (error) {
+      alert(`Terjadi kesalahan: ${error.message}`);
+    } finally {
+      setIsLocking(false);
+    }
+  };
+  // --------------------------------------------------
 
   const handleVolumeAkhirChange = (id, value) => {
     setOpnameItems((prevItems) =>
       prevItems.map((item) => {
         if (item.id === id && !item.isSubmitted) {
-          // PERBAIKAN: Gunakan volume akhir yang diinput user (bisa negatif)
           const volAkhir = toNumInput(value);
           const volRab = toNumInput(item.vol_rab);
           const selisih = volAkhir - volRab;
-          const hargaMaterial = Number(item.harga_material) || 0; // sudah numeric dari C
-          const hargaUpah = Number(item.harga_upah) || 0; // sudah numeric dari C
-
-          // PERBAIKAN: Total harga menggunakan volume akhir (bisa negatif)
+          const hargaMaterial = Number(item.harga_material) || 0;
+          const hargaUpah = Number(item.harga_upah) || 0;
           const total_harga = selisih * (hargaMaterial + hargaUpah);
 
           return {
             ...item,
             volume_akhir: value,
             selisih: selisih.toFixed(2),
-            total_harga: total_harga, // Ini bisa jadi negatif jika volume_akhir negatif
+            total_harga: total_harga,
           };
         }
         return item;
@@ -241,7 +306,6 @@ const withLingkup = lk ? base + `&lingkup=${encodeURIComponent(lk)}` : null;
       )
     );
 
-    // PERBAIKAN: Pastikan data yang dikirim mencerminkan nilai sebenarnya
     const submissionData = {
       kode_toko: selectedStore.kode_toko,
       nama_toko: selectedStore.nama_toko,
@@ -252,18 +316,16 @@ const withLingkup = lk ? base + `&lingkup=${encodeURIComponent(lk)}` : null;
       jenis_pekerjaan: itemToSubmit.jenis_pekerjaan,
       vol_rab: itemToSubmit.vol_rab,
       satuan: itemToSubmit.satuan,
-      volume_akhir: itemToSubmit.volume_akhir, // Bisa negatif
-      selisih: itemToSubmit.selisih, // Bisa negatif
+      volume_akhir: itemToSubmit.volume_akhir,
+      selisih: itemToSubmit.selisih,
       foto_url: itemToSubmit.foto_url,
       harga_material: itemToSubmit.harga_material,
       harga_upah: itemToSubmit.harga_upah,
-      total_harga_akhir: itemToSubmit.total_harga, // Bisa negatif
+      total_harga_akhir: itemToSubmit.total_harga,
       lingkup_pekerjaan: itemToSubmit.lingkup_pekerjaan || selectedLingkup,
       rab_key: itemToSubmit.rab_key || "",
       is_il: itemToSubmit.is_il,
     };
-
-    console.log("Data yang akan dikirim:", submissionData); // Debug log
 
     try {
       const response = await fetch(`${API_BASE_URL}/api/opname/item/submit`, {
@@ -327,7 +389,7 @@ const withLingkup = lk ? base + `&lingkup=${encodeURIComponent(lk)}` : null;
             <button
               type="button"
               onClick={onBack}
-              className="btn btn-back" 
+              className="btn btn-back"
               style={{ padding: "8px 16px" }}
             >
               Kembali
@@ -338,8 +400,8 @@ const withLingkup = lk ? base + `&lingkup=${encodeURIComponent(lk)}` : null;
             className="form-select"
             value={selectedUlok || ""}
             onChange={(e) => {
-              setSelectedUlok(e.target.value); // pilih ULOK
-              setSelectedLingkup(null); // reset lingkup setiap kali ULOK berubah
+              setSelectedUlok(e.target.value);
+              setSelectedLingkup(null);
             }}
           >
             <option value="">Pilih No. ULOK</option>
@@ -354,7 +416,6 @@ const withLingkup = lk ? base + `&lingkup=${encodeURIComponent(lk)}` : null;
     );
   }
 
-  // STEP 2: jika ULOK sudah dipilih tapi LINGKUP belum -> tampilkan pemilih lingkup
   if (selectedUlok && !selectedLingkup) {
     return (
       <div className="container" style={{ paddingTop: "20px" }}>
@@ -368,16 +429,15 @@ const withLingkup = lk ? base + `&lingkup=${encodeURIComponent(lk)}` : null;
     );
   }
 
-  // STEP 3: jika ULOK & LINGKUP sudah ada -> tampilkan tabel input
   return (
     <div
       style={{
         paddingTop: "20px",
         width: "100%",
         maxWidth: "100%",
-        margin: "0", // hilangkan margin default
-        paddingLeft: "0", // hilangkan padding kiri
-        paddingRight: "0", // hilangkan padding kanan
+        margin: "0",
+        paddingLeft: "0",
+        paddingRight: "0",
       }}
     >
       <div className="card" style={{ width: "100%", borderRadius: 0 }}>
@@ -393,7 +453,7 @@ const withLingkup = lk ? base + `&lingkup=${encodeURIComponent(lk)}` : null;
           <button
             type="button"
             onClick={onBack}
-            className="btn btn-back" 
+            className="btn btn-back"
             style={{ padding: "8px 16px" }}
           >
             Kembali
@@ -421,7 +481,6 @@ const withLingkup = lk ? base + `&lingkup=${encodeURIComponent(lk)}` : null;
                 }}
               >
                 <th style={{ padding: "12px", minWidth: "140px" }}>Kategori</th>
-
                 <th style={{ padding: "12px", minWidth: "150px" }}>
                   Jenis Pekerjaan
                 </th>
@@ -497,18 +556,9 @@ const withLingkup = lk ? base + `&lingkup=${encodeURIComponent(lk)}` : null;
                       const ST = String(
                         item.approval_status || ""
                       ).toUpperCase();
-
-                      // 1. Prioritas Tertinggi: REJECTED (Merah)
                       if (ST === "REJECTED") return "#ffe5e5";
-
-                      // 2. Prioritas Kedua: INTRUKSI LAPANGAN (Kuning)
-                      // Jika data IL="ya", beri warna kuning (meskipun sudah submitted/pending)
-                      if (item.is_il) return "#fff9c4"; // Kuning muda agar tulisan tetap terbaca
-
-                      // 3. Prioritas Ketiga: SUDAH SUBMIT (Hijau Muda)
+                      if (item.is_il) return "#fff9c4";
                       if (item.isSubmitted) return "#f0fff0";
-
-                      // 4. Default
                       return "transparent";
                     })(),
                     borderBottom: "1px solid #ddd",
@@ -539,22 +589,18 @@ const withLingkup = lk ? base + `&lingkup=${encodeURIComponent(lk)}` : null;
                       }
                       placeholder="0"
                       disabled={item.isSubmitted}
-                      // PERBAIKAN: Izinkan input angka negatif
                       step="any"
                     />
                   </td>
                   <td style={{ padding: "12px", textAlign: "center" }}>
                     {(() => {
-                      // Tampilkan selisih HANYA jika item sudah tersimpan
-                      // ATAU user sudah mengisi volume_akhir (tidak kosong/null/undefined)
                       const hasInput =
                         item.isSubmitted ||
                         (item.volume_akhir !== "" &&
                           item.volume_akhir !== null &&
                           item.volume_akhir !== undefined);
 
-                      if (!hasInput) return <span>-</span>; // sembunyikan selisih dulu
-
+                      if (!hasInput) return <span>-</span>;
                       const s = parseFloat(item.selisih);
                       return (
                         <span
@@ -574,7 +620,6 @@ const withLingkup = lk ? base + `&lingkup=${encodeURIComponent(lk)}` : null;
                       padding: "12px",
                       textAlign: "right",
                       fontWeight: "bold",
-                      // PERBAIKAN: Warna merah untuk total negatif
                       color: item.total_harga < 0 ? "red" : "black",
                     }}
                   >
@@ -614,7 +659,6 @@ const withLingkup = lk ? base + `&lingkup=${encodeURIComponent(lk)}` : null;
                     )}
                   </td>
 
-                  {/* Catatan */}
                   <td style={{ padding: "12px" }}>
                     {item.catatan ? (
                       <pre
@@ -667,8 +711,8 @@ const withLingkup = lk ? base + `&lingkup=${encodeURIComponent(lk)}` : null;
                                   x.id === item.id
                                     ? {
                                         ...x,
-                                        isSubmitted: false, // buka kembali agar bisa diisi ulang
-                                        approval_status: "Pending", // reset status
+                                        isSubmitted: false,
+                                        approval_status: "Pending",
                                         volume_akhir: "",
                                         selisih: "",
                                         total_harga: 0,
@@ -714,7 +758,7 @@ const withLingkup = lk ? base + `&lingkup=${encodeURIComponent(lk)}` : null;
             </tbody>
           </table>
         </div>
-        {/* --- BUTTON INTRUKSI LAPANGAN --- */}
+
         <div style={{ marginTop: "20px", marginBottom: "0px" }}>
           <a
             href="https://instruksi-lapangan.vercel.app/"
@@ -723,9 +767,9 @@ const withLingkup = lk ? base + `&lingkup=${encodeURIComponent(lk)}` : null;
             className="btn"
             style={{
               width: "100%",
-              backgroundColor: "#FFC107", // ✅ Ini membuat background jadi KUNING
+              backgroundColor: "#FFC107",
               fontWeight: "bold",
-              color: "#000", // Teks hitam agar kontras dengan kuning
+              color: "#000",
               textDecoration: "none",
               display: "block",
               textAlign: "center",
@@ -737,7 +781,7 @@ const withLingkup = lk ? base + `&lingkup=${encodeURIComponent(lk)}` : null;
             INSTRUKSI LAPANGAN
           </a>
         </div>
-        {/* PERBAIKAN: Tambahkan ringkasan total di bawah tabel */}
+
         <div
           style={{
             marginTop: "20px",
@@ -838,6 +882,56 @@ const withLingkup = lk ? base + `&lingkup=${encodeURIComponent(lk)}` : null;
             </strong>
           </div>
         </div>
+
+        {/* --- PENAMBAHAN BARU: Tombol Opname Final --- */}
+        <div style={{ marginTop: "20px" }}>
+          <button
+            onClick={handleOpnameFinal}
+            disabled={!canFinalize || isFinalized || isLocking}
+            style={{
+              width: "100%",
+              padding: "14px",
+              backgroundColor: isFinalized
+                ? "#28a745" // Hijau jika sudah finalized
+                : canFinalize
+                ? "#007bff" // Biru jika siap diklik
+                : "#6c757d", // Abu-abu jika disabled/pending
+              color: "white",
+              fontSize: "1.1rem",
+              fontWeight: "bold",
+              borderRadius: "8px",
+              border: "none",
+              cursor:
+                !canFinalize || isFinalized || isLocking
+                  ? "not-allowed"
+                  : "pointer",
+              transition: "background-color 0.3s",
+              boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
+            }}
+          >
+            {isLocking
+              ? "Memproses..."
+              : isFinalized
+              ? "Opname Selesai (Final)"
+              : canFinalize
+              ? "Opname Final"
+              : "Menunggu Approval Semua Item"}
+          </button>
+          {!canFinalize && !isFinalized && (
+            <p
+              style={{
+                textAlign: "center",
+                color: "#dc3545",
+                fontSize: "0.85rem",
+                marginTop: "8px",
+              }}
+            >
+              *Pastikan semua pekerjaan berstatus APPROVED untuk melakukan Opname
+              Final.
+            </p>
+          )}
+        </div>
+        {/* --------------------------------------------- */}
       </div>
     </div>
   );
