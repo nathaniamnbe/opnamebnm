@@ -92,7 +92,7 @@ const Header = () => {
                 alt="Building & Maintenance"
                 className="building-logo"
               />
-              <h1 style={{ fontSize: "24px", fontWeight: "bold", margin: 0 }}>
+              <h1 style={{ fontSize: "24px", fontWeight: "bold", margin: 0, textAlign: "center" }}>
                 Sistem Opname
               </h1>
             </div>
