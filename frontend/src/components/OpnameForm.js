@@ -714,7 +714,6 @@ const withLingkup = lk ? base + `&lingkup=${encodeURIComponent(lk)}` : null;
             </tbody>
           </table>
         </div>
-        {/* --- BUTTON INTRUKSI LAPANGAN (BARU) --- */}
         {/* --- BUTTON INTRUKSI LAPANGAN --- */}
         <div style={{ marginTop: "20px", marginBottom: "0px" }}>
           <a
@@ -735,7 +734,7 @@ const withLingkup = lk ? base + `&lingkup=${encodeURIComponent(lk)}` : null;
               boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
             }}
           >
-            INTRUKSI LAPANGAN
+            INSTRUKSI LAPANGAN
           </a>
         </div>
         {/* PERBAIKAN: Tambahkan ringkasan total di bawah tabel */}
