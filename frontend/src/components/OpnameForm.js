@@ -163,7 +163,7 @@ const OpnameForm = ({ onBack, selectedStore }) => {
       const checkStatus = async () => {
         try {
           const res = await fetch(
-            `${API_BASE_URL}/api/check_status_item_opname?no_ulok=${selectedUlok}&lingkup_pekerjaan=${selectedLingkup}`
+            `https://sparta-backend-5hdj.onrender.com/api/check_status_item_opname?no_ulok=${selectedUlok}&lingkup_pekerjaan=${selectedLingkup}`
           );
           const data = await res.json();
 
@@ -210,7 +210,7 @@ const OpnameForm = ({ onBack, selectedStore }) => {
     };
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/opname_locked`, {
+      const response = await fetch(`https://sparta-backend-5hdj.onrender.com/api/opname_locked`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
