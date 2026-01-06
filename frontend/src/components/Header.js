@@ -92,11 +92,18 @@ const Header = () => {
                 alt="Building & Maintenance"
                 className="building-logo"
               />
-              <h1 style={{ fontSize: "24px", fontWeight: "bold", margin: 0, textAlign: "center" }}>
-                Sistem Opname
-              </h1>
             </div>
-
+            <h1 style={{ 
+                fontSize: "24px", 
+                fontWeight: "bold", 
+                margin: 0,
+                position: "absolute",
+                left: "50%",
+                transform: "translateX(-50%)",
+                whiteSpace: "nowrap"
+              }}>
+              Sistem Opname
+            </h1>
             {/* Bagian Kanan: User & Logout */}
             {user && (
               <div
