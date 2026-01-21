@@ -31,7 +31,7 @@ const Login = () => {
       <div className="login-card">
         {/* Tombol Kembali */}
         <a
-          href="https://sparta-alfamart.vercel.app/dashboard/index.html"
+          href="https://sparta-alfamart.vercel.app/dashboard/pic/index.html"
           className="btn-back-link"
         >
           <svg
